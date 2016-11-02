@@ -1,0 +1,293 @@
+#VERSION:0.83;
+#TITLE:Not Constantinople;
+#SUBTITLE:;
+#ARTIST:a Turkey best served cold;
+#TITLETRANSLIT:;
+#SUBTITLETRANSLIT:;
+#ARTISTTRANSLIT:;
+#GENRE:;
+#ORIGIN:;
+#CREDIT:Telperion;
+#BANNER:;
+#BACKGROUND:;
+#PREVIEWVID:;
+#JACKET:;
+#CDIMAGE:;
+#DISCIMAGE:;
+#LYRICSPATH:;
+#CDTITLE:;
+#MUSIC:notconst.ogg;
+#OFFSET:-1.018000;
+#SAMPLESTART:25.027000;
+#SAMPLELENGTH:16.000000;
+#SELECTABLE:YES;
+#DISPLAYBPM:120.000000;
+#BPMS:0.000=120.000;
+#STOPS:;
+#DELAYS:;
+#WARPS:;
+#TIMESIGNATURES:0.000=4=4;
+#TICKCOUNTS:0.000=4;
+#COMBOS:0.000=1;
+#SPEEDS:0.000=1.000=0.000=0;
+#SCROLLS:0.000=1.000;
+#FAKES:;
+#LABELS:0.000=Song Start;
+#BGCHANGES:;
+#KEYSOUNDS:;
+#ATTACKS:
+;
+
+//---------------dance-single - ----------------
+#NOTEDATA:;
+#CHARTNAME:;
+#STEPSTYPE:dance-single;
+#DESCRIPTION:;
+#CHARTSTYLE:;
+#DIFFICULTY:Challenge;
+#METER:1;
+#RADARVALUES:0.006063,0.099736,0.010610,0.000000,0.000000,4.000000,1.000000,1.000000,0.000000,0.000000,1.000000,0.000000,0.000000,0.000000,0.006063,0.099736,0.010610,0.000000,0.000000,4.000000,1.000000,1.000000,0.000000,0.000000,1.000000,0.000000,0.000000,0.000000;
+#CREDIT:;
+#DISPLAYBPM:120.000000;
+#NOTES:
+// measure 0
+0000
+0000
+0000
+0000
+,  // measure 1
+0000
+0000
+0000
+0000
+,  // measure 2
+0000
+0000
+0000
+0000
+,  // measure 3
+0000
+0000
+0000
+0000
+,  // measure 4
+0000
+0000
+0000
+0000
+,  // measure 5
+0000
+0000
+0000
+0000
+,  // measure 6
+0000
+0000
+0000
+0000
+,  // measure 7
+0000
+0000
+0000
+0000
+,  // measure 8
+0000
+0000
+0000
+0000
+,  // measure 9
+0000
+0000
+0000
+0000
+,  // measure 10
+0000
+0000
+0000
+0000
+,  // measure 11
+0000
+0000
+0000
+0000
+,  // measure 12
+0000
+0000
+0000
+0000
+,  // measure 13
+0000
+0000
+0000
+0000
+,  // measure 14
+0000
+0000
+0000
+0000
+,  // measure 15
+0000
+0000
+0000
+0000
+,  // measure 16
+0000
+0000
+0000
+0000
+,  // measure 17
+0000
+0000
+0000
+0000
+,  // measure 18
+0000
+0000
+0000
+0000
+,  // measure 19
+0000
+0000
+0000
+0000
+,  // measure 20
+0000
+0000
+0000
+0000
+,  // measure 21
+0000
+0000
+0000
+0000
+,  // measure 22
+0000
+0000
+0000
+0000
+,  // measure 23
+0000
+0000
+0000
+0000
+,  // measure 24
+0000
+0000
+0000
+0000
+,  // measure 25
+0000
+0000
+0000
+0000
+,  // measure 26
+0000
+0000
+0000
+0000
+,  // measure 27
+0000
+0000
+0000
+0000
+,  // measure 28
+0000
+0000
+0000
+0000
+,  // measure 29
+0000
+0000
+0000
+0000
+,  // measure 30
+0000
+0000
+0000
+0000
+,  // measure 31
+0000
+0000
+0000
+0000
+,  // measure 32
+0000
+0000
+0000
+0000
+,  // measure 33
+0000
+0000
+0000
+0000
+,  // measure 34
+0000
+0000
+0000
+0000
+,  // measure 35
+0000
+0000
+0000
+0000
+,  // measure 36
+0000
+0000
+0000
+0000
+,  // measure 37
+0000
+0000
+0000
+0000
+,  // measure 38
+0000
+0000
+0000
+0000
+,  // measure 39
+0000
+0000
+0000
+0000
+,  // measure 40
+0000
+0000
+0000
+0000
+,  // measure 41
+0000
+0000
+0000
+0000
+,  // measure 42
+0000
+0000
+0000
+0000
+,  // measure 43
+0000
+0000
+0000
+0000
+,  // measure 44
+0000
+0000
+0000
+0000
+,  // measure 45
+0000
+0000
+0000
+0000
+,  // measure 46
+0000
+0000
+0000
+0000
+,  // measure 47
+1111
+0000
+0000
+0000
+;
