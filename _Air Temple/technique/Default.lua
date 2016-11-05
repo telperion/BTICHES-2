@@ -17,12 +17,19 @@ local fgcurcommand = 0;
 local checked = false;
 local screen;
 local nextbeat = 0;
+local DEG_TO_RAD = math.pi / 180.0;
 
 
 local cyberWidth = 20;
 local cyberHeight = 30;
 local cyberXStep = 2 * sw/cyberWidth/2;		-- Needs to be larger than half-screen to accommodate rotation
 local cyberYStep = 2 * sh/cyberHeight;		-- Needs to be larger than half-screen to accommodate rotation
+local cyberMinor = cyberWidth > cyberHeight and cyberHeight or cyberWidth;
+local cyberMajor = cyberWidth > cyberHeight and cyberWidth or cyberHeight;
+local cyberCenterX = cyberWidth/2;
+local cyberCenterY = cyberHeight/2;
+
+local cyberColorator = 1;
 
 
 
@@ -51,15 +58,22 @@ local cyberSkin = Def.ActorFrame {
 			:xy(sw/4, sh/2);
 	end
 };
+local cyberModulator = 257;
+local cyberGenerator = 12;
+local cyberColorator = 1;
 for cyberCol = 0,cyberWidth-1 do
 	for cyberRow = 0,cyberHeight-1 do
 		table.insert(cyberSkin,
 			Def.Quad {
 				Name = "cyberSkin_"..cyberCol.."_"..cyberRow,
 				InitCommand = function(self)
+					cyberColorator = math.fmod(cyberColorator * cyberGenerator, cyberModulator);
+					local c = cyberColorator / cyberModulator;
+					local cyberGreening = c < 0.5 and c + 0.5 or 1.0;
+					local cyberBluing   = c < 0.5 and 0.0 or c - 0.5;
 					self:zoomto(cyberXStep, cyberYStep)
 						:xy((cyberCol + 0.5 - cyberWidth*0.5) * cyberXStep, (cyberRow + 0.5 - cyberHeight*0.5) * cyberYStep)
-						:diffuse( color("1.0,"..(cyberCol / cyberWidth)..","..(cyberRow / cyberHeight)..",0.0") );
+						:diffuse( color("0.0,"..cyberGreening..","..cyberBluing..",0.0") );
 					Trace("Initialized cyberskin element: ("..cyberCol..", "..cyberRow..")");
 				end,
 				OnCommand = function(self)
@@ -123,7 +137,10 @@ table.insert(cyberSkinTex, cyberSkin);
 table.insert(theBoys, cyberSkinTex);
 
 
+-------------------------------------------------------------------------------
+--
 -- This is where the shit will be happening.
+--
 local BTIUtil_Scale = function(t, inLower, inUpper, outLower, outUpper)
 	local ti = (t - inLower) / (inUpper - inLower);
 	return outLower + ti * (outUpper - outLower);
@@ -141,6 +158,33 @@ local CalcCyberWave = function(r, t)
 									-- Opacity constant by distance, where 1/(A+1) is minimum opacity
 	local waveProgress = (r / waveWidth - waveSpread * CalcCyberEase(t));
 	return (waveFieldSize / (waveOpacity * r + waveFieldSize)) * (1 / (waveProgress * waveProgress + 1));
+end
+
+local CalcCyberLine = function(x, y, theta, t)
+	-- The line always passes through (0, 0), so offset x and y if necessary.
+	-- theta represents the angle of the line in degrees.
+	local lineSpread	= 1.0;		-- Spreading rate in units/beat
+	local lineDecay		= 1.0;		-- Decaying opacity rate in units/beat
+	local lineWidth		= 0.5;		-- Width of wave in units
+	
+	local r = y * math.cos(DEG_TO_RAD * theta) - x * math.sin(DEG_TO_RAD * theta);
+	local linePresence	= r / (lineWidth + lineSpread * t);
+	local linePulse		= 1.0 / (1.0 + linePresence * linePresence);
+	return linePulse * 1.0 / (1.0 + lineDecay*lineDecay * t*t);
+end
+
+local CalcCyberStripe = function(x, y, theta, d, t)
+	-- The basis line always passes through (0, 0), so offset x and y if necessary.
+	-- theta represents the angle of the stripes in degrees.
+	-- d represents the spacing between stripes.
+	local stripeDecay	= 1.0;		-- Decaying opacity rate in units/beat
+	local stripeWidth	= 0.5;		-- Duty cycle / stretching of wave (TODO: figure out a clean way to do this)
+	
+	if not t then do return 0.0 end end
+	
+	local r = y * math.cos(DEG_TO_RAD * theta) - x * math.sin(DEG_TO_RAD * theta);
+	local stripePulse	= 0.5 + 0.5 * math.cos(2 * math.pi * r / d);
+	return stripePulse*stripePulse * 1.0 / (1.0 + stripeDecay*stripeDecay * t*t);
 end
 
 -- Find the radial distance in cyberskin patches from the center.
@@ -187,11 +231,13 @@ local cyberHQ = Def.Quad {
 		end
 		
 		-- Pulse colors based on certain beat cues.
-		local pulseDing		= {8, 32, 64, 65, 68};
-		local pulseSigh		= {};
-		local pulseSamba	= {};
+		local pulseDing		= {9.5,       25.5,     41.5,       57.5, 73.5,       89.5,     105.5,        121.5 };
+		local pulseSamba	= {     17.5,                 49.5,             81.5,                  113.5        };
+		local pulseSigh		= {1,2,3,4                                                                          };
+		local pulseUnsigh	= {                 32,                                     96                      };
 		local waveFadeoff	= 8.0;		-- Fade out the wave after this many beats
 		local waveCutoff	= 12.0;		-- Cut off the wave after this many beats
+		local unsighLength	= 2.0;		-- Sharp intake of breath lasts this many beats
 		
 		for moniker,starlet in pairs(cyberBaby:GetChildren()) do
 			local xs, ys = string.match(moniker, "cyberSkin_(%d+)_(%d+)")
@@ -211,10 +257,57 @@ local cyberHQ = Def.Quad {
 						end
 						
 						alphaDerived = alphaDerived + CalcCyberWave( CalcCyberRadialPos(x, y), t ) * waveFade;
-						alphaDerived = alphaDerived > 1 and 1 or alphaDerived;
 					end
 				end
 				
+				for _,p in pairs(pulseSigh) do
+					local t = overtime - p;
+					local waveFade = 1.0;
+					if t >= 0.0 and t < waveCutoff then
+						if t >= waveFadeoff then
+							waveFade = BTIUtil_Scale(t, waveFadeoff, waveCutoff, 1.0, 0.0);
+						else
+							waveFade = 1.0;
+						end
+						
+						alphaDerived = alphaDerived + CalcCyberLine( x - cyberCenterX, y - cyberCenterY, 45, t ) * waveFade;
+						alphaDerived = alphaDerived + CalcCyberLine( x - cyberCenterX, y - cyberCenterY, 135, t ) * waveFade;
+					end
+				end
+				
+				for _,p in pairs(pulseSamba) do
+					local t = overtime - p;
+					local waveFade = 1.0;
+					if t >= 0.0 and t < waveCutoff then
+						if t >= waveFadeoff then
+							waveFade = BTIUtil_Scale(t, waveFadeoff, waveCutoff, 1.0, 0.0);
+						else
+							waveFade = 1.0;
+						end
+						
+						local t2 = t > 0.75 and t - 0.75 or nil;
+						local t3 = t > 1.5  and t - 1.5  or nil;
+						alphaDerived = alphaDerived + CalcCyberStripe( x - cyberCenterX, y - cyberCenterY, 60,  cyberMinor*0.25, t  ) * waveFade;
+						alphaDerived = alphaDerived + CalcCyberStripe( x - cyberCenterX, y - cyberCenterY, 120, cyberMinor*0.25, t2 ) * waveFade;
+						alphaDerived = alphaDerived + CalcCyberStripe( x - cyberCenterX, y - cyberCenterY, 0,   cyberMinor*0.25, t3 ) * waveFade;
+					end
+				end
+				
+				for _,p in pairs(pulseUnsigh) do
+					local t = overtime - p;
+					local waveFade = 0.0;
+					if t <= unsighLength/4.0 and t > -unsighLength then
+						local unsighTime = t / unsighLength;
+						waveFade = 1.0 + (unsighTime < 0 and unsighTime or -4.0*unsighTime);
+						
+						local unsighOpacity = 0.8;
+						local waveFadePowered = waveFade*waveFade;
+						alphaDerived = alphaDerived + waveFadePowered*unsighOpacity;
+					end
+				end
+				
+				alphaDerived = alphaDerived > 1.0 and 1.0 or alphaDerived;
+				alphaDerived = alphaDerived < 0.3 and 0.3 or alphaDerived;
 				starlet:diffusealpha(alphaDerived);
 			end
 		end
