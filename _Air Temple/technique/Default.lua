@@ -19,6 +19,93 @@ local screen;
 local nextbeat = 0;
 local DEG_TO_RAD = math.pi / 180.0;
 
+-------------------------------------------------------------------------------
+--		Mostly lifted from Kyzentun's clean rewrite of
+--						   TaroNuke's arbitrary mods generator.
+--		No sense rewriting code that I can just Ctrl+C, right?...
+--
+--	BEGIN 					Arbitrary Mods Generation					BEGIN
+-------------------------------------------------------------------------------
+-- Reflection into the eden. What's CapitalCase?
+for func_name, func in pairs(PlayerOptions) do
+   PlayerOptions[func_name:lower()]= func
+end
+
+-- Option recording.
+local poptions= {}
+-- Read down whatever options were applied going into the file.
+for i, pn in ipairs(GAMESTATE:GetEnabledPlayers()) do
+   poptions[pn]= GAMESTATE:GetPlayerState(pn):GetPlayerOptions("ModsLevel_Song")
+end
+
+-- Comprehensive list of available mods.
+local float_mods= {
+   "Boost", "Brake", "Wave", "Expand", "Boomerang", "Drunk", "Dizzy",
+   "Confusion", "Mini", "Tiny", "Flip", "Invert", "Tornado", "Tipsy",
+   "Bumpy", "Beat", "Xmode", "Twirl", "Roll", "Hidden", "HiddenOffset",
+   "Sudden", "SuddenOffset", "Stealth", "Blink", "RandomVanish", "Reverse",
+   "Split", "Alternate", "Cross", "Centered", "Dark", "Blind", "Cover",
+   "RandAttack", "NoAttack", "PlayerAutoPlay", "Tilt", "Skew", "Passmark",
+   "RandomSpeed",
+}
+-- Use this function to clear all mods.
+local function clear_mods(pn)
+   poptions[pn]:XMod(1)
+   for i, mod in ipairs(float_mods) do
+      poptions[pn][mod](poptions[pn], 0)
+   end
+end
+
+local num_chars= {["-"]= true}
+for i= 0, 9 do num_chars[tostring(i)]= true end
+
+-- Apply a mod from a string specification.
+local function apply_mod(mod, pn)
+   mod= mod:lower()
+   local sub_mods= split(",", mod)
+   for i, sub in ipairs(sub_mods) do
+      local level= 1
+      local speed= 1
+      local parts= split(" ", sub)
+      for p, par in ipairs(parts) do
+         local first_char= par:sub(1, 1)
+         if par == "no" then
+            level= 0
+         else
+            local before_num, num, after_num= par:match("(*?)([%d%-%.]+)([x%%%*]?)")
+            num= tonumber(num)
+            if num and after_num ~= "x" then
+               if before_num == "*" or after_num == "*" then
+                  speed= num
+               else
+                  level= num / 100
+               end
+            end
+         end
+      end
+      local mod_name= parts[#parts]
+      if PlayerOptions[mod_name] then
+         poptions[pn][mod_name](poptions[pn], level, speed)
+      elseif mod_name == "clearall" then
+         clear_mods(pn)
+      else
+         local corm, value, xm= mod_name:match("([cm]?)([%d%-%.]+)(x?)")
+         value= tonumber(value)
+         if xm == "x" then
+            poptions[pn]:XMod(value, speed)
+         elseif corm == "c" then
+            poptions[pn]:CMod(value, speed)
+         elseif corm == "m" then
+            poptions[pn]:MMod(value, speed)
+         end
+      end
+   end
+end
+-------------------------------------------------------------------------------
+--	 END 					Arbitrary Mods Generation					 END
+-------------------------------------------------------------------------------
+
+
 
 local cyberWidth = 20;
 local cyberHeight = 30;
@@ -195,7 +282,7 @@ local CalcCyberRadialPos = function(x, y)
 end
 
 
-local cyberHQ = Def.Quad {
+local cyberGfxHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
 			:SetWidth(6)
@@ -321,6 +408,94 @@ local cyberHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
-table.insert(theBoys, cyberHQ);
+-- table.insert(theBoys, cyberGfxHQ);
+
+
+local cyberModsTable = {
+	-- [1]: beat start
+	-- [2]: mod type
+	-- [3]: mod strength (out of unity),
+	-- [4]: mod approach (in beats to complete)
+	-- [5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
+		
+		{ 32.0,	"Flip",			 0.5,   2.0, 3}, 
+		{ 36.0,	"Flip",			 0.0,   2.0, 3}, 
+		{ 38.0,	"Expand",		 0.5,  16.0, 3}, 
+		{ 40.0,	"Invert",		 0.5,   2.0, 3}, 
+		{ 44.0,	"Invert",		 0.0,   2.0, 3}, 
+		{ 48.0,	"Flip",			 1.0,   3.0, 3}, 
+		{ 48.0,	"Invert",		 0.5,   1.0, 3}, 
+		{ 52.0,	"Alternate",	 0.1,  32.0, 3}, 
+		{ 52.0,	"Split",		 0.2,  32.0, 3}, 
+		{ 52.0,	"Reverse",		-0.2,  32.0, 3}, 
+		{ 56.0,	"Flip",			 0.0,   1.0, 3}, 
+		{ 56.0,	"Invert",		 0.0,   3.0, 3}, 
+	};
+local cyberModsLaunched = 0;
+local cyberModsWait = 0;
+local cyberModsLeadBy = 0.03;
+
+local cyberModsHQ = Def.Quad {
+	InitCommand = function(self)
+		self:SetHeight(6)
+			:SetWidth(6)
+			:xy(-sw,-sh)
+			:visible(false);
+	end,
+	OnCommand = function(self)
+		self:queuecommand("Update");
+	end,
+	UpdateCommand = function(self)
+		-- Most things are determined by beat, believe it or not.		
+		local overtime = GAMESTATE:GetSongBeat();
+		
+		if cyberModsLaunched >= #cyberModsTable then
+			Trace('>>> cyberModsHQ: Hibernated!!');
+			self:hibernate(600);
+			do return end
+		else
+			-- Trace('>>> cyberModsHQ: ' .. cyberModsLaunched);
+			-- Check the next line of the mods table.
+			cyberNextMod = cyberModsTable[cyberModsLaunched + 1];
+			
+			if overtime + cyberModsLeadBy >= cyberNextMod[1] then
+				-- TODO: this assumes the effect applies over a constant BPM section!!
+				local cyberBPS = GAMESTATE:GetSongBPS();
+				Trace('>>> cyberModsHQ: ' .. cyberModsLaunched .. ' @ time = ' .. overtime);
+				
+				for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
+					if (cyberNextMod[5] == 1 or cyberNextMod[5] == 3) then								-- TODO: FIXME
+						pops = GAMESTATE:GetPlayerState(pe):GetPlayerOptions("ModsLevel_Song");
+						
+						-- Calculate approach (in units of the value per second):
+						-- a = (value final - value initial) * (beats per second) / (beats for transition + ``machine epsilon``)
+						-- Has to be done individually for each player, just in case they're coming from different initial values :(
+						opVal, opApproach = pops[ cyberNextMod[2] ]( pops );
+						if opApproach == 0 then -- SOMEONE FUCKED UP AND IT WASN'T ME.
+							newApproach = cyberBPS;
+						else
+							newApproach = math.abs(cyberNextMod[3] - opVal) * cyberBPS / (cyberNextMod[4] + 0.001);
+						end
+											pops[ cyberNextMod[2] ]( pops, cyberNextMod[3], newApproach );
+						Trace('>>> cyberModsHQ: ' .. opVal .. ' @ rate = ' .. opApproach .. ' for ' .. pe);
+						Trace('>>> cyberModsHQ: ' .. cyberNextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
+					end
+				end
+				
+				cyberModsLaunched = cyberModsLaunched + 1;
+			else
+				-- Trace('>>> cyberModsHQ: ' .. overtime .. ' < ' .. cyberNextMod[1]);
+			end
+		end		
+		
+		-- Wait a bit and then update again!
+		self:queuecommand('WaitABit');
+	end,
+	WaitABitCommand = function(self)
+		self:sleep(0.02);
+		self:queuecommand('Update');
+	end
+}
+table.insert(theBoys, cyberModsHQ);
 
 return theBoys;
