@@ -511,10 +511,33 @@ local hamburgerHelper = Def.Quad {
 	end,
 	OnCommand = function(self)
 		local hamburger = SCREENMAN:GetTopScreen();
+		
 		if hamburger:GetScreenType() == "ScreenType_Gameplay" then
 			hamburger:GetChild("Underlay"):decelerate(1.0):diffusealpha(0.0);
 		end
-		self:hibernate(6000);
+		
+		-- TODO: how tf to hide the combo??
+		local P1 = hamburger:GetChild("PlayerP1");
+		if P1 then 
+			P1:GetChild("Combo"):y(-sh);
+		end
+		local P2 = hamburger:GetChild("PlayerP2");
+		if P2 then 
+			P2:GetChild("Combo"):y(-sh);
+		end
+		
+		
+		if P1 and P2 then
+				Trace("#### hibernate!");
+			self:hibernate(6000);
+		else
+			-- Wait a bit and then update again!
+			self:queuecommand('WaitABit');
+		end
+	end,	
+	WaitABitCommand = function(self)
+		self:sleep(0.02);
+		self:queuecommand('Update');
 	end
 }
 table.insert(theBoys, hamburgerHelper);
