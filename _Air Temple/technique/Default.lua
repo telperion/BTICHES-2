@@ -498,4 +498,29 @@ local cyberModsHQ = Def.Quad {
 }
 table.insert(theBoys, cyberModsHQ);
 
+-------------------------------------------------------------------------------
+--
+--		Everybody wants to hide the overlay.
+--
+local hamburgerHelper = Def.Quad {
+	InitCommand = function(self)
+		self:SetHeight(6)
+			:SetWidth(6)
+			:xy(-sw,-sh)
+			:visible(false);
+	end,
+	OnCommand = function(self)
+		local hamburger = SCREENMAN:GetTopScreen();
+		if hamburger:GetScreenType() == "ScreenType_Gameplay" then
+			hamburger:GetChild("Underlay"):decelerate(1.0):diffusealpha(0.0);
+		end
+		self:hibernate(6000);
+	end
+}
+table.insert(theBoys, hamburgerHelper);
+-------------------------------------------------------------------------------
+
+
+
+
 return theBoys;
