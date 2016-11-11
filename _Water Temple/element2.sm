@@ -21,6 +21,8 @@
 #STOPS:
 ;
 #BGCHANGES:;
+#FGCHANGES:0.000=technique=1.000=0=0=1=====,
+;
 #KEYSOUNDS:;
 #ATTACKS:;
 

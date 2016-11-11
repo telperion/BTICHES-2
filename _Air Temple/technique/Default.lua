@@ -411,6 +411,10 @@ local cyberGfxHQ = Def.Quad {
 -- table.insert(theBoys, cyberGfxHQ);
 
 
+-------------------------------------------------------------------------------
+--
+--		Manage arrow mods for the whole song here.
+--
 local cyberModsTable = {
 	-- [1]: beat start
 	-- [2]: mod type
@@ -500,7 +504,7 @@ table.insert(theBoys, cyberModsHQ);
 
 -------------------------------------------------------------------------------
 --
---		Everybody wants to hide the overlay.
+--		Everybody wants to hide the Lay's.
 --
 local hamburgerHelper = Def.Quad {
 	InitCommand = function(self)
@@ -513,17 +517,18 @@ local hamburgerHelper = Def.Quad {
 		local hamburger = SCREENMAN:GetTopScreen();
 		
 		if hamburger:GetScreenType() == "ScreenType_Gameplay" then
+			hamburger:GetChild("Overlay" ):decelerate(1.0):diffusealpha(0.0);
 			hamburger:GetChild("Underlay"):decelerate(1.0):diffusealpha(0.0);
 		end
 		
 		-- TODO: how tf to hide the combo??
 		local P1 = hamburger:GetChild("PlayerP1");
 		if P1 then 
-			P1:GetChild("Combo"):y(-sh);
+			P1:GetChild("Combo"):visible(false);
 		end
 		local P2 = hamburger:GetChild("PlayerP2");
 		if P2 then 
-			P2:GetChild("Combo"):y(-sh);
+			P2:GetChild("Combo"):visible(false);
 		end
 		
 		
