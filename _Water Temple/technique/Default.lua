@@ -121,9 +121,171 @@ local theBoys = Def.ActorFrame {
 };
 
 
+
 -------------------------------------------------------------------------------
 --
--- This is where the shit will be happening.
+-- 		Some graphical doods 'n' dads 'n' doodads.
+--
+local SQRT3 = math.sqrt(3.0);
+local enjoyTriangleSize 	= 60;			-- Length of equilateral triangle tile side, in pixels.
+local enjoyTriangleAscent   = enjoyTriangleSize * (SQRT3 / 2);
+local enjoyBGFieldSpan		= math.floor(      sw / enjoyTriangleSize);		-- The BG field is this many triangles wide.
+local enjoyBGFieldWidth 	= 				enjoyBGFieldSpan + 1;			-- The BG field requires this many triangles to cover.
+local enjoyBGFieldHeight 	= math.ceil(0.5 * sh / enjoyTriangleAscent);	-- The BG field is this many DOUBLE triangles tall.
+local enjoyBGFieldTexScale	= 1 + 1 / enjoyBGFieldSpan;						-- The BG field texture coordinates are scaled by this much from center.
+
+local cxScaled = 0.5 * (1 - enjoyBGFieldTexScale);
+local cyScaled = 0.5 * (1 - enjoyBGFieldTexScale);
+local BTIUtil_ScaleTexX = function(x)
+	return x/enjoyBGFieldWidth * enjoyBGFieldTexScale + cxScaled;
+end
+local BTIUtil_ScaleTexY = function(y)
+	return y/enjoyBGFieldHeight * enjoyBGFieldTexScale + cyScaled;
+end
+local BTIUtil_ScaleTex = function(x, y)
+	return {BTIUtil_ScaleTexX(x), BTIUtil_ScaleTexY(y)};
+end
+
+local oneStripVertices = {
+		{{-0.5 * enjoyTriangleSize,	0.0, 0}, {1,1,1,0.5}, BTIUtil_ScaleTex(-0.5, 0.0)}
+	};
+for i = 0,enjoyBGFieldWidth do
+	oneStripVertices[#oneStripVertices + 1] = {{ i      * enjoyTriangleSize,	1.0 * enjoyTriangleAscent, 	0}, {1,1,1,0.5}, BTIUtil_ScaleTex(i-0.5, 0.5)}; -- TEST
+	oneStripVertices[#oneStripVertices + 1] = {{(i+0.5) * enjoyTriangleSize,	0.0, 						0}, {1,1,1,0.5}, BTIUtil_ScaleTex(i+0.5, 0.0)};
+end
+
+local enjoyBG = Def.ActorFrame{
+	Name = "enjoyBG",
+	OnCommand = function(self)		
+		local rowChildren = {}
+		for moniker, starlet in pairs(self:GetChildren()) do
+			if moniker:find("enjoyBGRow") then
+				Trace("## Found BG row " .. moniker .. "!");
+				rowChildren[#rowChildren+1] = starlet;
+			end
+		end
+		
+		for r = 1,enjoyBGFieldHeight do
+			rowChildren[2*r-1]:SetVertices(oneStripVertices)
+							  :visible(true);
+			for i = 1,#oneStripVertices,2 do
+				oneStripVertices[i][1][2] = oneStripVertices[i][1][2] + 2 * enjoyTriangleAscent;
+				oneStripVertices[i][3][2] = oneStripVertices[i][3][2] + 1 / enjoyBGFieldHeight;
+				Trace("## ["..i.."][1] = {"..oneStripVertices[i][1][1]..", "..oneStripVertices[i][1][2]..", "..oneStripVertices[i][1][3].."}!");
+				Trace("## ["..i.."][2] = {"..oneStripVertices[i][2][1]..", "..oneStripVertices[i][2][2]..", "..oneStripVertices[i][2][3]..", "..oneStripVertices[i][2][4].."}!");
+				Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
+			end
+			
+			rowChildren[2*r  ]:SetVertices(oneStripVertices)
+							  :visible(true);
+			for i = 2,#oneStripVertices,2 do
+				oneStripVertices[i][1][2] = oneStripVertices[i][1][2] + 2 * enjoyTriangleAscent;
+				oneStripVertices[i][3][2] = oneStripVertices[i][3][2] + 1 / enjoyBGFieldHeight;
+			end
+		end
+	end
+};
+for r = 1,2*enjoyBGFieldHeight do
+	enjoyBG[#enjoyBG + 1] = Def.ActorMultiVertex {
+		Name = "enjoyBGRow"..r,
+		InitCommand = function(self)
+			self:visible(false)
+				:xy(0, 0)
+				:SetDrawState{Mode = "DrawMode_Strip", First = 1, Num = -1};
+		end
+	};
+end
+table.insert(theBoys, enjoyBG);
+
+local verts= {
+	{{0, 0, 0}, Color.Red},
+	{{0, 20, 0}, Color.Blue},
+	{{20, 0, 0}, Color.Green},
+	{{20, 20, 0}, Color.Yellow},
+	{{40, 0, 0}, Color.Orange},
+	{{40, 20, 0}, Color.Purple},
+	{{60, 0, 0}, Color.Black},
+	{{60, 20, 0}, Color.White},
+}
+local enjoyTest = Def.ActorMultiVertex{
+	Name= "AMV_Strip",
+	InitCommand=
+		function(self)
+			self:visible(true)
+			self:xy(sw/2, sh/2)
+			self:SetDrawState{Mode="DrawMode_Strip"}
+		end,
+	OnCommand=
+		function(self)
+			self:SetDrawState{First= 1, Num= -1}
+			verts[1][1][1]= 0
+			verts[4][1][1]= 20
+			verts[7][1][2]= 0
+			verts[8][1][2]= 20
+			self:SetVertices(verts)
+			self:finishtweening()
+			self:queuecommand("FirstMove")
+			self:queuecommand("SecondMove")
+		end,
+	FirstMoveCommand=
+		function(self)
+			self:linear(1)
+			verts[1][1][1]= verts[1][1][1]+10
+			verts[4][1][1]= verts[4][1][1]-10
+			verts[7][1][2]= verts[7][1][2]+10
+			verts[8][1][2]= verts[8][1][2]-10
+			self:SetVertices(verts)
+		end,
+	SecondMoveCommand=
+		function(self)
+			self:linear(1)
+			self:SetDrawState{First= 3, Num= 4}
+		end
+}
+table.insert(theBoys, enjoyTest);
+
+
+local enjoyBGTexSet = false;
+local enjoyBGTex = Def.ActorFrameTexture {	
+	InitCommand = function(self)
+		self:SetWidth(sw)
+			:SetHeight(sh)
+			:xy(0, 0)
+			:EnableAlphaBuffer(true)
+			:Create();
+	end,
+	OnCommand = function(self)
+		-- Set myself as the texture of two sprites.
+		if self:GetTexture() then
+			Trace("### OK, then.");
+			if not enjoyBGTexSet then
+				local enjoyBGHandle = self:GetParent():GetChild("enjoyBG"):GetChildren();
+				for starlet in pairs(enjoyBGHandle) do
+					enjoyBGHandle[starlet]:SetTexture( self:GetTexture() );
+					Trace("### " .. starlet .. ": oh my!!");
+				end
+				Trace("### OK, then!!");
+				enjoyBGTexSet = true;
+			end
+		end
+		
+		for i,v in ipairs(plr) do
+			if not v then
+				plr[i] = SCREENMAN:GetTopScreen():GetChild('PlayerP' .. i);
+				v = plr[i];
+			end
+			Trace("### " .. i .. ": " .. (plr[i] and "yes" or "no") .. ": oh wow!!");
+			self:GetChild("P" .. i .. "Clone"):SetTarget(v);
+		end
+	end,
+	Def.ActorProxy {Name = "P1Clone"},
+	Def.ActorProxy {Name = "P2Clone"}
+};
+table.insert(theBoys, enjoyBGTex);
+
+-------------------------------------------------------------------------------
+--
+-- 		This is where the shit will be happening.
 --
 local BTIUtil_Scale = function(t, inLower, inUpper, outLower, outUpper)
 	local ti = (t - inLower) / (inUpper - inLower);
@@ -149,6 +311,8 @@ local enjoyGfxHQ = Def.Quad {
 		local BPS = GAMESTATE:GetSongBPS();
 		
 		-- Who's interesting today?
+
+		
 		if overtime >=   0.0 and fgcurcommand ==  0 then
 			-- Start moving players toward the center.
 			for i,v in ipairs(plr) do
