@@ -127,35 +127,52 @@ local theBoys = Def.ActorFrame {
 -- 		Some graphical doods 'n' dads 'n' doodads.
 --
 local SQRT3 = math.sqrt(3.0);
-local enjoyTriangleSize 	= 60;			-- Length of equilateral triangle tile side, in pixels.
+local LOG2  = math.log(2.0);
+local enjoyTriangleSize 	= 20;			-- Length of equilateral triangle tile side, in pixels.
 local enjoyTriangleAscent   = enjoyTriangleSize * (SQRT3 / 2);
-local enjoyBGFieldSpan		= math.floor(      sw / enjoyTriangleSize);		-- The BG field is this many triangles wide.
+local enjoyBGFieldSpan		= math.ceil(      sw / enjoyTriangleSize);		-- The BG field is this many triangles wide.
 local enjoyBGFieldWidth 	= 				enjoyBGFieldSpan + 1;			-- The BG field requires this many triangles to cover.
 local enjoyBGFieldHeight 	= math.ceil(0.5 * sh / enjoyTriangleAscent);	-- The BG field is this many DOUBLE triangles tall.
-local enjoyBGFieldTexScale	= 1 + 1 / enjoyBGFieldSpan;						-- The BG field texture coordinates are scaled by this much from center.
+local enjoyBGFieldTexScale	= enjoyBGFieldSpan / (1 + enjoyBGFieldSpan);	-- The BG field texture coordinates are scaled by this much from center.
 
-local cxScaled = 0.5 * (1 - enjoyBGFieldTexScale);
-local cyScaled = 0.5 * (1 - enjoyBGFieldTexScale);
+-- Literally take a dump in a dump TRUCK.
+local tw = math.exp(math.ceil(math.log(sw)/LOG2) * LOG2);
+local th = math.exp(math.ceil(math.log(sh)/LOG2) * LOG2);
+Trace("### Are you shitting in my asshole with this textures " ..
+	  "constrained to powers of 2 bullshit!! tw = "..tw..", th = "..th..".");
+local cx = sw/2;
+local cy = sh/2;
 local BTIUtil_ScaleTexX = function(x)
-	return x/enjoyBGFieldWidth * enjoyBGFieldTexScale + cxScaled;
+	return (x - cx)/sw * enjoyBGFieldTexScale + 0.5;
 end
 local BTIUtil_ScaleTexY = function(y)
-	return y/enjoyBGFieldHeight * enjoyBGFieldTexScale + cyScaled;
+	return (y - cy)/sh * enjoyBGFieldTexScale + 0.5;
 end
 local BTIUtil_ScaleTex = function(x, y)
-	return {BTIUtil_ScaleTexX(x), BTIUtil_ScaleTexY(y)};
+	return {BTIUtil_ScaleTexX(x) * sw/tw, BTIUtil_ScaleTexY(y) * sh/th};
 end
 
 local oneStripVertices = {
-		{{-0.5 * enjoyTriangleSize,	0.0, 0}, {1,1,1,0.5}, BTIUtil_ScaleTex(-0.5, 0.0)}
+		{{-0.5 * enjoyTriangleSize,	0.0, 0}, {1,1,1,0.9}, {0, 0}}
 	};
-for i = 0,enjoyBGFieldWidth do
-	oneStripVertices[#oneStripVertices + 1] = {{ i      * enjoyTriangleSize,	1.0 * enjoyTriangleAscent, 	0}, {1,1,1,0.5}, BTIUtil_ScaleTex(i-0.5, 0.5)}; -- TEST
-	oneStripVertices[#oneStripVertices + 1] = {{(i+0.5) * enjoyTriangleSize,	0.0, 						0}, {1,1,1,0.5}, BTIUtil_ScaleTex(i+0.5, 0.0)};
+for i = 0,enjoyBGFieldWidth-1 do
+	oneStripVertices[#oneStripVertices + 1] = {{ i      * enjoyTriangleSize,	1.0 * enjoyTriangleAscent, 	0}, {1,1,1,0.9}, {0, 0}};
+	oneStripVertices[#oneStripVertices + 1] = {{(i+0.5) * enjoyTriangleSize,	0.0, 						0}, {1,1,1,0.9}, {0, 0}};
+end
+for i = 1,#oneStripVertices do
+	oneStripVertices[i][3] = BTIUtil_ScaleTex(oneStripVertices[i][1][1], oneStripVertices[i][1][2]);
 end
 
 local enjoyBG = Def.ActorFrame{
 	Name = "enjoyBG",
+	InitCommand = function(self)
+		self:xy(0, 0);
+		for i = 1,#oneStripVertices,2 do
+			Trace("## ["..i.."][1] = {"..oneStripVertices[i][1][1]..", "..oneStripVertices[i][1][2]..", "..oneStripVertices[i][1][3].."}!");
+			Trace("## ["..i.."][2] = {"..oneStripVertices[i][2][1]..", "..oneStripVertices[i][2][2]..", "..oneStripVertices[i][2][3]..", "..oneStripVertices[i][2][4].."}!");
+			Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
+		end
+	end,
 	OnCommand = function(self)		
 		local rowChildren = {}
 		for moniker, starlet in pairs(self:GetChildren()) do
@@ -165,12 +182,14 @@ local enjoyBG = Def.ActorFrame{
 			end
 		end
 		
+		Trace ("## sw = "..sw..", sh = "..sh.."!!");
+		
 		for r = 1,enjoyBGFieldHeight do
 			rowChildren[2*r-1]:SetVertices(oneStripVertices)
 							  :visible(true);
 			for i = 1,#oneStripVertices,2 do
 				oneStripVertices[i][1][2] = oneStripVertices[i][1][2] + 2 * enjoyTriangleAscent;
-				oneStripVertices[i][3][2] = oneStripVertices[i][3][2] + 1 / enjoyBGFieldHeight;
+				oneStripVertices[i][3] = BTIUtil_ScaleTex(oneStripVertices[i][1][1], oneStripVertices[i][1][2]);
 				Trace("## ["..i.."][1] = {"..oneStripVertices[i][1][1]..", "..oneStripVertices[i][1][2]..", "..oneStripVertices[i][1][3].."}!");
 				Trace("## ["..i.."][2] = {"..oneStripVertices[i][2][1]..", "..oneStripVertices[i][2][2]..", "..oneStripVertices[i][2][3]..", "..oneStripVertices[i][2][4].."}!");
 				Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
@@ -180,7 +199,10 @@ local enjoyBG = Def.ActorFrame{
 							  :visible(true);
 			for i = 2,#oneStripVertices,2 do
 				oneStripVertices[i][1][2] = oneStripVertices[i][1][2] + 2 * enjoyTriangleAscent;
-				oneStripVertices[i][3][2] = oneStripVertices[i][3][2] + 1 / enjoyBGFieldHeight;
+				oneStripVertices[i][3] = BTIUtil_ScaleTex(oneStripVertices[i][1][1], oneStripVertices[i][1][2]);
+				Trace("## ["..i.."][1] = {"..oneStripVertices[i][1][1]..", "..oneStripVertices[i][1][2]..", "..oneStripVertices[i][1][3].."}!");
+				Trace("## ["..i.."][2] = {"..oneStripVertices[i][2][1]..", "..oneStripVertices[i][2][2]..", "..oneStripVertices[i][2][3]..", "..oneStripVertices[i][2][4].."}!");
+				Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
 			end
 		end
 	end
@@ -197,52 +219,55 @@ for r = 1,2*enjoyBGFieldHeight do
 end
 table.insert(theBoys, enjoyBG);
 
-local verts= {
-	{{0, 0, 0}, Color.Red},
-	{{0, 20, 0}, Color.Blue},
-	{{20, 0, 0}, Color.Green},
-	{{20, 20, 0}, Color.Yellow},
-	{{40, 0, 0}, Color.Orange},
-	{{40, 20, 0}, Color.Purple},
-	{{60, 0, 0}, Color.Black},
-	{{60, 20, 0}, Color.White},
-}
-local enjoyTest = Def.ActorMultiVertex{
-	Name= "AMV_Strip",
-	InitCommand=
-		function(self)
-			self:visible(true)
-			self:xy(sw/2, sh/2)
-			self:SetDrawState{Mode="DrawMode_Strip"}
-		end,
-	OnCommand=
-		function(self)
-			self:SetDrawState{First= 1, Num= -1}
-			verts[1][1][1]= 0
-			verts[4][1][1]= 20
-			verts[7][1][2]= 0
-			verts[8][1][2]= 20
-			self:SetVertices(verts)
-			self:finishtweening()
-			self:queuecommand("FirstMove")
-			self:queuecommand("SecondMove")
-		end,
-	FirstMoveCommand=
-		function(self)
-			self:linear(1)
-			verts[1][1][1]= verts[1][1][1]+10
-			verts[4][1][1]= verts[4][1][1]-10
-			verts[7][1][2]= verts[7][1][2]+10
-			verts[8][1][2]= verts[8][1][2]-10
-			self:SetVertices(verts)
-		end,
-	SecondMoveCommand=
-		function(self)
-			self:linear(1)
-			self:SetDrawState{First= 3, Num= 4}
-		end
-}
-table.insert(theBoys, enjoyTest);
+--	This is Kyzentun's sample AMV code.
+--	I needed to make sure I could draw /any/ AMV at all.
+--
+--	local verts= {
+--		{{0, 0, 0}, Color.Red},
+--		{{0, 20, 0}, Color.Blue},
+--		{{20, 0, 0}, Color.Green},
+--		{{20, 20, 0}, Color.Yellow},
+--		{{40, 0, 0}, Color.Orange},
+--		{{40, 20, 0}, Color.Purple},
+--		{{60, 0, 0}, Color.Black},
+--		{{60, 20, 0}, Color.White},
+--	}
+--	local enjoyTest = Def.ActorMultiVertex{
+--		Name= "AMV_Strip",
+--		InitCommand=
+--			function(self)
+--				self:visible(true)
+--				self:xy(sw/2, sh/2)
+--				self:SetDrawState{Mode="DrawMode_Strip"}
+--			end,
+--		OnCommand=
+--			function(self)
+--				self:SetDrawState{First= 1, Num= -1}
+--				verts[1][1][1]= 0
+--				verts[4][1][1]= 20
+--				verts[7][1][2]= 0
+--				verts[8][1][2]= 20
+--				self:SetVertices(verts)
+--				self:finishtweening()
+--				self:queuecommand("FirstMove")
+--				self:queuecommand("SecondMove")
+--			end,
+--		FirstMoveCommand=
+--			function(self)
+--				self:linear(1)
+--				verts[1][1][1]= verts[1][1][1]+10
+--				verts[4][1][1]= verts[4][1][1]-10
+--				verts[7][1][2]= verts[7][1][2]+10
+--				verts[8][1][2]= verts[8][1][2]-10
+--				self:SetVertices(verts)
+--			end,
+--		SecondMoveCommand=
+--			function(self)
+--				self:linear(1)
+--				self:SetDrawState{First= 3, Num= 4}
+--			end
+--	}
+--	table.insert(theBoys, enjoyTest);
 
 
 local enjoyBGTexSet = false;
@@ -256,16 +281,24 @@ local enjoyBGTex = Def.ActorFrameTexture {
 	end,
 	OnCommand = function(self)
 		-- Set myself as the texture of two sprites.
-		if self:GetTexture() then
+		local texSelf = self:GetTexture();
+		if texSelf then
 			Trace("### OK, then.");
 			if not enjoyBGTexSet then
 				local enjoyBGHandle = self:GetParent():GetChild("enjoyBG"):GetChildren();
 				for starlet in pairs(enjoyBGHandle) do
-					enjoyBGHandle[starlet]:SetTexture( self:GetTexture() );
+					enjoyBGHandle[starlet]:SetTexture( texSelf );
 					Trace("### " .. starlet .. ": oh my!!");
 				end
 				Trace("### OK, then!!");
 				enjoyBGTexSet = true;
+			
+				--self:GetParent():GetChild("enjoyTestSprite"):SetTexture( texSelf );
+				local tcw = texSelf:GetTextureWidth();
+				local tch = texSelf:GetTextureHeight();
+				--Trace("### Texture coordinate rectangle: {L="..tcr[1]..", R="..tcr[2]..", T="..tcr[3]..", B="..tcr[4].."}!");
+				Trace("### Texture size: {W="..tcw..", H="..tch.."}!");
+				Trace("### Window  size: {W="..sw..", H="..sh.."}!");
 			end
 		end
 		
@@ -275,13 +308,31 @@ local enjoyBGTex = Def.ActorFrameTexture {
 				v = plr[i];
 			end
 			Trace("### " .. i .. ": " .. (plr[i] and "yes" or "no") .. ": oh wow!!");
-			self:GetChild("P" .. i .. "Clone"):SetTarget(v);
+			self:GetChild("P" .. i .. "Clone"):SetTarget(v)
+											  :xy(0, 0);
 		end
 	end,
+	Def.Quad {
+		Name = "oh my god",
+		InitCommand = function(self)
+			self:SetWidth(sw)
+				:SetHeight(sh)
+				:xy(sw/2, sh/2)
+				:diffuse({1.0, 1.0, 1.0, 0.5});
+		end
+	},
 	Def.ActorProxy {Name = "P1Clone"},
 	Def.ActorProxy {Name = "P2Clone"}
 };
 table.insert(theBoys, enjoyBGTex);
+
+local enjoyTestSprite = Def.Sprite {
+	Name = "enjoyTestSprite",
+	InitCommand = function(self)
+		self:xy(sw/2, sh/2);
+	end
+};
+--table.insert(theBoys, enjoyTestSprite);
 
 -------------------------------------------------------------------------------
 --
@@ -317,6 +368,7 @@ local enjoyGfxHQ = Def.Quad {
 			-- Start moving players toward the center.
 			for i,v in ipairs(plr) do
 				if v then
+					v:visible(false);
 					v:decelerate(8.0 / BPS):x(sw/2):z(0);
 				end
 			end
