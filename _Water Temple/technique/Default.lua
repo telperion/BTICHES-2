@@ -269,6 +269,24 @@ table.insert(theBoys, enjoyBG);
 --	}
 --	table.insert(theBoys, enjoyTest);
 
+function BTIUtil_Reflect(matriarch, depthString) 
+	depthString = depthString or ""
+	local childCount = 0
+	if matriarch ~= nil then
+		if matriarch["GetChildren"] ~= nil then
+			if matriarch:GetChildren() then
+				for k,v in pairs(matriarch:GetChildren()) do
+					Trace(">>>\t" .. depthString .. k .. " (type " .. type(v) .. ")")
+					if #k ~= 0 then
+						childCount = childCount + BTIUtil_Reflect(v, depthString .. "\t")
+					end
+				end
+			end
+		end
+	end
+	return childCount
+end
+
 
 local enjoyBGTexSet = false;
 local enjoyBGTex = Def.ActorFrameTexture {	
@@ -305,8 +323,9 @@ local enjoyBGTex = Def.ActorFrameTexture {
 		for i,v in ipairs(plr) do
 			if not v then
 				plr[i] = SCREENMAN:GetTopScreen():GetChild('PlayerP' .. i);
-				v = plr[i];
+				v = plr[i];				
 			end
+			BTIUtil_Reflect(v);
 			Trace("### " .. i .. ": " .. (plr[i] and "yes" or "no") .. ": oh wow!!");
 			self:GetChild("P" .. i .. "Clone"):SetTarget(v)
 											  :xy(0, 0);
@@ -405,11 +424,25 @@ local enjoyGfxHQ = Def.Quad {
 				if v then
 					v:x(sw/2 + 32*i-48);
 					v:z(0);
+					v:SetLife(0.8);
 				end
 			end
 			
 			fgcurcommand = fgcurcommand + 1;
 		end
+		if overtime >=  48.0 and fgcurcommand ==  3 then
+			-- boy i die!! shit boy...
+			local enjoyTheta = overtime * math.pi / 2.0;
+			
+			for i,v in ipairs(plr) do
+				if v then					
+					for j,w in ipairs(v:GetChild("NoteField"):GetColumnActors()) do
+						w:diffusealpha(0.5 + 0.5 * math.sin(enjoyTheta + math.pi / 2.0 * j));
+					end
+				end
+			end
+		end
+					
 		
 		
 		-- Wait a bit and then update again!
