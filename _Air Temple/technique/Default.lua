@@ -106,7 +106,6 @@ end
 -------------------------------------------------------------------------------
 
 
-
 local cyberWidth = 20;
 local cyberHeight = 30;
 local cyberXStep = 2 * sw/cyberWidth/2;		-- Needs to be larger than half-screen to accommodate rotation
@@ -136,6 +135,9 @@ local theBoys = Def.ActorFrame {
 
 
 
+-------------------------------------------------------------------------------
+--	BEGIN 					   Cyberskin Creation						BEGIN
+-------------------------------------------------------------------------------
 local cyberParameter = 0;
 local cyberSkin = Def.ActorFrame {
 	Name = "cyberSkin",
@@ -160,7 +162,7 @@ for cyberCol = 0,cyberWidth-1 do
 					local cyberBluing   = c < 0.5 and 0.0 or c - 0.5;
 					self:zoomto(cyberXStep, cyberYStep)
 						:xy((cyberCol + 0.5 - cyberWidth*0.5) * cyberXStep, (cyberRow + 0.5 - cyberHeight*0.5) * cyberYStep)
-						:diffuse( color("0.0,"..cyberGreening..","..cyberBluing..",0.0") );
+						:diffuse(0.0, cyberGreening, cyberBluing, 0.0);
 					Trace("Initialized cyberskin element: ("..cyberCol..", "..cyberRow..")");
 				end,
 				OnCommand = function(self)
@@ -222,6 +224,114 @@ local cyberSkinTex = Def.ActorFrameTexture {
 };
 table.insert(cyberSkinTex, cyberSkin);
 table.insert(theBoys, cyberSkinTex);
+-------------------------------------------------------------------------------
+--	 END  					   Cyberskin Creation						 END 
+-------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------
+--	BEGIN 					   Airflight Creation						BEGIN
+-------------------------------------------------------------------------------
+local cyberFlightStrips 	= 10
+local cyberFlightOptions 	= 10
+local BTIUtil_FakeRandom = function(i)
+	-- totally crypto safe. don't @ me
+	return math.fmod( math.sqrt(i/(cyberFlightOptions+1)) * 1000, 1 )
+end
+local cyberFlightAngle		= function(i) return 15 end
+local cyberFlightHeight 	= function(i) return 120 / (1 + 2*i/(cyberFlightOptions-1)) end
+local cyberFlightZed	 	= function(i) return 0*i end
+local cyberFlightCrossing 	= function(i) return (BTIUtil_FakeRandom(i) - 0.5) * sw end
+local cyberFlightUpperColor	= function(i) return {0.5*BTIUtil_FakeRandom(i) + 0.5, 1.0, 1.0} end
+local cyberFlightLowerColor	= function(i) r = BTIUtil_FakeRandom(i); return {0.5*r, 0.7*r + 0.3, 0.4*r + 0.6} end
+local cyberFlightSpeed	 	= function(i) return 6 / (1 + 5*i) end
+
+local cyberFSc = 0.1;
+local cyberFV = function(angle, height, crossing, zed, upperColor, lowerColor) 
+	local swd2	= cyberFSc * sw/2;
+	local swpc	= (swd2 + crossing) * math.sin(angle);
+	local swmc	= (swd2 - crossing) * math.sin(angle);
+	local hdiv2	= height / 2;
+	
+	local upperColorA = {upperColor[1], upperColor[2], upperColor[3], 0.8};
+	local lowerColorA = {lowerColor[1], lowerColor[2], lowerColor[3], 0.0};
+	--
+	--                 5
+	-- 1            _-¯6
+	-- 2¯-_      _-¯
+	--     ¯-__-¯
+	--     _-¯¯-_
+	-- 8_-¯      ¯-_
+	-- 7            ¯-_4
+	--                 3
+	--
+	return {
+		{{-swd2,  -swpc-hdiv2, zed}, upperColorA},
+		{{-swd2,  -swpc+hdiv2, zed}, lowerColorA},
+		{{ swd2,   swmc+hdiv2, zed}, lowerColorA},
+		{{ swd2,   swmc-hdiv2, zed}, upperColorA},
+		{{ swd2,  -swmc-hdiv2, zed}, upperColorA},
+		{{ swd2,  -swmc+hdiv2, zed}, lowerColorA},
+		{{-swd2,   swpc+hdiv2, zed}, lowerColorA},
+		{{-swd2,   swpc-hdiv2, zed}, upperColorA}
+	}
+end
+local cyberFVIndexed = function(i)
+	Trace("who turgled? "..i.." >> "..BTIUtil_FakeRandom(i))
+	return cyberFV(
+		cyberFlightAngle(i),
+		cyberFlightHeight(i) * cyberFSc,
+		cyberFlightCrossing(i) * cyberFSc,
+		cyberFlightZed(i) * cyberFSc,
+		cyberFlightUpperColor(i),
+		cyberFlightLowerColor(i)
+	)
+end
+
+local cyberFlight = Def.ActorFrame {
+	Name = "cyberFlight",
+	Def.ActorMultiVertex {
+		Name = "sky",
+		InitCommand = function(self)
+			self:SetWidth(2)
+				:SetHeight(24)
+				:xy(sw/2, sh/2)
+				:SetDrawState{Mode = "DrawMode_Quads"};
+		end,
+		OnCommand = function(self)
+			self:SetVertices({				
+					{{-1, -12, 0}, {0.4, 0.7, 0.9, 1.0}},
+					{{ 1, -12, 0}, {0.4, 0.7, 0.9, 1.0}},
+					{{ 1,  12, 0}, {0.0, 0.3, 0.6, 1.0}},
+					{{-1,  12, 0}, {0.0, 0.3, 0.6, 1.0}}
+				})
+				:zoomto(sw, sh)
+				:visible(true);
+		end
+	}
+};
+
+for i = cyberFlightStrips,1,-1 do
+	local cyberSkyAMV = Def.ActorMultiVertex {
+		Name = "skyAMV" .. i,
+		InitCommand = function(self)
+			self:xy(sw/2, sh/2)
+				:zoom(1/cyberFSc)
+				:SetDrawState{Mode = "DrawMode_Quads"};
+			self:aux( tonumber(string.match(self:GetName(), "[0-9]+")) );
+		end,
+		OnCommand = function(self)
+			self:SetVertices( cyberFVIndexed(self:getaux()) )
+				:visible(true)
+				:diffusealpha(1.0 - (i-1) / cyberFlightOptions);
+		end
+	}
+	table.insert(cyberFlight, cyberSkyAMV);
+end
+
+table.insert(theBoys, cyberFlight);
+-------------------------------------------------------------------------------
+--	 END  					   Airflight Creation						 END 
+-------------------------------------------------------------------------------
 
 
 -------------------------------------------------------------------------------
@@ -231,6 +341,13 @@ table.insert(theBoys, cyberSkinTex);
 local BTIUtil_Scale = function(t, inLower, inUpper, outLower, outUpper)
 	local ti = (t - inLower) / (inUpper - inLower);
 	return outLower + ti * (outUpper - outLower);
+end
+
+local BTIUtil_ConcatTable = function(base, extension)
+	for _,v in pairs(extension) do
+		base[#base + 1] = v
+	end
+	return base
 end
 
 local CalcCyberEase = function(t)
@@ -281,7 +398,7 @@ local CalcCyberRadialPos = function(x, y)
 	return math.sqrt(xi*xi + yi*yi);
 end
 
-
+local fgc = 0;
 local cyberGfxHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
@@ -306,6 +423,19 @@ local cyberGfxHQ = Def.Quad {
 			cyberBaby:rotationx(cyberRotX)
 					 :rotationz(cyberRotZ);					 
 		end
+--		if fgc == 0 then
+--			for skyIndex = 1,cyberFlightStrips do
+--				local cyberSkyStrip = self:GetParent():GetChild("cyberFlight"):GetChild("skyAMV"..skyIndex);
+--				if cyberSkyStrip then
+--					cyberSkyStrip:y(-2*sh)
+--								 :accelerate(24 / cyberFlightSpeed(skyIndex))
+--								 :y(2*sh)
+--								 :visible(false)
+--								 :hibernate(600);			 
+--				end
+--			end
+--			fgc = 1;
+--		end
 		if plr[1] then
 			plr[1]:rotationx(cyberRotX)
 				  :rotationz(cyberRotZ)
@@ -318,10 +448,15 @@ local cyberGfxHQ = Def.Quad {
 		end
 		
 		-- Pulse colors based on certain beat cues.
-		local pulseDing		= {9.5,       25.5,     41.5,       57.5, 73.5,       89.5,     105.5,        121.5 };
-		local pulseSamba	= {     17.5,                 49.5,             81.5,                  113.5        };
-		local pulseSigh		= {1,2,3,4                                                                          };
-		local pulseUnsigh	= {                 32,                                     96                      };
+		local pulseDing		= {9.5,       25.5,     41.5,       57.5, 73.5,       89.5,     105.5,        121.5,      149.5,           213.5         };
+		local pulseSamba	= {     17.5,                 49.5,             81.5,                  113.5                                             };
+		local pulseSigh		= {                                                                                  133,        165, 197,        229    };
+		local pulseUnsigh	= {                 32,                                     96,                                                       264};
+		
+		local pulseDing2	= {       539.5,             555.5,        571.5,        587.5,        603.5,        619.5,             635.5,        651.5 }; pulseDing 	= BTIUtil_ConcatTable(pulseDing, 	pulseDing2);
+		local pulseSamba2	= {              547.5,                           579.5,                      611.5,                           643.5        }; pulseSamba 	= BTIUtil_ConcatTable(pulseSamba, 	pulseSamba2);
+		local pulseSigh2	= {531.5,                           563.5,                      595.5,                           627.5                      }; pulseSigh 	= BTIUtil_ConcatTable(pulseSigh, 	pulseSigh2);
+		local pulseUnsigh2	= {                     562,                                                                626                             }; pulseUnsigh 	= BTIUtil_ConcatTable(pulseUnsigh, 	pulseUnsigh2);
 		local waveFadeoff	= 8.0;		-- Fade out the wave after this many beats
 		local waveCutoff	= 12.0;		-- Cut off the wave after this many beats
 		local unsighLength	= 2.0;		-- Sharp intake of breath lasts this many beats
@@ -408,7 +543,7 @@ local cyberGfxHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
--- table.insert(theBoys, cyberGfxHQ);
+table.insert(theBoys, cyberGfxHQ);
 
 
 -------------------------------------------------------------------------------
@@ -422,18 +557,18 @@ local cyberModsTable = {
 	-- [4]: mod approach (in beats to complete)
 	-- [5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
 		
-		{ 32.0,	"Flip",			 0.5,   2.0, 3}, 
-		{ 36.0,	"Flip",			 0.0,   2.0, 3}, 
-		{ 38.0,	"Expand",		 0.5,  16.0, 3}, 
-		{ 40.0,	"Invert",		 0.5,   2.0, 3}, 
-		{ 44.0,	"Invert",		 0.0,   2.0, 3}, 
-		{ 48.0,	"Flip",			 1.0,   3.0, 3}, 
-		{ 48.0,	"Invert",		 0.5,   1.0, 3}, 
-		{ 52.0,	"Alternate",	 0.1,  32.0, 3}, 
-		{ 52.0,	"Split",		 0.2,  32.0, 3}, 
-		{ 52.0,	"Reverse",		-0.2,  32.0, 3}, 
-		{ 56.0,	"Flip",			 0.0,   1.0, 3}, 
-		{ 56.0,	"Invert",		 0.0,   3.0, 3}, 
+--		{ 32.0,	"Flip",			 0.5,   2.0, 3}, 
+--		{ 36.0,	"Flip",			 0.0,   2.0, 3}, 
+--		{ 38.0,	"Expand",		 0.5,  16.0, 3}, 
+--		{ 40.0,	"Invert",		 0.5,   2.0, 3}, 
+--		{ 44.0,	"Invert",		 0.0,   2.0, 3}, 
+--		{ 48.0,	"Flip",			 1.0,   3.0, 3}, 
+--		{ 48.0,	"Invert",		 0.5,   1.0, 3}, 
+--		{ 52.0,	"Alternate",	 0.1,  32.0, 3}, 
+--		{ 52.0,	"Split",		 0.2,  32.0, 3}, 
+--		{ 52.0,	"Reverse",		-0.2,  32.0, 3}, 
+--		{ 56.0,	"Flip",			 0.0,   1.0, 3}, 
+--		{ 56.0,	"Invert",		 0.0,   3.0, 3}, 
 	};
 local cyberModsLaunched = 0;
 local cyberModsWait = 0;
