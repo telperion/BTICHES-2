@@ -233,9 +233,10 @@ table.insert(theBoys, cyberSkinTex);
 -------------------------------------------------------------------------------
 local cyberFlightStrips 	= 10
 local cyberFlightOptions 	= 10
-local BTIUtil_FakeRandom = function(i)
+local BTIUtil_FakeRandom = function(i, rangeSup)
 	-- totally crypto safe. don't @ me
-	return math.fmod( math.sqrt(i/(cyberFlightOptions+1)) * 1000, 1 )
+	rangeSup = rangeSup or (cyberFlightOptions+1)
+	return math.fmod( math.sqrt(i/rangeSup) * 1000, 1 )
 end
 local cyberFlightAngle		= function(i) return 15 end
 local cyberFlightHeight 	= function(i) return 120 / (1 + 2*i/(cyberFlightOptions-1)) end
@@ -243,7 +244,7 @@ local cyberFlightZed	 	= function(i) return 0*i end
 local cyberFlightCrossing 	= function(i) return (BTIUtil_FakeRandom(i) - 0.5) * sw end
 local cyberFlightUpperColor	= function(i) return {0.5*BTIUtil_FakeRandom(i) + 0.5, 1.0, 1.0} end
 local cyberFlightLowerColor	= function(i) r = BTIUtil_FakeRandom(i); return {0.5*r, 0.7*r + 0.3, 0.4*r + 0.6} end
-local cyberFlightSpeed	 	= function(i) return 6 / (1 + 5*i) end
+local cyberFlightSpeed	 	= function(i) return 6 / (1 + 5*i/(cyberFlightOptions-1)) end
 
 local cyberFSc = 0.1;
 local cyberFV = function(angle, height, crossing, zed, upperColor, lowerColor) 
@@ -292,7 +293,8 @@ local cyberFlight = Def.ActorFrame {
 	Def.ActorMultiVertex {
 		Name = "sky",
 		InitCommand = function(self)
-			self:SetWidth(2)
+			self:visible(false)
+				:SetWidth(2)
 				:SetHeight(24)
 				:xy(sw/2, sh/2)
 				:SetDrawState{Mode = "DrawMode_Quads"};
@@ -304,8 +306,7 @@ local cyberFlight = Def.ActorFrame {
 					{{ 1,  12, 0}, {0.0, 0.3, 0.6, 1.0}},
 					{{-1,  12, 0}, {0.0, 0.3, 0.6, 1.0}}
 				})
-				:zoomto(sw, sh)
-				:visible(true);
+				:zoomto(sw, sh);
 		end
 	}
 };
@@ -314,16 +315,32 @@ for i = cyberFlightStrips,1,-1 do
 	local cyberSkyAMV = Def.ActorMultiVertex {
 		Name = "skyAMV" .. i,
 		InitCommand = function(self)
-			self:xy(sw/2, sh/2)
+			self:visible(false)
+				:xy(sw/2, sh/2)
 				:zoom(1/cyberFSc)
 				:SetDrawState{Mode = "DrawMode_Quads"};
 			self:aux( tonumber(string.match(self:GetName(), "[0-9]+")) );
 		end,
 		OnCommand = function(self)
 			self:SetVertices( cyberFVIndexed(self:getaux()) )
-				:visible(true)
 				:diffusealpha(1.0 - (i-1) / cyberFlightOptions);
-		end
+		end,
+		DescentCommand = function(self)
+			local BPS = GAMESTATE:GetSongBPS();
+			self:visible(true)
+				:y(-1.5*sh)
+				:linear(12 * BPS / cyberFlightSpeed(self:getaux()))
+				:y(1.5*sh)
+				:queuecommand("DescentCommand");
+		end,
+		AscentCommand = function(self)
+			local BPS = GAMESTATE:GetSongBPS();
+			self:visible(true)
+				:y(1.5*sh)
+				:linear(12 * BPS / cyberFlightSpeed(self:getaux()))
+				:y(-1.5*sh)
+				:queuecommand("AscentCommand");
+		end	
 	}
 	table.insert(cyberFlight, cyberSkyAMV);
 end
@@ -357,7 +374,7 @@ end
 local CalcCyberWave = function(r, t)
 	local waveSpread	= 4.0;		-- Spreading rate in units/beat
 	local waveWidth		= 1.5;		-- Width of wave in units
-	local waveOpacity	= 6.0;		-- Opacity constant by distance, where 1/(A+1) is minimum opacity
+	local waveOpacity	= 4.0;		-- Opacity constant by distance, where 1/(A+1) is minimum opacity
 	local waveFieldSize	= (cyberWidth > cyberHeight) and cyberWidth or cyberHeight;		
 									-- Opacity constant by distance, where 1/(A+1) is minimum opacity
 	local waveProgress = (r / waveWidth - waveSpread * CalcCyberEase(t));
@@ -398,7 +415,7 @@ local CalcCyberRadialPos = function(x, y)
 	return math.sqrt(xi*xi + yi*yi);
 end
 
-local fgc = 0;
+local fgcDidMyJob = false;
 local cyberGfxHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
@@ -412,41 +429,198 @@ local cyberGfxHQ = Def.Quad {
 	UpdateCommand = function(self)
 		-- Most things are determined by beat, believe it or not.		
 		local overtime = GAMESTATE:GetSongBeat();
+		local BPS = GAMESTATE:GetSongBPS();
 		
 		-- Who's interesting today?
-		local cyberBaby = self:GetParent():GetChild("cyberSkinTex"):GetChild("cyberSkin");
+		local cyberBaby 	= self:GetParent():GetChild("cyberSkinTex"):GetChild("cyberSkin");
+		local cyberSky	 	= self:GetParent():GetChild("cyberFlight");
 		
-		-- One rotation every 16 beats.
-		local cyberRotX = math.sin(overtime * math.pi / 8) * (overtime / 12 + 10);
-		local cyberRotZ = math.cos(overtime * math.pi / 8) * (overtime / 24 + 5);
-		if cyberBaby then
-			cyberBaby:rotationx(cyberRotX)
-					 :rotationz(cyberRotZ);					 
-		end
---		if fgc == 0 then
---			for skyIndex = 1,cyberFlightStrips do
---				local cyberSkyStrip = self:GetParent():GetChild("cyberFlight"):GetChild("skyAMV"..skyIndex);
---				if cyberSkyStrip then
---					cyberSkyStrip:y(-2*sh)
---								 :accelerate(24 / cyberFlightSpeed(skyIndex))
---								 :y(2*sh)
---								 :visible(false)
---								 :hibernate(600);			 
---				end
---			end
---			fgc = 1;
---		end
-		if plr[1] then
-			plr[1]:rotationx(cyberRotX)
-				  :rotationz(cyberRotZ)
-				  :z(1);
-		end
-		if plr[2] then
-			plr[2]:rotationx(cyberRotX)
-				  :rotationz(-cyberRotZ)
-				  :z(1);
+		-- Get really cyber!
+		local cyberMaximum  = false;
+		
+		-------------------------------------------------------------------------------
+		-- Actions for major synchronous phases
+		--
+		--		0: Setup (relocate playfields)
+		--		1: Cyberskin and steps rotate		
+		--		2: Cyberskin and steps do not rotate
+		--		3: In-flight (ascending)
+		--		4: In-flight (reached apex)
+		--		5: In-flight (descending)
+		--		6: In-flight (reached ground)
+		--		7: Cyberskin and steps rotate again
+		--
+		if fgcurcommand == 0 then
+			for i,v in ipairs(plr) do
+				if v then
+					Trace("P"..i.." Y = "..v:GetY());
+					v:decelerate(BPS * 4)
+					 :y(sh/2 - 30)
+					 :z(1);
+				end
+			end
+			
+			fgcurcommand = 1;
+		elseif fgcurcommand == 1 then
+			local t = overtime;
+			local forceScale = 1;
+			-- Exception: Beats 256 through 264 scale back the rotation to zero.
+			if t > 256 then
+				forceScale = 1 - (overtime - 256) / 8;
+				forceScale = (forceScale < 0) and 0 or forceScale;
+			else 
+				-- Exception: Beats {252, 252.75, 253.5, 254.25, 255, 255.5} pause the rotation.
+				for _,beatPause in pairs({255.5, 255, 254.25, 253.5, 252.75, 252}) do
+					if t > beatPause then
+						t = beatPause;
+						break;
+					end
+				end
+			end
+			-- One rotation every 16 beats.
+			local cyberRotX = math.sin(t * math.pi / 8) * (t / 12 + 10) * forceScale;
+			local cyberRotZ = math.cos(t * math.pi / 8) * (t / 24 + 5)  * forceScale;
+			if cyberBaby then
+				cyberBaby:rotationx(cyberRotX)
+						 :rotationz(cyberRotZ);					 
+			end
+			for i,v in ipairs(plr) do
+				if v then
+					v:rotationx(cyberRotX)
+					 :rotationz(cyberRotZ * ((i == 1) and 1 or -1));
+				end
+			end
+			
+			if overtime >= 265 then
+				if cyberBaby then
+					cyberBaby:rotationx(0)
+							 :rotationz(0);					 
+				end
+				for i,v in ipairs(plr) do
+					if v then
+						v:rotationx(0)
+						 :rotationz(0);
+					end
+				end
+				
+				fgcurcommand = 2;
+			end
+		elseif fgcurcommand == 2 then
+			-- Just sit tight, mostly.
+			cyberMaximum = true;
+			
+			if overtime >= 338 then
+				fgcurcommand = 3;
+				cyberMaximum = false;
+			end
+		elseif fgcurcommand == 3 then
+			if not fgcDidMyJob then
+				local skyBackdrop = self:GetParent():GetChild("cyberFlight"):GetChild("sky");
+				if skyBackdrop then
+					skyBackdrop:visible(true);
+				end
+				for skyIndex = 1,cyberFlightStrips do
+					local cyberSkyStrip = self:GetParent():GetChild("cyberFlight"):GetChild("skyAMV"..skyIndex);
+					if cyberSkyStrip then
+						cyberSkyStrip:finishtweening()
+									 :queuecommand("Descent");
+					end
+				end
+				
+				fgcDidMyJob = true;
+			end
+			
+			if overtime >= 462 then
+				fgcurcommand = 4;
+				fgcDidMyJob = false;
+			end			
+		elseif fgcurcommand == 4 then
+			-- Just sit tight, mostly.
+			if not fgcDidMyJob then
+				for skyIndex = 1,cyberFlightStrips do
+					local cyberSkyStrip = self:GetParent():GetChild("cyberFlight"):GetChild("skyAMV"..skyIndex);
+					if cyberSkyStrip then
+						cyberSkyStrip:stoptweening();
+					end
+				end
+				
+				fgcDidMyJob = true;
+			end
+			
+			if overtime >= 466 then
+				fgcurcommand = 5;
+				fgcDidMyJob = false;
+			end		
+		elseif fgcurcommand == 5 then
+			if not fgcDidMyJob then
+				for skyIndex = 1,cyberFlightStrips do
+					local cyberSkyStrip = self:GetParent():GetChild("cyberFlight"):GetChild("skyAMV"..skyIndex);
+					if cyberSkyStrip then
+						cyberSkyStrip:finishtweening()
+									 :queuecommand("Ascent");
+					end
+				end
+				
+				fgcDidMyJob = true;
+			end
+			
+			if overtime >= 529 then
+				fgcurcommand = 6;
+				fgcDidMyJob = false;
+			end		
+		elseif fgcurcommand == 6 then
+			-- Just sit tight, mostly.
+			if not fgcDidMyJob then
+				local fullSky = self:GetParent():GetChild("cyberFlight");
+				if fullSky then
+					fullSky:decelerate(BPS)
+						   :diffusealpha(0.0)
+						   :visible(false)
+						   :hibernate(600);
+				end
+				
+				fgcDidMyJob = true;
+			end
+			
+			if overtime >= 530 then
+				fgcurcommand = 7;
+				fgcDidMyJob = false;
+			end		
+		elseif fgcurcommand == 7 then
+			local t = overtime - 530;
+			local forceScale = 1;
+			-- Exception: Beats 256 through 264 scale back the rotation to zero.
+			if overtime > 662 then
+				forceScale = 1 - (overtime - 662) / 1;
+				forceScale = (forceScale < 0) and 0 or forceScale;
+			else
+				-- Exception: Beats {661.25, 660.667, 660.188, 659.75, 657.688, 657.375, 657.313, 655.563, 655.375, 655, 654} pause the rotation. 
+				for _,beatPause in pairs({131.25, 130.667, 130.188, 129.75, 127.688, 127.375, 127.313, 125.563, 125.375, 125, 124}) do
+					if t > beatPause then
+						t = beatPause;
+						break;
+					end
+				end
+			end
+			-- One rotation every 16 beats.
+			local cyberRotX = math.sin(t * math.pi / 8) * (t / 4 + 10) * forceScale;
+			local cyberRotZ = math.cos(t * math.pi / 8) * (t / 8 + 5)  * forceScale;
+			if cyberBaby then
+				cyberBaby:rotationx(cyberRotX)
+						 :rotationz(cyberRotZ);					 
+			end
+			for i,v in ipairs(plr) do
+				if v then
+					v:rotationx(cyberRotX)
+					 :rotationz(cyberRotZ * ((i == 1) and 1 or -1));
+				end
+			end
 		end
 		
+		
+		-------------------------------------------------------------------------------
+		-- Cyberskin control
+		--
 		-- Pulse colors based on certain beat cues.
 		local pulseDing		= {9.5,       25.5,     41.5,       57.5, 73.5,       89.5,     105.5,        121.5,      149.5,           213.5         };
 		local pulseSamba	= {     17.5,                 49.5,             81.5,                  113.5                                             };
@@ -492,8 +666,10 @@ local cyberGfxHQ = Def.Quad {
 							waveFade = 1.0;
 						end
 						
-						alphaDerived = alphaDerived + CalcCyberLine( x - cyberCenterX, y - cyberCenterY, 45, t ) * waveFade;
-						alphaDerived = alphaDerived + CalcCyberLine( x - cyberCenterX, y - cyberCenterY, 135, t ) * waveFade;
+						alphaDerived = alphaDerived + CalcCyberLine( x - cyberCenterX*0.5, y - cyberCenterY,  22.5, t ) * waveFade;
+						alphaDerived = alphaDerived + CalcCyberLine( x - cyberCenterX*0.5, y - cyberCenterY,  67.5, t ) * waveFade;
+						alphaDerived = alphaDerived + CalcCyberLine( x - cyberCenterX*0.5, y - cyberCenterY, 112.5, t ) * waveFade;
+						alphaDerived = alphaDerived + CalcCyberLine( x - cyberCenterX*0.5, y - cyberCenterY, 157.5, t ) * waveFade;
 					end
 				end
 				
@@ -525,6 +701,34 @@ local cyberGfxHQ = Def.Quad {
 						local unsighOpacity = 0.8;
 						local waveFadePowered = waveFade*waveFade;
 						alphaDerived = alphaDerived + waveFadePowered*unsighOpacity;
+					end
+				end
+				
+				-- Special behavior for maximum cyber phase
+				-- 330: 18 27 
+				-- 332: 15 18 33
+				--
+				-- 333: 03 18 32
+				-- 334
+				-- {131.25, 130.667, 130.188, 129.75, 127.688, 127.375, 127.313, 125.563, 125.375, 125, 124}
+				local cyberMaxOffset = 16;
+				if cyberMaximum then
+					local t = (overtime - 265);
+					if t > 69 then 		-- nice.
+						t = t * 6;
+					else
+						for _,beatPause in pairs({67.688, 67.375, 67.313, 65.563, 65.375, 65, 64}) do
+							if t > beatPause then
+								t = beatPause;
+								break;
+							end
+						end
+					end
+					if t > 48 then
+						t = t + (t - 48) * (t - 48);
+					end
+					if overtime < 337 then
+						alphaDerived = alphaDerived + math.sin((t + cyberMaxOffset) * BTIUtil_FakeRandom( x + y * cyberWidth, cyberHeight * cyberWidth )) * 0.4 + 0.5;
 					end
 				end
 				
