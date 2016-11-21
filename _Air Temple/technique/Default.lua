@@ -19,104 +19,6 @@ local screen;
 local nextbeat = 0;
 local DEG_TO_RAD = math.pi / 180.0;
 
--------------------------------------------------------------------------------
---		Mostly lifted from Kyzentun's clean rewrite of
---						   TaroNuke's arbitrary mods generator.
---		No sense rewriting code that I can just Ctrl+C, right?...
---
---	BEGIN 					Arbitrary Mods Generation					BEGIN
--------------------------------------------------------------------------------
--- Reflection into the eden. What's CapitalCase?
-for func_name, func in pairs(PlayerOptions) do
-   PlayerOptions[func_name:lower()]= func
-end
-
--- Option recording.
-local poptions= {}
--- Read down whatever options were applied going into the file.
-for i, pn in ipairs(GAMESTATE:GetEnabledPlayers()) do
-   poptions[pn]= GAMESTATE:GetPlayerState(pn):GetPlayerOptions("ModsLevel_Song")
-end
-
--- Comprehensive list of available mods.
-local float_mods= {
-   "Boost", "Brake", "Wave", "Expand", "Boomerang", "Drunk", "Dizzy",
-   "Confusion", "Mini", "Tiny", "Flip", "Invert", "Tornado", "Tipsy",
-   "Bumpy", "Beat", "Xmode", "Twirl", "Roll", "Hidden", "HiddenOffset",
-   "Sudden", "SuddenOffset", "Stealth", "Blink", "RandomVanish", "Reverse",
-   "Split", "Alternate", "Cross", "Centered", "Dark", "Blind", "Cover",
-   "RandAttack", "NoAttack", "PlayerAutoPlay", "Tilt", "Skew", "Passmark",
-   "RandomSpeed",
-}
--- Use this function to clear all mods.
-local function clear_mods(pn)
-   poptions[pn]:XMod(1)
-   for i, mod in ipairs(float_mods) do
-      poptions[pn][mod](poptions[pn], 0)
-   end
-end
-
-local num_chars= {["-"]= true}
-for i= 0, 9 do num_chars[tostring(i)]= true end
-
--- Apply a mod from a string specification.
-local function apply_mod(mod, pn)
-   mod= mod:lower()
-   local sub_mods= split(",", mod)
-   for i, sub in ipairs(sub_mods) do
-      local level= 1
-      local speed= 1
-      local parts= split(" ", sub)
-      for p, par in ipairs(parts) do
-         local first_char= par:sub(1, 1)
-         if par == "no" then
-            level= 0
-         else
-            local before_num, num, after_num= par:match("(*?)([%d%-%.]+)([x%%%*]?)")
-            num= tonumber(num)
-            if num and after_num ~= "x" then
-               if before_num == "*" or after_num == "*" then
-                  speed= num
-               else
-                  level= num / 100
-               end
-            end
-         end
-      end
-      local mod_name= parts[#parts]
-      if PlayerOptions[mod_name] then
-         poptions[pn][mod_name](poptions[pn], level, speed)
-      elseif mod_name == "clearall" then
-         clear_mods(pn)
-      else
-         local corm, value, xm= mod_name:match("([cm]?)([%d%-%.]+)(x?)")
-         value= tonumber(value)
-         if xm == "x" then
-            poptions[pn]:XMod(value, speed)
-         elseif corm == "c" then
-            poptions[pn]:CMod(value, speed)
-         elseif corm == "m" then
-            poptions[pn]:MMod(value, speed)
-         end
-      end
-   end
-end
--------------------------------------------------------------------------------
---	 END 					Arbitrary Mods Generation					 END
--------------------------------------------------------------------------------
-
-
-local cyberWidth = 20;
-local cyberHeight = 30;
-local cyberXStep = 2 * sw/cyberWidth/2;		-- Needs to be larger than half-screen to accommodate rotation
-local cyberYStep = 2 * sh/cyberHeight;		-- Needs to be larger than half-screen to accommodate rotation
-local cyberMinor = cyberWidth > cyberHeight and cyberHeight or cyberWidth;
-local cyberMajor = cyberWidth > cyberHeight and cyberWidth or cyberHeight;
-local cyberCenterX = cyberWidth/2;
-local cyberCenterY = cyberHeight/2;
-
-local cyberColorator = 1;
-
 
 
 local theBoys = Def.ActorFrame {
@@ -138,7 +40,18 @@ local theBoys = Def.ActorFrame {
 -------------------------------------------------------------------------------
 --	BEGIN 					   Cyberskin Creation						BEGIN
 -------------------------------------------------------------------------------
-local cyberParameter = 0;
+local cyberWidth = 20;
+local cyberHeight = 30;
+local cyberXStep = 2 * sw/cyberWidth/2;		-- Needs to be larger than half-screen to accommodate rotation
+local cyberYStep = 2 * sh/cyberHeight;		-- Needs to be larger than half-screen to accommodate rotation
+local cyberMinor = cyberWidth > cyberHeight and cyberHeight or cyberWidth;
+local cyberMajor = cyberWidth > cyberHeight and cyberWidth or cyberHeight;
+local cyberCenterX = cyberWidth/2;
+local cyberCenterY = cyberHeight/2;
+
+local cyberColorator = 1;
+
+
 local cyberSkin = Def.ActorFrame {
 	Name = "cyberSkin",
 	InitCommand = function(self)
@@ -328,19 +241,25 @@ for i = cyberFlightStrips,1,-1 do
 		DescentCommand = function(self)
 			local BPS = GAMESTATE:GetSongBPS();
 			self:visible(true)
-				:y(-1.5*sh)
 				:linear(12 * BPS / cyberFlightSpeed(self:getaux()))
-				:y(1.5*sh)
-				:queuecommand("DescentCommand");
+				:y( 2*sh)
+				:queuecommand("Descent2");
+		end,
+		Descent2Command = function(self)
+			self:y(-2*sh)
+				:queuecommand("Descent");
 		end,
 		AscentCommand = function(self)
 			local BPS = GAMESTATE:GetSongBPS();
 			self:visible(true)
-				:y(1.5*sh)
 				:linear(12 * BPS / cyberFlightSpeed(self:getaux()))
-				:y(-1.5*sh)
-				:queuecommand("AscentCommand");
-		end	
+				:y(-2*sh)
+				:queuecommand("Ascent2");
+		end,
+		Ascent2Command = function(self)
+			self:y(2*sh)
+				:queuecommand("Ascent");
+		end
 	}
 	table.insert(cyberFlight, cyberSkyAMV);
 end
@@ -523,7 +442,7 @@ local cyberGfxHQ = Def.Quad {
 					local cyberSkyStrip = self:GetParent():GetChild("cyberFlight"):GetChild("skyAMV"..skyIndex);
 					if cyberSkyStrip then
 						cyberSkyStrip:finishtweening()
-									 :queuecommand("Descent");
+									 :queuecommand("Descent2");
 					end
 				end
 				
@@ -570,19 +489,22 @@ local cyberGfxHQ = Def.Quad {
 			end		
 		elseif fgcurcommand == 6 then
 			-- Just sit tight, mostly.
+			local fullSky = self:GetParent():GetChild("cyberFlight");
 			if not fgcDidMyJob then
-				local fullSky = self:GetParent():GetChild("cyberFlight");
 				if fullSky then
 					fullSky:decelerate(BPS)
-						   :diffusealpha(0.0)
-						   :visible(false)
-						   :hibernate(600);
+						   :diffusealpha(0.0);
 				end
 				
 				fgcDidMyJob = true;
 			end
 			
 			if overtime >= 530 then
+				if fullSky then
+					fullSky:visible(false)
+						   :hibernate(600);
+				end
+				
 				fgcurcommand = 7;
 				fgcDidMyJob = false;
 			end		
@@ -705,17 +627,11 @@ local cyberGfxHQ = Def.Quad {
 				end
 				
 				-- Special behavior for maximum cyber phase
-				-- 330: 18 27 
-				-- 332: 15 18 33
-				--
-				-- 333: 03 18 32
-				-- 334
-				-- {131.25, 130.667, 130.188, 129.75, 127.688, 127.375, 127.313, 125.563, 125.375, 125, 124}
 				local cyberMaxOffset = 16;
 				if cyberMaximum then
 					local t = (overtime - 265);
 					if t > 69 then 		-- nice.
-						t = t * 6;
+						t = t * 4;
 					else
 						for _,beatPause in pairs({67.688, 67.375, 67.313, 65.563, 65.375, 65, 64}) do
 							if t > beatPause then
@@ -725,7 +641,7 @@ local cyberGfxHQ = Def.Quad {
 						end
 					end
 					if t > 48 then
-						t = t + (t - 48) * (t - 48);
+						t = t + (t - 48) * (t - 48) / 4;
 					end
 					if overtime < 337 then
 						alphaDerived = alphaDerived + math.sin((t + cyberMaxOffset) * BTIUtil_FakeRandom( x + y * cyberWidth, cyberHeight * cyberWidth )) * 0.4 + 0.5;
@@ -747,13 +663,14 @@ local cyberGfxHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
-table.insert(theBoys, cyberGfxHQ);
+--table.insert(theBoys, cyberGfxHQ);
 
 
 -------------------------------------------------------------------------------
 --
 --		Manage arrow mods for the whole song here.
 --
+local cspd = 2.0;
 local cyberModsTable = {
 	-- [1]: beat start
 	-- [2]: mod type
@@ -761,22 +678,279 @@ local cyberModsTable = {
 	-- [4]: mod approach (in beats to complete)
 	-- [5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
 		
---		{ 32.0,	"Flip",			 0.5,   2.0, 3}, 
---		{ 36.0,	"Flip",			 0.0,   2.0, 3}, 
---		{ 38.0,	"Expand",		 0.5,  16.0, 3}, 
---		{ 40.0,	"Invert",		 0.5,   2.0, 3}, 
---		{ 44.0,	"Invert",		 0.0,   2.0, 3}, 
---		{ 48.0,	"Flip",			 1.0,   3.0, 3}, 
---		{ 48.0,	"Invert",		 0.5,   1.0, 3}, 
---		{ 52.0,	"Alternate",	 0.1,  32.0, 3}, 
---		{ 52.0,	"Split",		 0.2,  32.0, 3}, 
---		{ 52.0,	"Reverse",		-0.2,  32.0, 3}, 
---		{ 56.0,	"Flip",			 0.0,   1.0, 3}, 
---		{ 56.0,	"Invert",		 0.0,   3.0, 3}, 
+		{ 0.0,	"ScrollSpeed",	 cspd,	 0.5,	3}, 
+		{ 64.0,	"Beat",			 0.5,	16.0,	3}, 
+		{ 92.5,	"Beat",			 0.0,	 0.5,	3}, 
+		{ 93.0,	"Drunk",		 2.0,	 0.25,	3}, 
+		{ 93.5,	"Drunk",		 0.0,	 1.5,	3}, 
+		{ 95.5,	"Beat",			 0.5,	 0.5,	3}, 
+		{ 96.0,	"Beat",			 1.0,	16.0,	3}, 
+		{124.0,	"Beat",			 0.0,	 0.5,	3}, 
+		
+		{128.0,	"ScrollSpeed",	 3.0,	64.0,	3}, 
+		{128.0,	"Wave",			 1.0,	64.0,	3}, 
+		
+		{129.0,	"Invert",		-0.1,	 0.5,	3}, {129.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{129.5,	"Invert",		 0.1,	 0.5,	3}, {129.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{130.0,	"Invert",		 0.0,	 1.0,	3}, {130.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{131.0,	"Invert",		-0.1,	 0.5,	3}, {131.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{131.5,	"Invert",		 0.1,	 0.5,	3}, {131.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{132.0,	"Invert",		 0.0,	 1.0,	3}, {132.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{133.5,	"Invert",		 0.1,	 0.5,	3}, {133.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{134.5,	"Invert",		-0.1,	 0.5,	3}, {134.5,	"Flip",			-0.1,	 0.5,	3}, 
+		{135.0,	"Invert",		 0.0,	 1.0,	3}, {135.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{137.0,	"Invert",		-0.1,	 0.5,	3}, {137.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{137.5,	"Invert",		 0.1,	 0.5,	3}, {137.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{138.0,	"Invert",		 0.0,	 1.0,	3}, {138.0,	"Flip",			 0.0,	 1.0,	3}, 
+		
+		{139.0,	"Alternate",	 0.1,	 0.5,	3}, {140.0,	"Alternate",	 0.0,	 0.5,	3}, 
+		{140.0,	"Cross",		-0.1,	 1.0,	3}, {141.5,	"Cross",		 0.0,	 1.0,	3}, 
+		{141.5,	"Alternate",	-0.1,	 1.0,	3}, {143.0,	"Alternate",	 0.0,	 1.0,	3},
+		
+		{145.0,	"Invert",		-0.1,	 0.5,	3}, {145.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{145.5,	"Invert",		 0.1,	 0.5,	3}, {145.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{146.0,	"Invert",		 0.0,	 1.0,	3}, {146.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{147.0,	"Invert",		-0.1,	 0.5,	3}, {147.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{147.5,	"Invert",		 0.1,	 0.5,	3}, {147.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{148.0,	"Invert",		 0.0,	 1.0,	3}, {148.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{149.5,	"Invert",		 0.1,	 0.5,	3}, {149.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{150.5,	"Invert",		-0.1,	 0.5,	3}, {150.5,	"Flip",			-0.1,	 0.5,	3}, 
+		{151.0,	"Invert",		 0.0,	 1.0,	3}, {151.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{153.0,	"Invert",		-0.1,	 0.5,	3}, {153.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{153.5,	"Invert",		 0.1,	 0.5,	3}, {153.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{154.0,	"Invert",		 0.0,	 1.0,	3}, {154.0,	"Flip",			 0.0,	 1.0,	3}, 
+
+		{155.0,	"Cross",		 0.1,	 1.0,	3},
+		{156.0,	"Invert",		 0.2,	 1.0,	3}, {156.0,	"Flip",			 -0.2,	 1.0,	3}, 
+		{157.5,	"Cross",		 0.0,	 2.5,	3}, 
+		{157.5,	"Invert",		 0.0,	 2.5,	3}, {157.5,	"Flip",			 0.0,	 2.5,	3}, 
+		
+		{161.0,	"Invert",		 0.1,	 0.5,	3}, {161.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{161.5,	"Invert",		-0.1,	 0.5,	3}, {161.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{162.0,	"Invert",		 0.0,	 1.0,	3}, {162.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{163.0,	"Invert",		-0.1,	 0.5,	3}, {163.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{163.5,	"Invert",		 0.1,	 0.5,	3}, {163.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{164.0,	"Invert",		 0.0,	 1.0,	3}, {164.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{165.5,	"Invert",		 0.1,	 0.5,	3}, {165.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{166.5,	"Invert",		-0.1,	 0.5,	3}, {166.5,	"Flip",			-0.1,	 0.5,	3}, 
+		{167.0,	"Invert",		 0.0,	 1.0,	3}, {167.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{169.0,	"Invert",		 0.1,	 0.5,	3}, {169.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{169.5,	"Invert",		-0.1,	 0.5,	3}, {169.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{170.0,	"Invert",		 0.0,	 1.0,	3}, {170.0,	"Flip",			 0.0,	 1.0,	3}, 
+
+		{171.0,	"Split",		-0.1,	 0.5,	3}, {172.0,	"Split",		 0.0,	 0.5,	3}, 
+		{172.0,	"Cross",		-0.1,	 1.0,	3}, {173.5,	"Cross",		 0.0,	 1.0,	3}, 
+		{173.5,	"Split",		 0.1,	 1.0,	3}, {175.0,	"Split",		 0.0,	 1.0,	3},
+		
+		{176.0,	"Tiny",			-1.0,	 8.0,	3}, 
+		{176.0,	"Bumpy",		 1.0,	 8.0,	3}, 
+		{184.0,	"Tiny",			 0.0,	 1.0,	3}, 
+		{184.0,	"Bumpy",		 0.0,	 1.0,	3}, 
+				
+		{188.0,	"Dark",			 1.0,	 4.0,	3}, 
+		{192.0,	"Wave",			 1.2,	60.0,	3}, 
+		
+		{193.0,	"Invert",		 0.3,	 0.5,	3}, {193.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{193.5,	"Invert",		-0.3,	 0.5,	3}, {193.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{194.0,	"Invert",		 0.0,	 1.0,	3}, {194.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{195.0,	"Invert",		 0.3,	 0.5,	3}, {195.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{195.5,	"Invert",		-0.3,	 0.5,	3}, {195.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{196.0,	"Invert",		 0.0,	 1.0,	3}, {196.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{201.0,	"Invert",		-0.3,	 0.5,	3}, {201.0,	"Flip",			 0.1,	 0.5,	3}, 
+		{201.5,	"Invert",		 0.3,	 0.5,	3}, {201.5,	"Flip",			-0.1,	 0.5,	3}, 
+		{202.0,	"Invert",		 0.0,	 1.0,	3}, {202.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{203.0,	"Invert",		-0.3,	 0.5,	3}, {203.0,	"Flip",			 0.1,	 0.5,	3}, 
+		{203.5,	"Invert",		 0.3,	 0.5,	3}, {203.5,	"Flip",			-0.1,	 0.5,	3}, 
+		{204.0,	"Invert",		 0.0,	 1.0,	3}, {204.0,	"Flip",			 0.0,	 1.0,	3}, 
+		
+		{209.0,	"Invert",		 0.3,	 0.5,	3}, {209.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{209.5,	"Invert",		-0.3,	 0.5,	3}, {209.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{210.0,	"Invert",		 0.0,	 1.0,	3}, {210.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{211.0,	"Invert",		 0.3,	 0.5,	3}, {211.0,	"Flip",			-0.1,	 0.5,	3}, 
+		{211.5,	"Invert",		-0.3,	 0.5,	3}, {211.5,	"Flip",			 0.1,	 0.5,	3}, 
+		{212.0,	"Invert",		 0.0,	 1.0,	3}, {212.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{217.0,	"Invert",		-0.3,	 0.5,	3}, {217.0,	"Flip",			 0.1,	 0.5,	3}, 
+		{217.5,	"Invert",		 0.3,	 0.5,	3}, {217.5,	"Flip",			-0.1,	 0.5,	3}, 
+		{218.0,	"Invert",		 0.0,	 1.0,	3}, {218.0,	"Flip",			 0.0,	 1.0,	3}, 
+		{219.0,	"Invert",		-0.3,	 0.5,	3}, {219.0,	"Flip",			 0.1,	 0.5,	3}, 
+		{219.5,	"Invert",		 0.3,	 0.5,	3}, {219.5,	"Flip",			-0.1,	 0.5,	3}, 
+		{220.0,	"Invert",		 0.0,	 1.0,	3}, {220.0,	"Flip",			 0.0,	 1.0,	3}, 
+		
+		{224.0,	"Invert",		 0.375,	 2.0,	3}, {224.0,	"Flip",			 0.375,	 2.0,	3}, 
+		{226.0,	"Invert",		 0.0,	 2.0,	3}, {226.0,	"Flip",			 0.0,	 2.0,	3}, 
+		{232.0,	"Invert",		 0.375,	 2.0,	3}, {232.0,	"Flip",			 0.375,	 2.0,	3}, 
+		{234.0,	"Invert",		 0.0,	 2.0,	3}, {234.0,	"Flip",			 0.0,	 2.0,	3}, 
+		{240.0,	"Invert",		 0.8,	 2.0,	3},
+		{242.0,	"Invert",		 0.0,	 2.0,	3},
+		{244.0,	"Invert",		 0.8,	 2.0,	3},
+		{246.0,	"Invert",		 0.0,	 2.0,	3},
+				
+		
+		{256.0,	"ScrollSpeed",	 cspd,	 8.0,	3}, 
+		{256.0,	"Wave",			 0.0,	 8.0,	3}, 
+		{260.0,	"Dark",			 0.0,	 4.0,	3}, 
+		
+		{265.0,	"Tipsy",		 0.5,	 0.01,	3}, 
+		{265.0,	"Dizzy",		 0.5,	 0.01,	3}, 
+		{265.0,	"Brake",		 0.2,	 0.01,	3}, 		
+		
+		{266.0,	"Tipsy",		 1.0,	47.0,	3}, 
+		{266.0,	"Brake",		 1.5,	63.0,	3}, 
+		
+		-- Dizzy is a fuckall useless mod when applied vanilla		
+		{266.0,	"Dizzy",		-1.0,	 6.0,	3}, 
+		{274.0,	"Dizzy",		 1.5,	 6.0,	3}, 
+		{282.0,	"Dizzy",		-2.0,	 6.0,	3}, 
+		{290.0,	"Dizzy",		 2.5,	 6.0,	3}, 
+		{298.0,	"Dizzy",		-3.0,	 6.0,	3}, 
+		{306.0,	"Dizzy",		 3.5,	 6.0,	3}, 
+		{313.0,	"Dizzy",		 0.0,	16.0,	3}, 
+		
+		{329.0,	"Brake",		 0.0,	 8.0,	3}, 
+		{337.0,	"Tipsy",		 0.0,	 0.01,	3}, 
+		
+		-- Air phase
+		{370.0,	"Stealth",		 0.5,	 2.0,	3}, {370.0,	"Dark",			 1.0,	 2.0,	3}, 
+		{370.0,	"Flip",			 1.0,	 2.0,	3}, {370.0,	"Invert",		-1.0,	 2.0,	3}, 
+		{372.0,	"Stealth",		 0.0,	 2.0,	3}, {372.0,	"Dark",			 0.0,	 2.0,	3}, 
+		{374.0,	"Stealth",		 0.5,	 2.0,	3}, {374.0,	"Dark",			 1.0,	 2.0,	3}, 
+		{374.0,	"Flip",			 0.0,	 2.0,	3}, {374.0,	"Invert",		 0.0,	 2.0,	3}, 
+		{376.0,	"Stealth",		 0.0,	 2.0,	3}, {376.0,	"Dark",			 0.0,	 2.0,	3}, 
+		{378.0,	"Stealth",		 0.5,	 2.0,	3}, {378.0,	"Dark",			 1.0,	 2.0,	3}, 
+		{378.0,	"Flip",			 1.0,	 2.0,	3}, {378.0,	"Invert",		-1.0,	 2.0,	3}, 
+		{380.0,	"Stealth",		 0.0,	 2.0,	3}, {380.0,	"Dark",			 0.0,	 2.0,	3}, 
+		{382.0,	"Stealth",		 0.5,	 2.0,	3}, {382.0,	"Dark",			 1.0,	 2.0,	3}, 
+		{382.0,	"Flip",			 0.0,	 2.0,	3}, {382.0,	"Invert",		 0.0,	 2.0,	3}, 
+		{384.0,	"Stealth",		 0.0,	 2.0,	3}, {384.0,	"Dark",			 0.0,	 2.0,	3}, 
+		
 	};
 local cyberModsLaunched = 0;
 local cyberModsWait = 0;
 local cyberModsLeadBy = 0.03;
+
+local mods = {
+	["LifeSetting"] =	"ENUM", 
+	["DrainSetting"] =	"ENUM", 
+--	["BatteryLives"] =	"INT", 
+	["TimeSpacing"] =	"FLOAT", 
+	["MaxScrollBPM"] =	"FLOAT", 
+	["ScrollSpeed"] =	"FLOAT", 
+	["ScrollBPM"] =		"FLOAT", 
+	["Boost"] =			"FLOAT", 
+	["Brake"] =			"FLOAT", 
+	["Wave"] =			"FLOAT", 
+	["Expand"] =		"FLOAT", 
+	["Boomerang"] =		"FLOAT", 
+	["Drunk"] =			"FLOAT", 
+	["Dizzy"] =			"FLOAT", 
+	["Confusion"] =		"FLOAT", 	-- yuck
+	["Mini"] =			"FLOAT", 
+	["Tiny"] =			"FLOAT", 
+	["Flip"] =			"FLOAT", 
+	["Invert"] =		"FLOAT", 
+	["Tornado"] =		"FLOAT", 
+	["Tipsy"] =			"FLOAT", 
+	["Bumpy"] =			"FLOAT", 
+	["Beat"] =			"FLOAT", 
+	["Xmode"] =			"FLOAT", 
+	["Twirl"] =			"FLOAT", 
+	["Roll"] =			"FLOAT", 
+	["Hidden"] =		"FLOAT", 
+	["HiddenOffset"] =	"FLOAT", 
+	["Sudden"] =		"FLOAT", 
+	["SuddenOffset"] =	"FLOAT", 
+	["Stealth"] =		"FLOAT", 
+	["Blink"] =			"FLOAT", 
+	["RandomVanish"] =	"FLOAT", 
+	["Reverse"] =		"FLOAT", 
+	["Split"] =			"FLOAT", 
+	["Alternate"] =		"FLOAT", 
+	["Cross"] =			"FLOAT", 
+	["Centered"] =		"FLOAT", 
+	["Dark"] =			"FLOAT", 
+	["Blind"] =			"FLOAT", 
+	["Cover"] =			"FLOAT", 
+	["RandAttack"] =	"FLOAT", 
+	["NoAttack"] =		"FLOAT", 
+	["PlayerAutoPlay"] ="FLOAT", 
+	["Skew"] =			"FLOAT", 
+	["Tilt"] =			"FLOAT", 
+	["Passmark"] =		"FLOAT", 
+	["RandomSpeed"] =	"FLOAT", 
+	["TurnNone"] =		"BOOL", 
+	["Mirror"] =		"BOOL", 
+	["Backwards"] =		"BOOL", 
+	["Left"] =			"BOOL", 
+	["Right"] =			"BOOL", 
+	["Shuffle"] =		"BOOL", 
+	["SoftShuffle"] =	"BOOL", 
+	["SuperShuffle"] =	"BOOL", 
+	["NoHolds"] =		"BOOL", 
+	["NoRolls"] =		"BOOL", 
+	["NoMines"] =		"BOOL", 
+	["Little"] =		"BOOL", 
+	["Wide"] =			"BOOL", 
+	["Big"] =			"BOOL", 
+	["Quick"] =			"BOOL", 
+	["BMRize"] =		"BOOL", 
+	["Skippy"] =		"BOOL", 
+	["Mines"] =			"BOOL", 
+	["AttackMines"] =	"BOOL", 
+	["Echo"] =			"BOOL", 
+	["Stomp"] =			"BOOL", 
+	["Planted"] =		"BOOL", 
+	["Floored"] =		"BOOL", 
+	["Twister"] =		"BOOL", 
+	["HoldRolls"] =		"BOOL", 
+	["NoJumps"] =		"BOOL", 
+	["NoHands"] =		"BOOL", 
+	["NoLifts"] =		"BOOL", 
+	["NoFakes"] =		"BOOL", 
+	["NoQuads"] =		"BOOL", 
+	["NoStretch"] =		"BOOL", 
+	["MuteOnError"] =	"BOOL", 
+	["FailSetting"] =	"ENUM", 
+	["MinTNSToHideNotes"] =	"ENUM"
+}
+local clearAllMods = function(playerNum, justTrace)
+	local currValue;
+	local currApproach;
+	
+	playerNum = playerNum or 1
+	justTrace = justTrace or false
+	
+	if playerNum < 1 or playerNum > 2 then do Trace("In clearAllMods: Player number "..playerNum.." is invalid!"); return end end
+	pops = GAMESTATE:GetPlayerState("PlayerNumber_P"..playerNum):GetPlayerOptions("ModsLevel_Song");
+	if pops then
+		for modName,modType in pairs(mods) do
+			currValue,currApproach = pops[modName](pops);
+			Trace("In clearAllMods: P"..playerNum.." has mod "..modName.." set to "..tostring(currValue));
+			
+			if not justTrace then
+				if modType == "FLOAT" then
+					if modName == "ScrollBPM" then
+						pops[modName](pops, 200);
+					elseif modName == "ScrollSpeed" then
+						pops[modName](pops, 1);
+					else
+						pops[modName](pops, 0);
+					end
+				elseif modType == "BOOL" then
+					pops[modName](pops, false);
+				elseif modType == "INT" then
+					if modName == "BatteryLives" then
+						pops[modName](pops, 4);
+					else
+						pops[modName](pops, 0);
+					end
+				else -- if modType == "ENUM" then
+				end
+			end
+		end
+	else
+		Trace("In clearAllMods: Player options for "..playerNum.." are not initialized!");
+	end
+end
 
 local cyberModsHQ = Def.Quad {
 	InitCommand = function(self)
@@ -787,6 +961,8 @@ local cyberModsHQ = Def.Quad {
 	end,
 	OnCommand = function(self)
 		self:queuecommand("Update");
+		clearAllMods(1);
+		clearAllMods(2);
 	end,
 	UpdateCommand = function(self)
 		-- Most things are determined by beat, believe it or not.		
@@ -797,37 +973,41 @@ local cyberModsHQ = Def.Quad {
 			self:hibernate(600);
 			do return end
 		else
-			-- Trace('>>> cyberModsHQ: ' .. cyberModsLaunched);
-			-- Check the next line of the mods table.
-			cyberNextMod = cyberModsTable[cyberModsLaunched + 1];
-			
-			if overtime + cyberModsLeadBy >= cyberNextMod[1] then
-				-- TODO: this assumes the effect applies over a constant BPM section!!
-				local cyberBPS = GAMESTATE:GetSongBPS();
-				Trace('>>> cyberModsHQ: ' .. cyberModsLaunched .. ' @ time = ' .. overtime);
+			while cyberModsLaunched < #cyberModsTable do
+				-- Trace('>>> cyberModsHQ: ' .. cyberModsLaunched);
+				-- Check the next line of the mods table.
+				cyberNextMod = cyberModsTable[cyberModsLaunched + 1];
 				
-				for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
-					if (cyberNextMod[5] == 1 or cyberNextMod[5] == 3) then								-- TODO: FIXME
-						pops = GAMESTATE:GetPlayerState(pe):GetPlayerOptions("ModsLevel_Song");
-						
-						-- Calculate approach (in units of the value per second):
-						-- a = (value final - value initial) * (beats per second) / (beats for transition + ``machine epsilon``)
-						-- Has to be done individually for each player, just in case they're coming from different initial values :(
-						opVal, opApproach = pops[ cyberNextMod[2] ]( pops );
-						if opApproach == 0 then -- SOMEONE FUCKED UP AND IT WASN'T ME.
-							newApproach = cyberBPS;
-						else
-							newApproach = math.abs(cyberNextMod[3] - opVal) * cyberBPS / (cyberNextMod[4] + 0.001);
+				if overtime + cyberModsLeadBy >= cyberNextMod[1] then
+					-- TODO: this assumes the effect applies over a constant BPM section!!
+					local cyberBPS = GAMESTATE:GetSongBPS();
+					Trace('>>> cyberModsHQ: ' .. cyberModsLaunched .. ' @ time = ' .. overtime);
+					
+					for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
+						pn = tonumber(string.match(pe, "[0-9]+"));
+						if (cyberNextMod[5] == pn or cyberNextMod[5] == 3) then
+							pops = GAMESTATE:GetPlayerState(pe):GetPlayerOptions("ModsLevel_Song");
+							
+							-- Calculate approach (in units of the value per second):
+							-- a = (value final - value initial) * (beats per second) / (beats for transition + ``machine epsilon``)
+							-- Has to be done individually for each player, just in case they're coming from different initial values :(
+							opVal, opApproach = pops[ cyberNextMod[2] ]( pops );
+							if opApproach == 0 then -- SOMEONE FUCKED UP AND IT WASN'T ME.
+								newApproach = cyberBPS;
+							else
+								newApproach = math.abs(cyberNextMod[3] - opVal) * cyberBPS / (cyberNextMod[4] + 0.001);
+							end
+												pops[ cyberNextMod[2] ]( pops, cyberNextMod[3], newApproach );
+							Trace('>>> cyberModsHQ: ' .. opVal .. ' @ rate = ' .. opApproach .. ' for ' .. pe);
+							Trace('>>> cyberModsHQ: ' .. cyberNextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
 						end
-											pops[ cyberNextMod[2] ]( pops, cyberNextMod[3], newApproach );
-						Trace('>>> cyberModsHQ: ' .. opVal .. ' @ rate = ' .. opApproach .. ' for ' .. pe);
-						Trace('>>> cyberModsHQ: ' .. cyberNextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
 					end
+					
+					cyberModsLaunched = cyberModsLaunched + 1;
+				else
+					-- Trace('>>> cyberModsHQ: ' .. overtime .. ' < ' .. cyberNextMod[1]);
+					break;
 				end
-				
-				cyberModsLaunched = cyberModsLaunched + 1;
-			else
-				-- Trace('>>> cyberModsHQ: ' .. overtime .. ' < ' .. cyberNextMod[1]);
 			end
 		end		
 		
@@ -835,7 +1015,7 @@ local cyberModsHQ = Def.Quad {
 		self:queuecommand('WaitABit');
 	end,
 	WaitABitCommand = function(self)
-		self:sleep(0.02);
+		self:sleep(0.01);
 		self:queuecommand('Update');
 	end
 }
@@ -863,11 +1043,11 @@ local hamburgerHelper = Def.Quad {
 		-- TODO: how tf to hide the combo??
 		local P1 = hamburger:GetChild("PlayerP1");
 		if P1 then 
-			P1:GetChild("Combo"):visible(false);
+			P1:GetChild("Combo"):hibernate(1573);
 		end
 		local P2 = hamburger:GetChild("PlayerP2");
 		if P2 then 
-			P2:GetChild("Combo"):visible(false);
+			P2:GetChild("Combo"):hibernate(1573);
 		end
 		
 		
