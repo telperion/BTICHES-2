@@ -462,6 +462,12 @@ local cyberGfxHQ = Def.Quad {
 						cyberSkyStrip:stoptweening();
 					end
 				end
+				for i,v in ipairs(plr) do
+					if v then
+						v:decelerate(BPS * 4)
+						 :y(sh/2 + 30);
+					end
+				end
 				
 				fgcDidMyJob = true;
 			end
@@ -494,6 +500,12 @@ local cyberGfxHQ = Def.Quad {
 				if fullSky then
 					fullSky:decelerate(BPS)
 						   :diffusealpha(0.0);
+				end
+				for i,v in ipairs(plr) do
+					if v then
+						v:decelerate(BPS)
+						 :y(sh/2 - 30);
+					end
 				end
 				
 				fgcDidMyJob = true;
@@ -663,7 +675,7 @@ local cyberGfxHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
---table.insert(theBoys, cyberGfxHQ);
+table.insert(theBoys, cyberGfxHQ);
 
 
 -------------------------------------------------------------------------------
@@ -821,9 +833,82 @@ local cyberModsTable = {
 		{380.0,	"Stealth",		 0.0,	 2.0,	3}, {380.0,	"Dark",			 0.0,	 2.0,	3}, 
 		{382.0,	"Stealth",		 0.5,	 2.0,	3}, {382.0,	"Dark",			 1.0,	 2.0,	3}, 
 		{382.0,	"Flip",			 0.0,	 2.0,	3}, {382.0,	"Invert",		 0.0,	 2.0,	3}, 
-		{384.0,	"Stealth",		 0.0,	 2.0,	3}, {384.0,	"Dark",			 0.0,	 2.0,	3}, 
+		{384.0,	"Stealth",		 0.0,	 2.0,	3}, --{384.0,	"Dark",			 0.0,	 2.0,	3}, 
 		
-	};
+		{386.0,	"Flip",			 0.5,	 0.75,	3}, {386.0,	"Invert",		-0.5,	 0.75,	3},  
+		{386.0, "Tornado",		 0.5,	 0.05,	3}, {386.0, "Tipsy",		-2.0,	 0.05,	3},
+		{386.75,"Flip",			 0.0,	 0.75,	3}, {386.75,"Invert",		 0.0,	 0.75,	3}, 
+		{386.75,"Tornado",		 0.0,	 0.75,	3}, {386.75,"Tipsy",		 0.0,	 0.75,	3},
+		{388.0,	"Flip",			 0.0,	 0.75,	3}, {388.0,	"Invert",		 0.5,	 0.75,	3}, 
+		{388.0, "Tornado",		 0.5,	 0.05,	3}, {388.0, "Tipsy",		-2.0,	 0.05,	3},
+		{388.75,"Flip",			 0.0,	 0.75,	3}, {388.75,"Invert",		 0.0,	 0.75,	3}, 
+		{388.75,"Tornado",		 0.0,	 0.75,	3}, {388.75,"Tipsy",		 0.0,	 0.75,	3},
+		{390.0,	"Flip",			 0.5,	 0.75,	3}, {390.0,	"Invert",		-0.5,	 0.75,	3}, 
+		{390.0, "Tornado",		-0.5,	 0.05,	3}, {390.0, "Tipsy",		 2.0,	 0.05,	3},
+		{390.75,"Flip",			 0.0,	 0.75,	3}, {390.75,"Invert",		 0.0,	 0.75,	3}, 
+		{390.75,"Tornado",		 0.0,	 0.75,	3}, {390.75,"Tipsy",		 0.0,	 0.75,	3},
+		{392.0,	"Flip",			 0.0,	 0.75,	3}, {392.0,	"Invert",		 0.5,	 0.75,	3}, 
+		{392.0, "Tornado",		-0.5,	 0.05,	3}, {392.0, "Tipsy",		 2.0,	 0.05,	3},
+		{392.75,"Flip",			 0.0,	 0.75,	3}, {392.75,"Invert",		 0.0,	 0.75,	3}, 
+		{392.75,"Tornado",		 0.0,	 0.75,	3}, {392.75,"Tipsy",		 0.0,	 0.75,	3},
+		{394.0,	"Flip",			 0.5,	 4.0,	3}, {394.0,	"Invert",		 0.0,	 4.0,	3}, 
+		{398.0,	"Flip",			 0.0,	 4.0,	3}, 
+		{398.0,	"Dark",			 0.0,	 4.0,	3}, 
+				
+		{398.0,	"Hidden",		 0.7,	 4.0,	3}, 
+		{398.0,	"Sudden",		 0.7,	 4.0,	3}, 
+		{398.0,	"HiddenOffset",	-1.0,	 0.01,	3}, 
+		{398.0,	"SuddenOffset",	-0.5,	 0.01,	3}, 
+		{402.0,	"HiddenOffset",	 0.8,	60.0,	3}, 
+		{402.0,	"SuddenOffset",	 1.0,	60.0,	3}, 
+				
+		{402.0,	"ScrollSpeed",	 cspd * 0.6,	4.0,	3}, 
+		{402.0,	"Boost",		 1.2,	4.0,	3}, 
+		
+		{460.0,	"Hidden",		 0.0,	 2.0,	3}, 
+		{460.0,	"Sudden",		 0.0,	 2.0,	3}, 
+		{462.0,	"HiddenOffset",	-1.0,	 2.0,	3}, 
+		{462.0,	"SuddenOffset",	-0.5,	 2.0,	3}, 
+		{462.0,	"Reverse",		 1.0,	 3.5,	3}, 				
+		{466.0,	"Hidden",		 0.7,	 4.0,	3}, 
+		{466.0,	"Sudden",		 0.7,	 4.0,	3}, 
+		{466.0,	"HiddenOffset",	 0.8,	64.0,	3}, 
+		{466.0,	"SuddenOffset",	 1.0,	64.0,	3}, 
+						
+		{522.0,	"Hidden",		 0.0,	 4.0,	3}, 
+		{522.0,	"Sudden",		 0.0,	 4.0,	3}, 
+		{522.0,	"HiddenOffset",	 0.0,	 4.0,	3}, 
+		{522.0,	"SuddenOffset",	 0.0,	 4.0,	3}, 
+		{526.0,	"Reverse",		 0.8,	 0.01,	3}, 
+		{526.0,	"Centered",		 0.3,	 0.01,	3}, 
+		{526.75,"Reverse",		 0.6,	 0.01,	3}, 
+		{526.75,"Centered",		 0.7,	 0.01,	3}, 
+		{527.5,	"Reverse",		 0.4,	 0.01,	3}, 
+		{527.5,	"Centered",		 1.0,	 0.01,	3}, 
+		{528.25,"Reverse",		 0.2,	 0.01,	3}, 
+		{528.25,"Centered",		 0.7,	 0.01,	3}, 
+		{529.0,	"Reverse",		 0.0,	 0.01,	3}, 
+		{529.0,	"Centered",		 0.3,	 0.01,	3}, 
+		{529.0,	"ScrollSpeed",	 cspd,	 1.0,	3}, 
+		{529.0,	"Boost",		 0.0,	 1.0,	3}, 
+		{529.05,"Centered",		 0.0,	 5.0,	3}, 
+		
+		
+		{529.5,	"Beat",			 1.0,	 0.5,	3}, 
+		{530.0,	"Beat",			 0.5,	32.0,	3}, 
+		{558.5,	"Beat",			 0.0,	 0.5,	3}, 
+		{559.0,	"Drunk",		-2.0,	 0.25,	3}, 
+		{559.5,	"Drunk",		 0.0,	 1.5,	3}, 
+		{561.5,	"Beat",			 0.5,	 0.5,	3}, 
+		{562.0,	"Beat",			 0.0,	32.0,	3}, 
+				
+		{590.0,	"Tiny",			-1.0,	 2.0,	3}, {590.0,	"Flip",			0.5,	 2.0,	3}, 
+		{592.5,	"Tiny",			 1.0,	 0.25,	3},
+		{592.75,"Tiny",			 0.0,	 0.25,	3}, {593.0,	"Flip",			0.0,	 1.0,	3}, 
+				
+		{623.0,	"Drunk",		-2.0,	 0.25,	3}, 
+		{623.5,	"Drunk",		 0.0,	 1.5,	3}, 
+};
 local cyberModsLaunched = 0;
 local cyberModsWait = 0;
 local cyberModsLeadBy = 0.03;

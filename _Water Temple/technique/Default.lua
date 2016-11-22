@@ -19,91 +19,6 @@ local screen;
 local nextbeat = 0;
 local DEG_TO_RAD = math.pi / 180.0;
 
--------------------------------------------------------------------------------
---		Mostly lifted from Kyzentun's clean rewrite of
---						   TaroNuke's arbitrary mods generator.
---		No sense rewriting code that I can just Ctrl+C, right?...
---
---	BEGIN 					Arbitrary Mods Generation					BEGIN
--------------------------------------------------------------------------------
--- Reflection into the eden. What's CapitalCase?
-for func_name, func in pairs(PlayerOptions) do
-   PlayerOptions[func_name:lower()]= func
-end
-
--- Option recording.
-local poptions= {}
--- Read down whatever options were applied going into the file.
-for i, pn in ipairs(GAMESTATE:GetEnabledPlayers()) do
-   poptions[pn]= GAMESTATE:GetPlayerState(pn):GetPlayerOptions("ModsLevel_Song")
-end
-
--- Comprehensive list of available mods.
-local float_mods= {
-   "Boost", "Brake", "Wave", "Expand", "Boomerang", "Drunk", "Dizzy",
-   "Confusion", "Mini", "Tiny", "Flip", "Invert", "Tornado", "Tipsy",
-   "Bumpy", "Beat", "Xmode", "Twirl", "Roll", "Hidden", "HiddenOffset",
-   "Sudden", "SuddenOffset", "Stealth", "Blink", "RandomVanish", "Reverse",
-   "Split", "Alternate", "Cross", "Centered", "Dark", "Blind", "Cover",
-   "RandAttack", "NoAttack", "PlayerAutoPlay", "Tilt", "Skew", "Passmark",
-   "RandomSpeed",
-}
--- Use this function to clear all mods.
-local function clear_mods(pn)
-   poptions[pn]:XMod(1)
-   for i, mod in ipairs(float_mods) do
-      poptions[pn][mod](poptions[pn], 0)
-   end
-end
-
-local num_chars= {["-"]= true}
-for i= 0, 9 do num_chars[tostring(i)]= true end
-
--- Apply a mod from a string specification.
-local function apply_mod(mod, pn)
-   mod= mod:lower()
-   local sub_mods= split(",", mod)
-   for i, sub in ipairs(sub_mods) do
-      local level= 1
-      local speed= 1
-      local parts= split(" ", sub)
-      for p, par in ipairs(parts) do
-         local first_char= par:sub(1, 1)
-         if par == "no" then
-            level= 0
-         else
-            local before_num, num, after_num= par:match("(*?)([%d%-%.]+)([x%%%*]?)")
-            num= tonumber(num)
-            if num and after_num ~= "x" then
-               if before_num == "*" or after_num == "*" then
-                  speed= num
-               else
-                  level= num / 100
-               end
-            end
-         end
-      end
-      local mod_name= parts[#parts]
-      if PlayerOptions[mod_name] then
-         poptions[pn][mod_name](poptions[pn], level, speed)
-      elseif mod_name == "clearall" then
-         clear_mods(pn)
-      else
-         local corm, value, xm= mod_name:match("([cm]?)([%d%-%.]+)(x?)")
-         value= tonumber(value)
-         if xm == "x" then
-            poptions[pn]:XMod(value, speed)
-         elseif corm == "c" then
-            poptions[pn]:CMod(value, speed)
-         elseif corm == "m" then
-            poptions[pn]:MMod(value, speed)
-         end
-      end
-   end
-end
--------------------------------------------------------------------------------
---	 END 					Arbitrary Mods Generation					 END
--------------------------------------------------------------------------------
 
 
 local theBoys = Def.ActorFrame {
@@ -219,55 +134,6 @@ for r = 1,2*enjoyBGFieldHeight do
 end
 table.insert(theBoys, enjoyBG);
 
---	This is Kyzentun's sample AMV code.
---	I needed to make sure I could draw /any/ AMV at all.
---
---	local verts= {
---		{{0, 0, 0}, Color.Red},
---		{{0, 20, 0}, Color.Blue},
---		{{20, 0, 0}, Color.Green},
---		{{20, 20, 0}, Color.Yellow},
---		{{40, 0, 0}, Color.Orange},
---		{{40, 20, 0}, Color.Purple},
---		{{60, 0, 0}, Color.Black},
---		{{60, 20, 0}, Color.White},
---	}
---	local enjoyTest = Def.ActorMultiVertex{
---		Name= "AMV_Strip",
---		InitCommand=
---			function(self)
---				self:visible(true)
---				self:xy(sw/2, sh/2)
---				self:SetDrawState{Mode="DrawMode_Strip"}
---			end,
---		OnCommand=
---			function(self)
---				self:SetDrawState{First= 1, Num= -1}
---				verts[1][1][1]= 0
---				verts[4][1][1]= 20
---				verts[7][1][2]= 0
---				verts[8][1][2]= 20
---				self:SetVertices(verts)
---				self:finishtweening()
---				self:queuecommand("FirstMove")
---				self:queuecommand("SecondMove")
---			end,
---		FirstMoveCommand=
---			function(self)
---				self:linear(1)
---				verts[1][1][1]= verts[1][1][1]+10
---				verts[4][1][1]= verts[4][1][1]-10
---				verts[7][1][2]= verts[7][1][2]+10
---				verts[8][1][2]= verts[8][1][2]-10
---				self:SetVertices(verts)
---			end,
---		SecondMoveCommand=
---			function(self)
---				self:linear(1)
---				self:SetDrawState{First= 3, Num= 4}
---			end
---	}
---	table.insert(theBoys, enjoyTest);
 
 function BTIUtil_Reflect(matriarch, depthString) 
 	depthString = depthString or ""
@@ -352,6 +218,74 @@ local enjoyTestSprite = Def.Sprite {
 	end
 };
 --table.insert(theBoys, enjoyTestSprite);
+
+
+-------------------------------------------------------------------------------
+--
+-- 		More proxies than the Middle East during the Cold War
+--
+local enjoyP1ProxA = Def.ActorProxy {
+	Name = "P1CloneA",
+	InitCommand = function(self)
+	end,
+	OnCommand = function(self)
+		McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+		if McCoy then
+			Trace(self:GetName() .. " is alive!!");
+			self:SetTarget(McCoy)
+				:xy(0, 0);
+		end
+	end
+}
+table.insert(theBoys, enjoyP1ProxA);
+
+local enjoyP1ProxB = Def.ActorProxy {
+	Name = "P1CloneB",
+	InitCommand = function(self)
+	end,
+	OnCommand = function(self)
+		McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+		if McCoy then
+			Trace(self:GetName() .. " is alive!!");
+			self:SetTarget(McCoy)
+				:xy(0, 0);
+		end
+	end
+}
+table.insert(theBoys, enjoyP1ProxB);
+
+local enjoyP2ProxA = Def.ActorProxy {
+	Name = "P2CloneA",
+	InitCommand = function(self)
+	end,
+	OnCommand = function(self)
+		McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+		if McCoy then
+			Trace(self:GetName() .. " is alive!!");
+			self:SetTarget(McCoy)
+				:xy(0, 0);
+		end
+	end
+}
+table.insert(theBoys, enjoyP2ProxA);
+
+local enjoyP2ProxB = Def.ActorProxy {
+	Name = "P2CloneB",
+	InitCommand = function(self)
+	end,
+	OnCommand = function(self)
+		McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+		if McCoy then
+			Trace(self:GetName() .. " is alive!!");
+			self:SetTarget(McCoy)
+				:xy(0, 0);
+		end
+	end
+}
+table.insert(theBoys, enjoyP2ProxB);
+
+
+-------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
 --
@@ -564,11 +498,11 @@ local hamburgerHelper = Def.Quad {
 		-- TODO: how tf to hide the combo??
 		local P1 = hamburger:GetChild("PlayerP1");
 		if P1 then 
-			P1:GetChild("Combo"):visible(false);
+			P1:GetChild("Combo"):hibernate(1573);
 		end
 		local P2 = hamburger:GetChild("PlayerP2");
 		if P2 then 
-			P2:GetChild("Combo"):visible(false);
+			P2:GetChild("Combo"):hibernate(1573);
 		end
 		
 		
