@@ -1110,6 +1110,7 @@ table.insert(theBoys, cyberModsHQ);
 --
 --		Everybody wants to hide the Lay's.
 --
+noteskinSet = nil;
 local hamburgerHelper = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
@@ -1124,20 +1125,35 @@ local hamburgerHelper = Def.Quad {
 			hamburger:GetChild("Overlay" ):decelerate(1.0):diffusealpha(0.0);
 			hamburger:GetChild("Underlay"):decelerate(1.0):diffusealpha(0.0);
 		end
-		
-		-- TODO: how tf to hide the combo??
-		local P1 = hamburger:GetChild("PlayerP1");
-		if P1 then 
-			P1:GetChild("Combo"):hibernate(1573);
+				
+		local playersFound = 0;
+		local hadToSetNoteskin = false;
+		for pn = 1,2 do
+			if not noteskinSet then				
+				pops = GAMESTATE:GetPlayerState("PlayerNumber_P"..pn):GetPlayerOptions("ModsLevel_Preferred");
+				if pops then 
+					prevNS, didItWork = pops:NoteSkin("cyber");
+					Trace (pn .. ": " .. prevNS .. " > " .. tostring(didItWork) .. "!!");
+					if prevNS ~= "cyber" then
+						hadToSetNoteskin = true;
+					end
+				end
+			end
+			
+			pv = hamburger:GetChild("PlayerP"..pn);
+			if pv then
+				pv:GetChild("Combo"):hibernate(1573);
+				playersFound = playersFound + pn;
+			end
 		end
-		local P2 = hamburger:GetChild("PlayerP2");
-		if P2 then 
-			P2:GetChild("Combo"):hibernate(1573);
+				
+		noteskinSet = true;
+		if hadToSetNoteskin then
+			SCREENMAN:SetNewScreen("ScreenGameplay"):StartTransitioningScreen("SM_GoToNextScreen");
 		end
 		
-		
-		if P1 and P2 then
-				Trace("#### hibernate!");
+		if playersFound == 3 then
+			Trace("#### hibernate!");
 			self:hibernate(6000);
 		else
 			-- Wait a bit and then update again!

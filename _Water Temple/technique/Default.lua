@@ -83,9 +83,9 @@ local enjoyBG = Def.ActorFrame{
 	InitCommand = function(self)
 		self:xy(0, 0);
 		for i = 1,#oneStripVertices,2 do
-			Trace("## ["..i.."][1] = {"..oneStripVertices[i][1][1]..", "..oneStripVertices[i][1][2]..", "..oneStripVertices[i][1][3].."}!");
-			Trace("## ["..i.."][2] = {"..oneStripVertices[i][2][1]..", "..oneStripVertices[i][2][2]..", "..oneStripVertices[i][2][3]..", "..oneStripVertices[i][2][4].."}!");
-			Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
+--			Trace("## ["..i.."][1] = {"..oneStripVertices[i][1][1]..", "..oneStripVertices[i][1][2]..", "..oneStripVertices[i][1][3].."}!");
+--			Trace("## ["..i.."][2] = {"..oneStripVertices[i][2][1]..", "..oneStripVertices[i][2][2]..", "..oneStripVertices[i][2][3]..", "..oneStripVertices[i][2][4].."}!");
+--			Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
 		end
 	end,
 	OnCommand = function(self)		
@@ -105,9 +105,9 @@ local enjoyBG = Def.ActorFrame{
 			for i = 1,#oneStripVertices,2 do
 				oneStripVertices[i][1][2] = oneStripVertices[i][1][2] + 2 * enjoyTriangleAscent;
 				oneStripVertices[i][3] = BTIUtil_ScaleTex(oneStripVertices[i][1][1], oneStripVertices[i][1][2]);
-				Trace("## ["..i.."][1] = {"..oneStripVertices[i][1][1]..", "..oneStripVertices[i][1][2]..", "..oneStripVertices[i][1][3].."}!");
-				Trace("## ["..i.."][2] = {"..oneStripVertices[i][2][1]..", "..oneStripVertices[i][2][2]..", "..oneStripVertices[i][2][3]..", "..oneStripVertices[i][2][4].."}!");
-				Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
+--				Trace("## ["..i.."][1] = {"..oneStripVertices[i][1][1]..", "..oneStripVertices[i][1][2]..", "..oneStripVertices[i][1][3].."}!");
+--				Trace("## ["..i.."][2] = {"..oneStripVertices[i][2][1]..", "..oneStripVertices[i][2][2]..", "..oneStripVertices[i][2][3]..", "..oneStripVertices[i][2][4].."}!");
+--				Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
 			end
 			
 			rowChildren[2*r  ]:SetVertices(oneStripVertices)
@@ -115,9 +115,9 @@ local enjoyBG = Def.ActorFrame{
 			for i = 2,#oneStripVertices,2 do
 				oneStripVertices[i][1][2] = oneStripVertices[i][1][2] + 2 * enjoyTriangleAscent;
 				oneStripVertices[i][3] = BTIUtil_ScaleTex(oneStripVertices[i][1][1], oneStripVertices[i][1][2]);
-				Trace("## ["..i.."][1] = {"..oneStripVertices[i][1][1]..", "..oneStripVertices[i][1][2]..", "..oneStripVertices[i][1][3].."}!");
-				Trace("## ["..i.."][2] = {"..oneStripVertices[i][2][1]..", "..oneStripVertices[i][2][2]..", "..oneStripVertices[i][2][3]..", "..oneStripVertices[i][2][4].."}!");
-				Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
+--				Trace("## ["..i.."][1] = {"..oneStripVertices[i][1][1]..", "..oneStripVertices[i][1][2]..", "..oneStripVertices[i][1][3].."}!");
+--				Trace("## ["..i.."][2] = {"..oneStripVertices[i][2][1]..", "..oneStripVertices[i][2][2]..", "..oneStripVertices[i][2][3]..", "..oneStripVertices[i][2][4].."}!");
+--				Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
 			end
 		end
 	end
@@ -155,7 +155,9 @@ end
 
 
 local enjoyBGTexSet = false;
+local enjoyBGTexReflect = nil;
 local enjoyBGTex = Def.ActorFrameTexture {	
+	Name = "enjoyBGTex",
 	InitCommand = function(self)
 		self:SetWidth(sw)
 			:SetHeight(sh)
@@ -189,12 +191,13 @@ local enjoyBGTex = Def.ActorFrameTexture {
 		for i,v in ipairs(plr) do
 			if not v then
 				plr[i] = SCREENMAN:GetTopScreen():GetChild('PlayerP' .. i);
-				v = plr[i];				
+				v = plr[i];
 			end
-			BTIUtil_Reflect(v);
-			Trace("### " .. i .. ": " .. (plr[i] and "yes" or "no") .. ": oh wow!!");
+--			BTIUtil_Reflect(v);
+--			Trace("### " .. i .. ": " .. (plr[i] and "yes" or "no") .. ": oh wow!!");
 			self:GetChild("P" .. i .. "Clone"):SetTarget(v)
-											  :xy(0, 0);
+											  :xy(0, 0)
+											  :visible(true);
 		end
 	end,
 	Def.Quad {
@@ -224,65 +227,39 @@ local enjoyTestSprite = Def.Sprite {
 --
 -- 		More proxies than the Middle East during the Cold War
 --
-local enjoyP1ProxA = Def.ActorProxy {
-	Name = "P1CloneA",
-	InitCommand = function(self)
-	end,
-	OnCommand = function(self)
-		McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
-		if McCoy then
-			Trace(self:GetName() .. " is alive!!");
-			self:SetTarget(McCoy)
-				:xy(0, 0);
-		end
-	end
-}
-table.insert(theBoys, enjoyP1ProxA);
+local enjoyProxies = {}
 
-local enjoyP1ProxB = Def.ActorProxy {
-	Name = "P1CloneB",
-	InitCommand = function(self)
-	end,
-	OnCommand = function(self)
-		McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
-		if McCoy then
-			Trace(self:GetName() .. " is alive!!");
-			self:SetTarget(McCoy)
-				:xy(0, 0);
-		end
+for playerNumber = 1,2 do
+	for proxyIndex = 0,2 do
+		enjoyProxies[#enjoyProxies+1] = Def.ActorFrame {
+			Name = "P"..playerNumber.."Frame"..string.char(proxyIndex + string.byte("A")),
+			InitCommand = function(self)
+				self:xy(sw/2, sh/2)
+					:visible(false);
+			end,
+			
+			Def.ActorProxy {
+				Name = "P"..playerNumber.."Clone"..string.char(proxyIndex + string.byte("A")),
+				InitCommand = function(self)
+				end,
+				OnCommand = function(self)
+					McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP'..playerNumber);
+					if McCoy then
+						Trace(self:GetName() .. " is alive!!");
+						self:SetTarget(McCoy)
+							:xy(-McCoy:GetX(), -McCoy:GetY());
+					end
+				end
+			}
+		}
 	end
-}
-table.insert(theBoys, enjoyP1ProxB);
+end		
 
-local enjoyP2ProxA = Def.ActorProxy {
-	Name = "P2CloneA",
-	InitCommand = function(self)
-	end,
-	OnCommand = function(self)
-		McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
-		if McCoy then
-			Trace(self:GetName() .. " is alive!!");
-			self:SetTarget(McCoy)
-				:xy(0, 0);
-		end
-	end
-}
-table.insert(theBoys, enjoyP2ProxA);
+for _,ep in pairs(enjoyProxies) do
+	table.insert(theBoys, ep);
+end
 
-local enjoyP2ProxB = Def.ActorProxy {
-	Name = "P2CloneB",
-	InitCommand = function(self)
-	end,
-	OnCommand = function(self)
-		McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
-		if McCoy then
-			Trace(self:GetName() .. " is alive!!");
-			self:SetTarget(McCoy)
-				:xy(0, 0);
-		end
-	end
-}
-table.insert(theBoys, enjoyP2ProxB);
+
 
 
 -------------------------------------------------------------------------------
@@ -305,6 +282,16 @@ local enjoyGfxHQ = Def.Quad {
 			:visible(false);
 	end,
 	OnCommand = function(self)
+		-- Who's the AFT?
+		for moniker,starlet in pairs(self:GetParent():GetChildren()) do
+			Trace("OwO whats this? "..moniker);
+			if string.find(moniker, "enjoyBGTex") then
+				Trace("found it!! "..moniker);
+				enjoyBGTexReflect = starlet;
+				break;
+			end
+		end
+		Trace("we tried...");
 		self:queuecommand("Update");
 	end,
 	UpdateCommand = function(self)
@@ -314,66 +301,69 @@ local enjoyGfxHQ = Def.Quad {
 		-- TODO: this assumes the effect applies over a constant BPM section!!
 		local BPS = GAMESTATE:GetSongBPS();
 		
-		-- Who's interesting today?
-
+		-- take time to smell the rosetations
+		local enjoyTheta = overtime * math.pi / 2.0;
+		local enjoyRadius = 32.0;
+	
 		
-		if overtime >=   0.0 and fgcurcommand ==  0 then
+		-- Who's interesting today?
+		if overtime >=  0.0 and fgcurcommand ==  0 then
+			-- Hide the actual playfields. Let the proxies do the work.
+			for i,v in ipairs(plr) do
+				if v then
+					v:visible(false):y(sh/2 - 30):z(0);
+				end
+			end
+			
+			fgcurcommand = fgcurcommand + 1;
+		end
+		if overtime >=  96.0 and fgcurcommand ==  1 then
 			-- Start moving players toward the center.
 			for i,v in ipairs(plr) do
 				if v then
-					v:visible(false);
-					v:decelerate(8.0 / BPS):x(sw/2):z(0);
+					v:accelerate(28.0 / BPS):x(sw/2);
 				end
 			end
 			
 			fgcurcommand = fgcurcommand + 1;
 		end
-		if overtime >=  12.0 and fgcurcommand ==  1 then
-			-- oh damn now what's going on
+--		if overtime >=  48.0 and fgcurcommand ==  3 then
+--			-- boy i die!! shit boy...
+--			local enjoyTheta = overtime * math.pi / 2.0;
+--			
+--			for i,v in ipairs(plr) do
+--				if v then					
+--					for j,w in ipairs(v:GetChild("NoteField"):GetColumnActors()) do
+--						w:diffusealpha(0.5 + 0.5 * math.sin(enjoyTheta + math.pi / 2.0 * j));
+--					end
+--				end
+--			end
+--		end
+		if overtime >= 126.75 and fgcurcommand ==  2 then
+			-- oh shit!!			
 			for i,v in ipairs(plr) do
+				local sideGuide = (i == 2) and 0.75 or 0.25;
 				if v then
-					v:decelerate(4.0 / BPS):x(sw/2 + 64*i-96);
+					v:visible(false):x(sideGuide * sw);
 				end
+			end
+			
+			for i = 1,2 do
+				local sideSign = (i == 2) and 1 or -1;
+				enjoyBGTexReflect:GetChild("P"..i.."Clone"):visible(false);
+				self:GetParent():GetChild("P"..i.."FrameA"):visible(true)
+														   :decelerate(0.25 / BPS)
+														   :x(sw/2 + enjoyRadius * sideSign);
 			end
 			
 			fgcurcommand = fgcurcommand + 1;
 		end
-		if overtime >=  16.0 and fgcurcommand ==  2 then
-			-- take time to smell the rosetations
-			local enjoyTheta = overtime * math.pi / 2.0;
-			local enjoyRadius = 32.0;
-			
+		if overtime >= 128.0 and fgcurcommand ==  3 then			
 			-- around and around! shit boy
-			for i,v in ipairs(plr) do
-				if v then
-					local sideSign = (i == 2) and 1 or -1;
-					v:x(sw/2 + enjoyRadius * sideSign * math.cos(enjoyTheta));
-					v:z(       enjoyRadius * sideSign * math.sin(enjoyTheta));
-				end
-			end
-		end
-		if overtime >=  32.0 and fgcurcommand ==  2 then
-			-- okay that is QUITE ENOUGH
-			for i,v in ipairs(plr) do
-				if v then
-					v:x(sw/2 + 32*i-48);
-					v:z(0);
-					v:SetLife(0.8);
-				end
-			end
-			
-			fgcurcommand = fgcurcommand + 1;
-		end
-		if overtime >=  48.0 and fgcurcommand ==  3 then
-			-- boy i die!! shit boy...
-			local enjoyTheta = overtime * math.pi / 2.0;
-			
-			for i,v in ipairs(plr) do
-				if v then					
-					for j,w in ipairs(v:GetChild("NoteField"):GetColumnActors()) do
-						w:diffusealpha(0.5 + 0.5 * math.sin(enjoyTheta + math.pi / 2.0 * j));
-					end
-				end
+			for i = 1,2 do
+				local sideSign = (i == 2) and 1 or -1;
+				self:GetParent():GetChild("P"..i.."FrameA"):x(sw/2 + enjoyRadius * sideSign * math.cos(enjoyTheta));
+				self:GetParent():GetChild("P"..i.."FrameA"):z(       enjoyRadius * sideSign * math.sin(enjoyTheta));
 			end
 		end
 					
@@ -394,6 +384,7 @@ table.insert(theBoys, enjoyGfxHQ);
 --
 --		Manage arrow mods for the whole song here.
 --
+local cspd = 2.5;
 local modsTable = {
 	-- [1]: beat start
 	-- [2]: mod type
@@ -401,17 +392,145 @@ local modsTable = {
 	-- [4]: mod approach (in beats to complete)
 	-- [5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
 		
-		{ 0.0,	"Flip",			-0.5,     2.0, 3}, 
-		{ 4.0,	"Invert",		 0.0,     2.0, 3}, 
-		{ 64.0,	"Split",		 0.1,     2.0, 3}, 
-		{ 72.0,	"Split",		-0.1,     2.0, 3}, 
-		{ 80.0,	"Split",		 0.0,     1.0, 3}, 
-		{ 80.0,	"Flip",			-0.25,    1.0, 3}, 
-		{ 80.0,	"Invert",		 0.0,     1.0, 3}
+		{   0.0,	"ScrollSpeed",	 cspd,    2.0,	3}, 
+		{   0.0,	"Sudden",		 1.0,     2.0,	3}, 
+		{   0.0,	"SuddenOffset",	 0.8,     2.0,	3}, 
+		{ 120.0,	"Flip",			 0.5,     4.0,	3}, 
+		{ 120.0,	"Dark",			 1.0,     4.0,	3}, 
+		{ 120.0,	"Stealth",		 0.9,     4.0,	3}, 
+		{ 124.0,	"Dark",			 0.0,     0.25,	3}, 
+		{ 125.0,	"Flip",			-0.5,     0.25,	3}, 
+		{ 125.0,	"Invert",		 1.0,     0.25,	3}, 
+		{ 126.0,	"Invert",		 0.0,     0.25,	3}, 
+		{ 126.25,	"Stealth",		 0.0,     0.75,	3}, 
 	};
 local modsLaunched = 0;
 local modsWait = 0;
 local modsLeadBy = 0.03;
+	
+local mods = {
+	["LifeSetting"] =	"ENUM", 
+	["DrainSetting"] =	"ENUM", 
+--	["BatteryLives"] =	"INT", 
+	["TimeSpacing"] =	"FLOAT", 
+	["MaxScrollBPM"] =	"FLOAT", 
+	["ScrollSpeed"] =	"FLOAT", 
+	["ScrollBPM"] =		"FLOAT", 
+	["Boost"] =			"FLOAT", 
+	["Brake"] =			"FLOAT", 
+	["Wave"] =			"FLOAT", 
+	["Expand"] =		"FLOAT", 
+	["Boomerang"] =		"FLOAT", 
+	["Drunk"] =			"FLOAT", 
+	["Dizzy"] =			"FLOAT", 
+	["Confusion"] =		"FLOAT", 	-- yuck
+	["Mini"] =			"FLOAT", 
+	["Tiny"] =			"FLOAT", 
+	["Flip"] =			"FLOAT", 
+	["Invert"] =		"FLOAT", 
+	["Tornado"] =		"FLOAT", 
+	["Tipsy"] =			"FLOAT", 
+	["Bumpy"] =			"FLOAT", 
+	["Beat"] =			"FLOAT", 
+	["Xmode"] =			"FLOAT", 
+	["Twirl"] =			"FLOAT", 
+	["Roll"] =			"FLOAT", 
+	["Hidden"] =		"FLOAT", 
+	["HiddenOffset"] =	"FLOAT", 
+	["Sudden"] =		"FLOAT", 
+	["SuddenOffset"] =	"FLOAT", 
+	["Stealth"] =		"FLOAT", 
+	["Blink"] =			"FLOAT", 
+	["RandomVanish"] =	"FLOAT", 
+	["Reverse"] =		"FLOAT", 
+	["Split"] =			"FLOAT", 
+	["Alternate"] =		"FLOAT", 
+	["Cross"] =			"FLOAT", 
+	["Centered"] =		"FLOAT", 
+	["Dark"] =			"FLOAT", 
+	["Blind"] =			"FLOAT", 
+	["Cover"] =			"FLOAT", 
+	["RandAttack"] =	"FLOAT", 
+	["NoAttack"] =		"FLOAT", 
+	["PlayerAutoPlay"] ="FLOAT", 
+	["Skew"] =			"FLOAT", 
+	["Tilt"] =			"FLOAT", 
+	["Passmark"] =		"FLOAT", 
+	["RandomSpeed"] =	"FLOAT", 
+	["TurnNone"] =		"BOOL", 
+	["Mirror"] =		"BOOL", 
+	["Backwards"] =		"BOOL", 
+	["Left"] =			"BOOL", 
+	["Right"] =			"BOOL", 
+	["Shuffle"] =		"BOOL", 
+	["SoftShuffle"] =	"BOOL", 
+	["SuperShuffle"] =	"BOOL", 
+	["NoHolds"] =		"BOOL", 
+	["NoRolls"] =		"BOOL", 
+	["NoMines"] =		"BOOL", 
+	["Little"] =		"BOOL", 
+	["Wide"] =			"BOOL", 
+	["Big"] =			"BOOL", 
+	["Quick"] =			"BOOL", 
+	["BMRize"] =		"BOOL", 
+	["Skippy"] =		"BOOL", 
+	["Mines"] =			"BOOL", 
+	["AttackMines"] =	"BOOL", 
+	["Echo"] =			"BOOL", 
+	["Stomp"] =			"BOOL", 
+	["Planted"] =		"BOOL", 
+	["Floored"] =		"BOOL", 
+	["Twister"] =		"BOOL", 
+	["HoldRolls"] =		"BOOL", 
+	["NoJumps"] =		"BOOL", 
+	["NoHands"] =		"BOOL", 
+	["NoLifts"] =		"BOOL", 
+	["NoFakes"] =		"BOOL", 
+	["NoQuads"] =		"BOOL", 
+	["NoStretch"] =		"BOOL", 
+	["MuteOnError"] =	"BOOL", 
+	["FailSetting"] =	"ENUM", 
+	["MinTNSToHideNotes"] =	"ENUM"
+}
+local clearAllMods = function(playerNum, justTrace)
+	local currValue;
+	local currApproach;
+	
+	playerNum = playerNum or 1
+	justTrace = justTrace or false
+	
+	if playerNum < 1 or playerNum > 2 then do Trace("In clearAllMods: Player number "..playerNum.." is invalid!"); return end end
+	pops = GAMESTATE:GetPlayerState("PlayerNumber_P"..playerNum):GetPlayerOptions("ModsLevel_Song");
+	if pops then
+		for modName,modType in pairs(mods) do
+			currValue,currApproach = pops[modName](pops);
+			-- Trace("In clearAllMods: P"..playerNum.." has mod "..modName.." set to "..tostring(currValue));
+			
+			if not justTrace then
+				if modType == "FLOAT" then
+					if modName == "ScrollBPM" then
+						pops[modName](pops, 200);
+					elseif modName == "ScrollSpeed" then
+						pops[modName](pops, 1);
+					else
+						pops[modName](pops, 0);
+					end
+				elseif modType == "BOOL" then
+					pops[modName](pops, false);
+				elseif modType == "INT" then
+					if modName == "BatteryLives" then
+						pops[modName](pops, 4);
+					else
+						pops[modName](pops, 0);
+					end
+				else -- if modType == "ENUM" then
+				end
+			end
+		end
+	else
+		Trace("In clearAllMods: Player options for "..playerNum.." are not initialized!");
+	end
+end
 
 local enjoyModsHQ = Def.Quad {
 	InitCommand = function(self)
@@ -422,47 +541,53 @@ local enjoyModsHQ = Def.Quad {
 	end,
 	OnCommand = function(self)
 		self:queuecommand("Update");
+		clearAllMods(1);
+		clearAllMods(2);
 	end,
 	UpdateCommand = function(self)
 		-- Most things are determined by beat, believe it or not.		
 		local overtime = GAMESTATE:GetSongBeat();
 		
 		if modsLaunched >= #modsTable then
-			Trace('>>> modsHQ: Hibernated!!');
+			Trace('>>> enjoyModsHQ: Hibernated!!');
 			self:hibernate(600);
 			do return end
 		else
-			-- Trace('>>> modsHQ: ' .. modsLaunched);
-			-- Check the next line of the mods table.
-			modNext = modsTable[modsLaunched + 1];
-			
-			if overtime + modsLeadBy >= modNext[1] then
-				-- TODO: this assumes the effect applies over a constant BPM section!!
-				local BPS = GAMESTATE:GetSongBPS();
-				Trace('>>> modsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
+			while modsLaunched < #modsTable do
+				-- Trace('>>> enjoyModsHQ: ' .. modsLaunched);
+				-- Check the next line of the mods table.
+				nextMod = modsTable[modsLaunched + 1];
 				
-				for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
-					if (modNext[5] == 1 or modNext[5] == 3) then								-- TODO: FIXME
-						pops = GAMESTATE:GetPlayerState(pe):GetPlayerOptions("ModsLevel_Song");
-						
-						-- Calculate approach (in units of the value per second):
-						-- a = (value final - value initial) * (beats per second) / (beats for transition + ``machine epsilon``)
-						-- Has to be done individually for each player, just in case they're coming from different initial values :(
-						opVal, opApproach = pops[ modNext[2] ]( pops );
-						if opApproach == 0 then -- SOMEONE FUCKED UP AND IT WASN'T ME.
-							newApproach = BPS;
-						else
-							newApproach = math.abs(modNext[3] - opVal) * BPS / (modNext[4] + 0.001);
+				if overtime + modsLeadBy >= nextMod[1] then
+					-- TODO: this assumes the effect applies over a constant BPM section!!
+					local BPS = GAMESTATE:GetSongBPS();
+					Trace('>>> enjoyModsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
+					
+					for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
+						pn = tonumber(string.match(pe, "[0-9]+"));
+						if (nextMod[5] == pn or nextMod[5] == 3) then
+							pops = GAMESTATE:GetPlayerState(pe):GetPlayerOptions("ModsLevel_Song");
+							
+							-- Calculate approach (in units of the value per second):
+							-- a = (value final - value initial) * (beats per second) / (beats for transition + ``machine epsilon``)
+							-- Has to be done individually for each player, just in case they're coming from different initial values :(
+							opVal, opApproach = pops[ nextMod[2] ]( pops );
+							if opApproach == 0 then -- SOMEONE FUCKED UP AND IT WASN'T ME.
+								newApproach = BPS;
+							else
+								newApproach = math.abs(nextMod[3] - opVal) * BPS / (nextMod[4] + 0.001);
+							end
+												pops[ nextMod[2] ]( pops, nextMod[3], newApproach );
+							Trace('>>> enjoyModsHQ: ' .. opVal      .. ' @ rate = ' .. opApproach  .. ' for ' .. pe);
+							Trace('>>> enjoyModsHQ: ' .. nextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
 						end
-											pops[ modNext[2] ]( pops, modNext[3], newApproach );
-						Trace('>>> modsHQ: ' .. opVal      .. ' @ rate = ' .. opApproach ..  ' for ' .. pe);
-						Trace('>>> modsHQ: ' .. modNext[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
 					end
+					
+					modsLaunched = modsLaunched + 1;
+				else
+					-- Trace('>>> enjoyModsHQ: ' .. overtime .. ' < ' .. nextMod[1]);
+					break;
 				end
-				
-				modsLaunched = modsLaunched + 1;
-			else
-				-- Trace('>>> modsHQ: ' .. overtime .. ' < ' .. modNext[1]);
 			end
 		end		
 		
@@ -470,7 +595,7 @@ local enjoyModsHQ = Def.Quad {
 		self:queuecommand('WaitABit');
 	end,
 	WaitABitCommand = function(self)
-		self:sleep(0.02);
+		self:sleep(0.01);
 		self:queuecommand('Update');
 	end
 }
@@ -480,6 +605,7 @@ table.insert(theBoys, enjoyModsHQ);
 --
 --		Everybody wants to hide the Lay's.
 --
+noteskinSet = nil;
 local hamburgerHelper = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
@@ -494,20 +620,35 @@ local hamburgerHelper = Def.Quad {
 			hamburger:GetChild("Overlay" ):decelerate(1.0):diffusealpha(0.0);
 			hamburger:GetChild("Underlay"):decelerate(1.0):diffusealpha(0.0);
 		end
-		
-		-- TODO: how tf to hide the combo??
-		local P1 = hamburger:GetChild("PlayerP1");
-		if P1 then 
-			P1:GetChild("Combo"):hibernate(1573);
+				
+		local playersFound = 0;
+		local hadToSetNoteskin = false;
+		for pn = 1,2 do
+			if not noteskinSet then				
+				pops = GAMESTATE:GetPlayerState("PlayerNumber_P"..pn):GetPlayerOptions("ModsLevel_Preferred");
+				if pops then 
+					prevNS, didItWork = pops:NoteSkin("cyber");
+					Trace (pn .. ": " .. prevNS .. " > " .. tostring(didItWork) .. "!!");
+					if prevNS ~= "cyber" then
+						hadToSetNoteskin = true;
+					end
+				end
+			end
+			
+			pv = hamburger:GetChild("PlayerP"..pn);
+			if pv then
+				pv:GetChild("Combo"):hibernate(1573);
+				playersFound = playersFound + pn;
+			end
 		end
-		local P2 = hamburger:GetChild("PlayerP2");
-		if P2 then 
-			P2:GetChild("Combo"):hibernate(1573);
+				
+		noteskinSet = true;
+		if hadToSetNoteskin then
+			SCREENMAN:SetNewScreen("ScreenGameplay"):StartTransitioningScreen("SM_GoToNextScreen");
 		end
 		
-		
-		if P1 and P2 then
-				Trace("#### hibernate!");
+		if playersFound == 3 then
+			Trace("#### hibernate!");
 			self:hibernate(6000);
 		else
 			-- Wait a bit and then update again!
