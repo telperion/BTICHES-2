@@ -311,7 +311,8 @@ local enjoyGfxHQ = Def.Quad {
 			-- Hide the actual playfields. Let the proxies do the work.
 			for i,v in ipairs(plr) do
 				if v then
-					v:visible(false):y(sh/2 - 30):z(0);
+					v:visible(false)
+					 :decelerate(16.0 / BPS):y(sh/2 - 30):z(0);
 				end
 			end
 			
@@ -358,12 +359,60 @@ local enjoyGfxHQ = Def.Quad {
 			
 			fgcurcommand = fgcurcommand + 1;
 		end
-		if overtime >= 128.0 and fgcurcommand ==  3 then			
+		if overtime >= 128.0  and fgcurcommand ==  3 then			
 			-- around and around! shit boy
 			for i = 1,2 do
 				local sideSign = (i == 2) and 1 or -1;
 				self:GetParent():GetChild("P"..i.."FrameA"):x(sw/2 + enjoyRadius * sideSign * math.cos(enjoyTheta));
 				self:GetParent():GetChild("P"..i.."FrameA"):z(       enjoyRadius * sideSign * math.sin(enjoyTheta));
+			end
+			
+			if overtime >= 160.0 then
+				fgcurcommand = fgcurcommand + 1;
+			end
+		end
+		if overtime >= 160.0  and fgcurcommand ==  4 then			
+			-- around and around! shit boy
+			for i = 1,2 do
+				local sideSign = (i == 2) and 1 or -1;
+				self:GetParent():GetChild("P"..i.."FrameA"):x(sw/2 + enjoyRadius * sideSign * math.cos(enjoyTheta));
+				self:GetParent():GetChild("P"..i.."FrameA"):z(     - enjoyRadius * sideSign * math.sin(enjoyTheta));
+			end
+			
+			if overtime >= 191.0 then				
+				for i = 1,2 do
+					local sideSign = (i == 2) and 1 or -1;
+					self:GetParent():GetChild("P"..i.."FrameA"):decelerate(1.0 / BPS):xy(sw/2, sh/2 + enjoyRadius * sideSign);
+				end
+				fgcurcommand = fgcurcommand + 1;
+			end
+		end
+		if overtime >= 192.0  and fgcurcommand ==  5 then			
+			-- around and around! shit boy
+			for i = 1,2 do
+				local sideSign = (i == 2) and 1 or -1;
+				self:GetParent():GetChild("P"..i.."FrameA"):y(sh/2 + enjoyRadius * sideSign * math.cos(enjoyTheta));
+				self:GetParent():GetChild("P"..i.."FrameA"):z(       enjoyRadius * sideSign * math.sin(enjoyTheta));
+			end
+			
+			if overtime >= 224.0 then
+				fgcurcommand = fgcurcommand + 1;
+			end
+		end
+		if overtime >= 224.0  and fgcurcommand ==  6 then			
+			-- around and around! shit boy
+			for i = 1,2 do
+				local sideSign = (i == 2) and 1 or -1;
+				self:GetParent():GetChild("P"..i.."FrameA"):y(sh/2 + enjoyRadius * sideSign * math.cos(enjoyTheta)):x(sw/2);
+				self:GetParent():GetChild("P"..i.."FrameA"):z(     - enjoyRadius * sideSign * math.sin(enjoyTheta));
+			end
+			
+			if overtime >= 252.0 then				
+				for i = 1,2 do
+					local sideSign = (i == 2) and 1 or -1;
+					self:GetParent():GetChild("P"..i.."FrameA"):decelerate(4.0 / BPS):xy(sw/2, sh/2):z(0);
+				end
+				fgcurcommand = fgcurcommand + 1;
 			end
 		end
 					
@@ -384,7 +433,7 @@ table.insert(theBoys, enjoyGfxHQ);
 --
 --		Manage arrow mods for the whole song here.
 --
-local cspd = 2.5;
+local cspd = 2.2;
 local modsTable = {
 	-- [1]: beat start
 	-- [2]: mod type
@@ -393,16 +442,131 @@ local modsTable = {
 	-- [5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
 		
 		{   0.0,	"ScrollSpeed",	 cspd,    2.0,	3}, 
-		{   0.0,	"Sudden",		 1.0,     2.0,	3}, 
-		{   0.0,	"SuddenOffset",	 0.8,     2.0,	3}, 
+		
+		{  64.0,	"Tornado",		 0.5,     4.0,	3}, 
+		{  68.0,	"Tornado",		 0.0,     3.0,	3}, 
+		{  72.0,	"Tornado",		 0.5,     4.0,	3}, 
+		{  76.0,	"Tornado",		 0.0,     3.0,	3}, 
+		{  80.0,	"Tornado",		-0.5,     4.0,	3}, 
+		{  84.0,	"Tornado",		 0.0,     3.0,	3}, 
+		{  88.0,	"Tornado",		 0.5,     3.0,	3}, 
+		{  92.0,	"Tornado",		 0.0,     3.0,	3}, 
+		
+		{  96.0,	"Roll",			 0.5,    28.0,	3},
+		
 		{ 120.0,	"Flip",			 0.5,     4.0,	3}, 
 		{ 120.0,	"Dark",			 1.0,     4.0,	3}, 
 		{ 120.0,	"Stealth",		 0.9,     4.0,	3}, 
+		 
+		{ 124.0,	"Roll",			 0.0,     0.5,	3}, 		
 		{ 124.0,	"Dark",			 0.0,     0.25,	3}, 
-		{ 125.0,	"Flip",			-0.5,     0.25,	3}, 
-		{ 125.0,	"Invert",		 1.0,     0.25,	3}, 
+		{ 125.0,	"Flip",			-0.25,    0.25,	3}, 
+		{ 125.0,	"Invert",		 0.75,    0.25,	3}, 
 		{ 126.0,	"Invert",		 0.0,     0.25,	3}, 
 		{ 126.25,	"Stealth",		 0.0,     0.75,	3}, 
+--		{   0.0,	"Sudden",		 1.0,     2.0,	3}, 
+--		{   0.0,	"SuddenOffset",	 0.8,     2.0,	3}, 
+
+		{ 252.0,	"Flip",			 0.0,     3.0,	3}, 
+		{ 252.0,	"Centered",		 0.5,     3.0,	3}, 
+		{ 252.0,	"Hidden",		 0.9,     4.0,	3}, 
+		{ 252.0,	"Boost",		-3.0,     4.0,	3}, 
+		{ 288.0,	"Centered",		 0.0,    32.0,	3}, 
+		{ 288.0,	"Hidden",		 0.0,    32.0,	3}, 
+		{ 288.0,	"Boost",		 0.0,    16.0,	3}, 
+		
+		{ 320.0,	"Tornado",		 0.5,     8.0,	3}, 
+		{ 328.0,	"Tornado",		-0.5,     8.0,	3}, 
+		{ 336.0,	"Tornado",		 0.5,     8.0,	3}, 
+		{ 344.0,	"Tornado",		 0.0,     8.0,	3}, 
+				
+		{ 352.0,	"Drunk",		-0.5,     0.01,	3}, 
+		{ 352.0,	"Split",		 0.1,     0.01,	1}, 
+		{ 352.0,	"Split",		-0.1,     0.01,	2}, 
+		{ 352.5,	"Drunk",		 0.0,     3.5,	3}, 
+		{ 352.5,	"Split",		 0.0,     3.5,	3}, 
+				
+		{ 356.0,	"Drunk",		 0.5,     0.01,	3}, 
+		{ 356.0,	"Alternate",	-0.1,     0.01,	1}, 
+		{ 356.0,	"Alternate",	 0.1,     0.01,	2}, 
+		{ 356.5,	"Drunk",		 0.0,     3.5,	3}, 
+		{ 356.5,	"Alternate",	 0.0,     3.5,	3}, 
+				
+		{ 360.0,	"Drunk",		-0.5,     0.01,	3}, 
+		{ 360.0,	"Alternate",	 0.1,     0.01,	1}, 
+		{ 360.0,	"Alternate",	-0.1,     0.01,	2}, 
+		{ 360.5,	"Drunk",		 0.0,     1.5,	3}, 
+		{ 360.5,	"Alternate",	 0.0,     1.5,	3}, 
+				
+		{ 362.0,	"Drunk",		 0.5,     0.01,	3}, 
+		{ 362.0,	"Split",		-0.1,     0.01,	1}, 
+		{ 362.0,	"Split",		 0.1,     0.01,	2}, 
+		{ 362.5,	"Drunk",		 0.0,     1.5,	3}, 
+		{ 362.5,	"Split",		 0.0,     1.5,	3}, 
+				
+		{ 364.0,	"Drunk",		-0.5,     0.01,	3}, 
+		{ 364.0,	"Split",		 0.1,     0.01,	1}, 
+		{ 364.0,	"Split",		-0.1,     0.01,	2}, 
+		{ 364.5,	"Drunk",		 0.0,     0.5,	3}, 
+		{ 364.5,	"Split",		 0.0,     0.5,	3}, 				
+		{ 365.0,	"Drunk",		 0.5,     0.01,	3}, 
+		{ 365.0,	"Alternate",	-0.1,     0.01,	1}, 
+		{ 365.0,	"Alternate",	 0.1,     0.01,	2}, 
+		{ 365.5,	"Drunk",		 0.0,     0.5,	3}, 
+		{ 365.5,	"Alternate",	 0.0,     0.5,	3}, 				
+		{ 366.0,	"Drunk",		-0.5,     0.01,	3}, 
+		{ 366.0,	"Alternate",	 0.1,     0.01,	1}, 
+		{ 366.0,	"Alternate",	-0.1,     0.01,	2}, 
+		{ 366.5,	"Drunk",		 0.0,     0.5,	3}, 
+		{ 366.5,	"Alternate",	 0.0,     0.5,	3}, 				
+		{ 367.0,	"Drunk",		 0.5,     0.01,	3}, 
+		{ 367.0,	"Split",		-0.1,     0.01,	1}, 
+		{ 367.0,	"Split",		 0.1,     0.01,	2}, 
+		{ 367.5,	"Drunk",		 0.0,     0.5,	3}, 
+		{ 367.5,	"Split",		 0.0,     0.5,	3}, 
+		
+		{ 368.0,	"Drunk",		-0.3,     0.01,	3}, 
+		{ 368.25,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 368.5,	"Drunk",		 0.3,     0.01,	3}, 
+		{ 368.75,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 369.0,	"Drunk",		-0.4,     0.01,	3}, 
+		{ 369.25,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 369.5,	"Drunk",		 0.4,     0.01,	3}, 
+		{ 369.75,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 370.0,	"Drunk",		-0.5,     0.01,	3}, 
+		{ 370.25,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 370.5,	"Drunk",		 0.5,     0.01,	3}, 
+		{ 370.75,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 371.0,	"Drunk",		-0.6,     0.01,	3}, 
+		{ 371.25,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 371.5,	"Drunk",		 0.6,     0.01,	3}, 
+		{ 371.75,	"Drunk",		 0.0,     0.25,	3}, 
+		
+		{ 372.0,	"Drunk",		-0.7,     0.01,	3}, 
+		{ 372.25,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 372.5,	"Drunk",		 0.7,     0.01,	3}, 
+		{ 372.75,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 373.0,	"Drunk",		-0.8,     0.01,	3}, 
+		{ 373.25,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 373.5,	"Drunk",		 0.8,     0.01,	3}, 
+		{ 373.75,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 374.0,	"Drunk",		-0.9,     0.01,	3}, 
+		{ 374.25,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 374.5,	"Drunk",		 0.9,     0.01,	3}, 
+		{ 374.75,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 375.0,	"Drunk",		-1.0,     0.01,	3}, 
+		{ 375.25,	"Drunk",		 0.0,     0.25,	3}, 
+		{ 375.5,	"Drunk",		 1.0,     0.01,	3}, 
+		{ 375.75,	"Drunk",		 0.0,     0.25,	3}, 
+		
+		{ 376.0,	"Split",		-1.0,     1.5,	3}, 
+		{ 376.0,	"Reverse",		 1.0,     1.5,	3}, 
+		{ 378.0,	"Split",		 0.0,     1.5,	3}, 
+		{ 380.0,	"Centered",		 2.0,     2.0,	3}, 
+		{ 381.5,	"Reverse",		 0.0,     2.0,	3}, 
+		{ 383.0,	"Centered",		 0.0,     1.0,	3}, 
+		
+		
 	};
 local modsLaunched = 0;
 local modsWait = 0;
