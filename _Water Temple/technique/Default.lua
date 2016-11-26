@@ -171,17 +171,11 @@ local enjoyBG = Def.ActorFrame{
 --				Trace("## ["..i.."][3] = {"..osv[i][3][1]..", "..osv[i][3][2].."}!");
 
 			end
-			if self:getaux() == 0 then
-				rowChildren[r]:decelerate(4.0 / BPS)
-							  :SetVertices(osv);
-			else
-				rowChildren[r]:accelerate(4.0 / BPS)
-							  :SetVertices(osv);
-			end
+			rowChildren[r]:smooth(4.0 / BPS)
+						  :SetVertices(osv);
 		end		
 		
 		self:sleep(2.0 / BPS)
-			:aux(self:getaux() == 0 and 1 or 0)
 			:queuecommand("Morph2");
 	end,
 	Morph2Command = function(self)			
