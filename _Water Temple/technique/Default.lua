@@ -78,7 +78,22 @@ for i = 1,#oneStripVertices do
 	oneStripVertices[i][3] = BTIUtil_ScaleTex(oneStripVertices[i][1][1], oneStripVertices[i][1][2]);
 end
 
-allVertices = {};
+local allVertices = {};
+-- Lua with that stealth shallow copy. fuck thou and the referential horse thee rode in on
+deepcopy = function(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in next, orig, nil do
+            copy[deepcopy(orig_key)] = deepcopy(orig_value)
+        end
+        setmetatable(copy, deepcopy(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+end
 local enjoyBG = Def.ActorFrame{
 	Name = "enjoyBG",
 	InitCommand = function(self)
@@ -102,7 +117,7 @@ local enjoyBG = Def.ActorFrame{
 		Trace ("## sw = "..sw..", sh = "..sh.."!!");
 		
 		for r = 1,enjoyBGFieldHeight do			
-			allVertices[#allVertices + 1] = oneStripVertices;
+			allVertices[#allVertices + 1] = deepcopy(oneStripVertices);
 			rowChildren[2*r-1]:SetVertices(oneStripVertices)
 							  :visible(true);
 			for i = 1,#oneStripVertices,2 do
@@ -113,7 +128,7 @@ local enjoyBG = Def.ActorFrame{
 --				Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
 			end
 			
-			allVertices[#allVertices + 1] = oneStripVertices;
+			allVertices[#allVertices + 1] = deepcopy(oneStripVertices);
 			rowChildren[2*r  ]:SetVertices(oneStripVertices)
 							  :visible(true);
 			for i = 2,#oneStripVertices,2 do
@@ -126,6 +141,8 @@ local enjoyBG = Def.ActorFrame{
 		end
 	end,
 	MorphCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();
+		
 		local rowChildren = {}
 		for moniker, starlet in pairs(self:GetChildren()) do
 			rn = tonumber(string.match(moniker, "enjoyBGRow([0-9]+)"));
@@ -135,16 +152,35 @@ local enjoyBG = Def.ActorFrame{
 			end
 		end
 		
+		local vertMorph = deepcopy(allVertices);		
 		for r = 1,enjoyBGFieldHeight*2 do
-			osv = allVertices[r];
+			local osv = vertMorph[r];
 			for i = 1,#osv do 
-				osv[i][3] = BTIUtil_ScaleTex(osv[i][1][1], osv[i][1][2]);
-				-- osv[i][3][1] = osv[i][3][1] + 0.2;
-				-- osv[i][3][2] = osv[i][3][2] + 0.4;
+				if r == 1 or (i+r) % 2 == 1 then				
+					osv[i][3] = BTIUtil_ScaleTex(osv[i][1][1], osv[i][1][2]);
+					osv[i][3][1] = osv[i][3][1] + 0.8 * (math.random() - 0.5) * (sw/tw) / enjoyBGFieldWidth;
+					osv[i][3][2] = osv[i][3][2] + 0.4 * (math.random() - 0.5) * (sh/th) / enjoyBGFieldHeight;
+				else
+					osv[i][3] = vertMorph[r-1][i][3];
+				end				
+				
+				Trace("## ["..i.."][1] = {"..osv[i][1][1]..", "..osv[i][1][2]..", "..osv[i][1][3].."}!");
+				Trace("## ["..i.."][2] = {"..osv[i][2][1]..", "..osv[i][2][2]..", "..osv[i][2][3]..", "..osv[i][2][4].."}!");
+				Trace("## ["..i.."][3] = {"..osv[i][3][1]..", "..osv[i][3][2].."}!");
+
 			end
-			rowChildren[r]:decelerate(4.0)
-						  :SetVertices(osv);
+			if self:getaux() == 0 then
+				rowChildren[r]:decelerate(4.0 / BPS)
+							  :SetVertices(osv);
+			else
+				rowChildren[r]:accelerate(4.0 / BPS)
+							  :SetVertices(osv);
+			end
 		end		
+		
+		self:sleep(4.0 / BPS)
+			:aux(self:getaux() == 0 and 1 or 0)
+			:queuecommand("Morph");
 	end
 };
 for r = 1,2*enjoyBGFieldHeight do
