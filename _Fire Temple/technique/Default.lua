@@ -42,6 +42,33 @@ local theBoys = Def.ActorFrame {
 -- 		Some graphical doods 'n' dads 'n' doodads.
 --
 -------------------------------------------------------------------------------
+local numArrows = {["4th"] = 45,  ["32nd"] = 30,    ["48th"] = 15};		-- Number of arrows to instantiate
+local texArrows = {["4th"] = 0.0, ["32nd"] = 0.625, ["48th"] = 0.75};	-- Texture coordinate shifts
+
+local felysNotes = {};
+local stronk = 64;
+for quantColor,quantCount in pairs(numArrows) do
+	Trace("> making scary "..quantColor.." notes");
+	for i = 1,quantCount do
+		local pos = {math.cos(i/quantCount * 2 * math.pi) * stronk, math.sin(i/quantCount * 2 * math.pi) * stronk};
+		
+		Trace("> making scary "..quantColor.." note #"..i);
+		felysNotes[#felysNotes + 1] = NOTESKIN:LoadActorForNoteSkin("Down", "Tap Note", "cyber") .. {
+			Name = "ScaryNote"..quantColor.."_"..i,
+			InitCommand = function(self)
+				self:visible(true)
+					:xy(sw/2 + pos[1], sh/2 + pos[2])
+					:texturetranslate(texArrows[quantColor], 0);
+			end,
+		};
+		Trace(">>> made scary "..quantColor.." note #"..i);
+	end
+	stronk = stronk + 64;
+end
+
+for i = 1,#felysNotes do
+--	table.insert(theBoys, felysNotes[i]);
+end
 
 -------------------------------------------------------------------------------
 --
@@ -68,20 +95,13 @@ local enjoyGfxHQ = Def.Quad {
 		local overtime = GAMESTATE:GetSongBeat();
 		
 		-- TODO: this assumes the effect applies over a constant BPM section!!
-		local BPS = GAMESTATE:GetSongBPS();
-		
-		-- take time to smell the rosetations
-		local enjoyTheta = overtime * math.pi / 2.0;
-		local enjoyRadius = 32.0;
-	
+		local BPS = GAMESTATE:GetSongBPS();	
 		
 		-- Who's interesting today?
 		if overtime >=  0.0 and fgcurcommand ==  0 then
-			-- Hide the actual playfields. Let the proxies do the work.
 			for i,v in ipairs(plr) do
 				if v then
-					v:visible(false)
-					 :decelerate(16.0 / BPS):y(sh/2 - 30):z(0);
+					v:decelerate(16.0 / BPS):y(sh/2 - 30):z(0);
 				end
 			end
 			
