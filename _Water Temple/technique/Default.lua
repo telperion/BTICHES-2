@@ -79,6 +79,7 @@ for i = 1,#oneStripVertices do
 end
 
 local allVertices = {};
+local morphedVertices = {};
 -- Lua with that stealth shallow copy. fuck thou and the referential horse thee rode in on
 deepcopy = function(orig)
     local orig_type = type(orig)
@@ -139,6 +140,8 @@ local enjoyBG = Def.ActorFrame{
 --				Trace("## ["..i.."][3] = {"..oneStripVertices[i][3][1]..", "..oneStripVertices[i][3][2].."}!");
 			end
 		end
+		
+		morphedVertices = deepcopy(allVertices);
 	end,
 	MorphCommand = function(self)
 		local BPS = GAMESTATE:GetSongBPS();
@@ -152,21 +155,20 @@ local enjoyBG = Def.ActorFrame{
 			end
 		end
 		
-		local vertMorph = deepcopy(allVertices);		
 		for r = 1,enjoyBGFieldHeight*2 do
-			local osv = vertMorph[r];
+			local osv = morphedVertices[r];
 			for i = 1,#osv do 
 				if r == 1 or (i+r) % 2 == 1 then				
 					osv[i][3] = BTIUtil_ScaleTex(osv[i][1][1], osv[i][1][2]);
 					osv[i][3][1] = osv[i][3][1] + 0.8 * (math.random() - 0.5) * (sw/tw) / enjoyBGFieldWidth;
 					osv[i][3][2] = osv[i][3][2] + 0.4 * (math.random() - 0.5) * (sh/th) / enjoyBGFieldHeight;
 				else
-					osv[i][3] = vertMorph[r-1][i][3];
-				end				
+					osv[i][3] = morphedVertices[r-1][i][3];
+				end
 				
-				Trace("## ["..i.."][1] = {"..osv[i][1][1]..", "..osv[i][1][2]..", "..osv[i][1][3].."}!");
-				Trace("## ["..i.."][2] = {"..osv[i][2][1]..", "..osv[i][2][2]..", "..osv[i][2][3]..", "..osv[i][2][4].."}!");
-				Trace("## ["..i.."][3] = {"..osv[i][3][1]..", "..osv[i][3][2].."}!");
+--				Trace("## ["..i.."][1] = {"..osv[i][1][1]..", "..osv[i][1][2]..", "..osv[i][1][3].."}!");
+--				Trace("## ["..i.."][2] = {"..osv[i][2][1]..", "..osv[i][2][2]..", "..osv[i][2][3]..", "..osv[i][2][4].."}!");
+--				Trace("## ["..i.."][3] = {"..osv[i][3][1]..", "..osv[i][3][2].."}!");
 
 			end
 			if self:getaux() == 0 then
@@ -178,10 +180,17 @@ local enjoyBG = Def.ActorFrame{
 			end
 		end		
 		
-		self:sleep(4.0 / BPS)
+		self:sleep(2.0 / BPS)
 			:aux(self:getaux() == 0 and 1 or 0)
+			:queuecommand("Morph2");
+	end,
+	Morph2Command = function(self)			
+		local BPS = GAMESTATE:GetSongBPS();
+		
+		morphedVertices = deepcopy(allVertices);
+		self:sleep(2.0 / BPS)
 			:queuecommand("Morph");
-	end
+	end	
 };
 for r = 1,2*enjoyBGFieldHeight do
 	enjoyBG[#enjoyBG + 1] = Def.ActorMultiVertex {
@@ -268,7 +277,7 @@ local enjoyBGTex = Def.ActorFrameTexture {
 			self:SetWidth(sw)
 				:SetHeight(sh)
 				:xy(sw/2, sh/2)
-				:diffuse({1.0, 1.0, 1.0, 0.5});
+				:diffuse({1.0, 1.0, 1.0, 0.7});
 		end
 	},
 	Def.ActorProxy {Name = "P1Clone"},
@@ -428,7 +437,7 @@ local enjoyGfxHQ = Def.Quad {
 			for i = 1,2 do
 				local sideSign = (i == 2) and 1 or -1;
 				self:GetParent():GetChild("P"..i.."FrameA"):x(sw/2 + enjoyRadius * sideSign * math.cos(enjoyTheta));
-				self:GetParent():GetChild("P"..i.."FrameA"):z(       enjoyRadius * sideSign * math.sin(enjoyTheta));
+				self:GetParent():GetChild("P"..i.."FrameA"):z(       enjoyRadius * sideSign * math.sin(enjoyTheta) + enjoyRadius);
 			end
 			
 			if overtime >= 160.0 then
@@ -440,7 +449,7 @@ local enjoyGfxHQ = Def.Quad {
 			for i = 1,2 do
 				local sideSign = (i == 2) and 1 or -1;
 				self:GetParent():GetChild("P"..i.."FrameA"):x(sw/2 + enjoyRadius * sideSign * math.cos(enjoyTheta));
-				self:GetParent():GetChild("P"..i.."FrameA"):z(     - enjoyRadius * sideSign * math.sin(enjoyTheta));
+				self:GetParent():GetChild("P"..i.."FrameA"):z(     - enjoyRadius * sideSign * math.sin(enjoyTheta) + enjoyRadius);
 			end
 			
 			if overtime >= 191.0 then				
@@ -456,7 +465,7 @@ local enjoyGfxHQ = Def.Quad {
 			for i = 1,2 do
 				local sideSign = (i == 2) and 1 or -1;
 				self:GetParent():GetChild("P"..i.."FrameA"):y(sh/2 + enjoyRadius * sideSign * math.cos(enjoyTheta));
-				self:GetParent():GetChild("P"..i.."FrameA"):z(       enjoyRadius * sideSign * math.sin(enjoyTheta));
+				self:GetParent():GetChild("P"..i.."FrameA"):z(       enjoyRadius * sideSign * math.sin(enjoyTheta) + enjoyRadius);
 			end
 			
 			if overtime >= 224.0 then
@@ -468,39 +477,60 @@ local enjoyGfxHQ = Def.Quad {
 			for i = 1,2 do
 				local sideSign = (i == 2) and 1 or -1;
 				self:GetParent():GetChild("P"..i.."FrameA"):y(sh/2 + enjoyRadius * sideSign * math.cos(enjoyTheta)):x(sw/2);
-				self:GetParent():GetChild("P"..i.."FrameA"):z(     - enjoyRadius * sideSign * math.sin(enjoyTheta));
+				self:GetParent():GetChild("P"..i.."FrameA"):z(     - enjoyRadius * sideSign * math.sin(enjoyTheta) + enjoyRadius);
 			end
 			
 			if overtime >= 252.0 then				
 				for i = 1,2 do
 					local sideSign = (i == 2) and 1 or -1;
-					self:GetParent():GetChild("P"..i.."FrameA"):decelerate(4.0 / BPS):xy(sw/2, sh/2):z(0);
+					self:GetParent():GetChild("P"..i.."FrameA"):decelerate(3.0 / BPS):xy(sw/2, sh/2):z(0);
 				end
 				fgcurcommand = fgcurcommand + 1;
 			end
+		end		
+		if overtime >= 255.0  and fgcurcommand ==  7 then			
+			-- switch to the water again
+			for i = 1,2 do
+				local sideSign = (i == 2) and 1 or -1;				
+									if plr[i] then   plr[i]:finishtweening():x(sw/2); end
+				enjoyBGTexReflect:GetChild("P"..i.."Clone"):visible(true);
+				self:GetParent():GetChild("P"..i.."FrameA"):visible(false);
+			end
+			
+			fgcurcommand = fgcurcommand + 1;
 		end
-		if overtime >= 384.0  and fgcurcommand ==  7 then			
+		if overtime >= 384.0  and fgcurcommand ==  8 then			
 			-- YO SKRILL DROP IT HARD
+			for i,v in ipairs(plr) do
+				local sideGuide = (i == 2) and 0.75 or 0.25;
+				if v then
+					v:visible(false):x(sideGuide * sw);
+				end
+			end
+			
 			for i = 1,2 do
 				local proxyNames = {'A', 'B', 'C', 'D'};
 				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP'..i);
 				local sideSign = (i == 2) and 1 or -1;
+				
 				for proxyIndex,proxyID in ipairs(proxyNames) do
 					local thisProxyFrame = self:GetParent():GetChild("P"..i.."Frame"..proxyID);
 					local thisProxyClone = thisProxyFrame:GetChild(  "P"..i.."Clone"..proxyID);
 					thisProxyClone:y(-sh * 0.75 - McCoy:GetY());
 					thisProxyFrame:visible(true)
-								  :y( sh * 1.25 - 30)
+								  :xy(sw/2, sh * 1.25 - 30)
 								  :baserotationx(180 * (2 * proxyIndex - i) / #proxyNames)
 								  :baserotationz(10 * sideSign)
 								  :linear(32.0 / BPS)
 								  :rotationx(180 * 32 / #proxyNames);
 				end
+				
+				enjoyBGTexReflect:GetChild("P"..i.."Clone"):visible(false);
 			end
 			
 			fgcurcommand = fgcurcommand + 1;
 		end
-		if overtime >= 416.0  and fgcurcommand ==  8 then			
+		if overtime >= 416.0  and fgcurcommand ==  9 then			
 			-- YO SKROPP DROP IT HROP
 			for i = 1,2 do
 				local proxyNames = {'A', 'B', 'C', 'D'};
@@ -514,7 +544,7 @@ local enjoyGfxHQ = Def.Quad {
 			
 			fgcurcommand = fgcurcommand + 1;
 		end
-		if overtime >= 444.0  and fgcurcommand ==  9 then			
+		if overtime >= 444.0  and fgcurcommand == 10 then			
 			-- YR SKRKS DON'T DR THAT ANY MORE
 			for i = 1,2 do
 				local proxyNames = {'A', 'B', 'C', 'D'};
@@ -532,16 +562,16 @@ local enjoyGfxHQ = Def.Quad {
 			
 			fgcurcommand = fgcurcommand + 1;
 		end
-		if overtime >= 448.0  and fgcurcommand == 10 then			
+		if overtime >= 448.0  and fgcurcommand == 11 then			
 			-- around and around! shit boy
 			for i = 1,2 do
 				local proxyNames = {'A', 'B', 'C', 'D'};
 				for proxyIndex,proxyID in ipairs(proxyNames) do
-					local sidePhase = (i - proxyIndex * 0.5) * math.pi;
+					local sidePhase = (i * 0.5 - proxyIndex) * math.pi;
 					local thisProxyFrame = self:GetParent():GetChild("P"..i.."Frame"..proxyID);
 					thisProxyFrame:visible(proxyIndex < 3)
 								  :x(sw/2 + enjoyRadius * math.cos(enjoyTheta + sidePhase))
-								  :z(       enjoyRadius * math.sin(enjoyTheta + sidePhase));
+								  :z(       enjoyRadius * math.sin(enjoyTheta + sidePhase) + enjoyRadius);
 				end
 			end
 			
@@ -549,19 +579,19 @@ local enjoyGfxHQ = Def.Quad {
 				fgcurcommand = fgcurcommand + 1;
 			end
 		end
-		if overtime >= 480.0  and fgcurcommand == 11 then			
+		if overtime >= 480.0  and fgcurcommand == 12 then			
 			-- shit boy! around and around
 			for i = 1,2 do
 				local proxyNames = {'A', 'B'};
 				for proxyIndex,proxyID in ipairs(proxyNames) do
-					local sidePhase = (i - proxyIndex * 0.5) * math.pi;
+					local sidePhase = (i * 0.5 - proxyIndex) * math.pi;
 					local thisProxyFrame = self:GetParent():GetChild("P"..i.."Frame"..proxyID);
 					if overtime >= 511.0 then
 						thisProxyFrame:decelerate(1.0 / BPS)
 									  :xy(sw/2, sh/2 + enjoyRadius * math.cos(sidePhase));
 					else
 						thisProxyFrame:x(sw/2 + enjoyRadius * math.cos(enjoyTheta + sidePhase))
-									  :z(     - enjoyRadius * math.sin(enjoyTheta + sidePhase));
+									  :z(     - enjoyRadius * math.sin(enjoyTheta + sidePhase) + enjoyRadius);
 					end
 				end
 			end
@@ -570,15 +600,15 @@ local enjoyGfxHQ = Def.Quad {
 				fgcurcommand = fgcurcommand + 1;
 			end
 		end
-		if overtime >= 512.0  and fgcurcommand == 12 then			
+		if overtime >= 512.0  and fgcurcommand == 13 then			
 			-- up and down! shit boy
 			for i = 1,2 do
 				local proxyNames = {'A', 'B'};
 				for proxyIndex,proxyID in ipairs(proxyNames) do
-					local sidePhase = (i - proxyIndex * 0.5) * math.pi;
+					local sidePhase = (i * 0.5 - proxyIndex) * math.pi;
 					local thisProxyFrame = self:GetParent():GetChild("P"..i.."Frame"..proxyID);
 					thisProxyFrame:y(sh/2 + enjoyRadius * math.cos(enjoyTheta + sidePhase))
-								  :z(       enjoyRadius * math.sin(enjoyTheta + sidePhase));
+								  :z(       enjoyRadius * math.sin(enjoyTheta + sidePhase) + enjoyRadius);
 				end
 			end
 			
@@ -586,12 +616,12 @@ local enjoyGfxHQ = Def.Quad {
 				fgcurcommand = fgcurcommand + 1;
 			end
 		end
-		if overtime >= 544.0  and fgcurcommand == 13 then			
+		if overtime >= 544.0  and fgcurcommand == 14 then			
 			-- shit boy! up and down
 			for i = 1,2 do
 				local proxyNames = {'A', 'B'};
 				for proxyIndex,proxyID in ipairs(proxyNames) do
-					local sidePhase = (i - proxyIndex * 0.5) * math.pi;
+					local sidePhase = (i * 0.5 - proxyIndex) * math.pi;
 					local thisProxyFrame = self:GetParent():GetChild("P"..i.."Frame"..proxyID);
 					if overtime >= 564.0 then
 						thisProxyFrame:z(0)
@@ -599,7 +629,7 @@ local enjoyGfxHQ = Def.Quad {
 									  :xy(sw * (-0.25 + 0.5 * i), sh/2);
 					else
 						thisProxyFrame:y(sh/2 + enjoyRadius * math.cos(enjoyTheta + sidePhase))
-									  :z(     - enjoyRadius * math.sin(enjoyTheta + sidePhase));
+									  :z(     - enjoyRadius * math.sin(enjoyTheta + sidePhase) + enjoyRadius);
 					end
 				end
 			end
@@ -660,7 +690,7 @@ local modsTable = {
 --		{   0.0,	"Sudden",		 1.0,     2.0,	3}, 
 --		{   0.0,	"SuddenOffset",	 0.8,     2.0,	3}, 
 
-		{ 252.0,	"Flip",			 0.0,     3.0,	3}, 
+		{ 248.0,	"Flip",			 0.0,     7.0,	3}, 
 		{ 252.0,	"Centered",		 0.5,     3.0,	3}, 
 		{ 252.0,	"Hidden",		 0.9,     4.0,	3}, 
 		{ 252.0,	"Boost",		-3.0,     4.0,	3}, 
@@ -759,7 +789,7 @@ local modsTable = {
 		{ 381.5,	"Reverse",		 0.0,     2.0,	3}, 
 		{ 383.0,	"Centered",		 0.0,     1.0,	3}, 
 		{ 383.0,	"Sudden",		 1.0,     2.0,	3}, 
-		{ 383.0,	"SuddenOffset",	 0.8,     2.0,	3}, 
+		{ 383.0,	"SuddenOffset",	 1.0,     2.0,	3}, 
 		
 		{ 398.0,	"Drunk",		 0.5,     0.25,	1}, 
 		{ 398.0,	"Drunk",		-0.5,     0.25,	2}, 
@@ -777,8 +807,8 @@ local modsTable = {
 		{ 414.0,	"Dizzy",		-0.8,     0.25,	2}, 
 		{ 415.0,	"Dizzy",		 0.0,     1.0,	3}, 
 					
-		{ 432.0,	"Sudden",		 0.0,     4.0,	3}, 
-		{ 432.0,	"SuddenOffset",	 0.0,     2.0,	3}, 
+		{ 432.0,	"Sudden",		 0.0,     8.0,	3}, 
+		{ 432.0,	"SuddenOffset",	 0.0,     8.0,	3}, 
 		{ 440.0,	"Flip",			 0.25,    4.0,	3}, 
 		{ 440.0,	"Invert",		 0.25,    4.0,	3}, 
 		{ 445.0,	"Flip",			-0.25,    0.25,	3}, 
@@ -798,7 +828,7 @@ local modsTable = {
 		{ 576.0,	"Tornado",		-3.0,     3.0,	1}, 
 		{ 576.0,	"Tornado",		 3.0,     3.0,	2}, 
 		{ 576.0,	"Bumpy",		 3.0,     3.0,	3}, 
-		{ 576.0,	"Brake",		 1.0,     3.0,	3}, 
+		{ 576.0,	"Boost",		 3.0,     3.0,	3}, 
 		
 		
 	};
