@@ -37,6 +37,327 @@ local theBoys = Def.ActorFrame {
 
 
 
+
+-------------------------------------------------------------------------------
+--
+--		Weak sunset.
+--
+
+-- In terms of sw (x) and sh (y).
+-- First coordinate is center (xc, yc), second is size (width, height).
+local felysSunsetQuadsLight = {			
+	{{0.5,  0.5},  {1.3,  1.3}},		-- sky
+	{{0.61, 0.72}, {0.23, 0.2}},		-- sun (horizontal)
+	{{0.61, 0.72}, {0.15, 0.3}},		-- sun (vertical)
+	{{0.34, 0.65}, {0.25, 0.06}},		-- left cloud
+	{{0.78, 0.56}, {0.25, 0.06}},		-- right cloud
+	{{0.08, 0.75}, {0.34, 0.23}},		-- left squat hill
+	{{0.08, 0.75}, {0.17, 0.45}},		-- left tall hill
+	{{0.92, 0.8},  {0.34, 0.23}},		-- right squat hill
+	{{0.92, 0.8},  {0.17, 0.45}},		-- right tall hill
+	{{0.5,  0.9},  {1.3,  0.3}},		-- ground
+};
+
+local felysSunsetQuadsDark = {	
+	{{0.5,  0.5},  {1.3,  1.3}},		-- sky
+	{{0.61, 1.05}, {0.28, 0.2}},		-- sun (horizontal)
+	{{0.61, 1.05}, {0.18, 0.3}},		-- sun (vertical)
+	{{0.34, 0.62}, {0.25, 0.06}},		-- left cloud
+	{{0.78, 0.56}, {0.25, 0.06}},		-- right cloud
+	{{0.08, 0.75}, {0.34, 0.31}},		-- left squat hill
+	{{0.08, 0.75}, {0.23, 0.45}},		-- left tall hill
+	{{0.92, 0.8},  {0.34, 0.31}},		-- right squat hill
+	{{0.92, 0.8},  {0.23, 0.45}},		-- right tall hill
+	{{0.5,  0.9},  {1.3,  0.3}},		-- ground
+};
+
+local felysSunsetQuadsAngry = {			
+	{{0.5,  0.5},  {1.3,  1.3}},		-- sky
+	{{0.61, 0.72}, {0.23, 0.2}},		-- sun (horizontal)
+	{{0.61, 0.72}, {0.15, 0.3}},		-- sun (vertical)
+	{{0.34, 0.65}, {0.25, 0.06}},		-- left cloud
+	{{0.78, 0.56}, {0.25, 0.06}},		-- right cloud
+	{{0.08, 0.75}, {0.34, 0.23}},		-- left squat hill
+	{{0.08, 0.75}, {0.17, 0.45}},		-- left tall hill
+	{{0.92, 0.8},  {0.34, 0.23}},		-- right squat hill
+	{{0.92, 0.8},  {0.17, 0.45}},		-- right tall hill
+	{{0.5,  0.9},  {1.3,  0.3}},		-- ground
+};
+
+-- {R, G, B, A}
+-- {LT, RT, RB, LB}
+local felysSunsetColorsLight = {			
+	{	{0.0, 0.0, 0.0, 0.3},
+		{0.0, 0.0, 0.0, 0.3},
+		{0.4, 0.3, 0.3, 1.0},
+		{0.4, 0.3, 0.3, 1.0}	},		-- sky
+	{	{0.8, 0.7, 0.0, 1.0},
+		{0.8, 0.7, 0.0, 1.0},
+		{0.8, 0.5, 0.0, 1.0},
+		{0.8, 0.5, 0.0, 1.0}	},		-- sun (horizontal)
+	{	{0.8, 0.75, 0.0, 1.0},
+		{0.8, 0.75, 0.0, 1.0},
+		{0.8, 0.45, 0.0, 1.0},
+		{0.8, 0.45, 0.0, 1.0}	},		-- sun (vertical)
+	{	{1.0, 0.3, 0.0, 0.2},
+		{1.0, 0.3, 0.0, 0.2},
+		{1.0, 0.0, 0.0, 0.5},
+		{1.0, 0.0, 0.0, 0.5}	},		-- left cloud
+	{	{1.0, 0.3, 0.0, 0.2},
+		{1.0, 0.3, 0.0, 0.2},
+		{1.0, 0.0, 0.0, 0.5},
+		{1.0, 0.0, 0.0, 0.5}	},		-- right cloud
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 0.7},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- left squat hill
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 0.7},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- left tall hill
+	{	{0.0, 0.0, 0.0, 0.7},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- right squat hill
+	{	{0.0, 0.0, 0.0, 0.7},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- right tall hill
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- ground
+};
+
+-- {R, G, B, A}
+-- {LT, RT, RB, LB}
+local felysSunsetColorsDark = {			
+	{	{0.0, 0.0, 0.0, 0.3},
+		{0.0, 0.0, 0.0, 0.3},
+		{0.2, 0.1, 0.1, 0.5},
+		{0.2, 0.1, 0.1, 0.5}	},		-- sky
+	{	{0.8, 0.3, 0.0, 1.0},
+		{0.8, 0.3, 0.0, 1.0},
+		{0.8, 0.1, 0.0, 1.0},
+		{0.8, 0.1, 0.0, 1.0}	},		-- sun (horizontal)
+	{	{0.8, 0.35, 0.0, 1.0},
+		{0.8, 0.35, 0.0, 1.0},
+		{0.8, 0.05, 0.0, 1.0},
+		{0.8, 0.05, 0.0, 1.0}	},		-- sun (vertical)
+	{	{0.7, 0.3, 0.3, 0.1},
+		{0.7, 0.3, 0.3, 0.1},
+		{1.0, 0.0, 0.0, 0.2},
+		{1.0, 0.0, 0.0, 0.2}	},		-- left cloud
+	{	{0.7, 0.3, 0.3, 0.1},
+		{0.7, 0.3, 0.3, 0.1},
+		{1.0, 0.0, 0.0, 0.2},
+		{1.0, 0.0, 0.0, 0.2}	},		-- right cloud
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- left squat hill
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- left tall hill
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- right squat hill
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- right tall hill
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- ground
+};
+
+local felysSunsetColorsAngry = {			
+	{	{0.0, 0.0, 0.0, 0.3},
+		{0.0, 0.0, 0.0, 0.3},
+		{0.4, 0.3, 0.3, 1.0},
+		{0.4, 0.3, 0.3, 1.0}	},		-- sky
+	{	{0.8, 0.0, 0.5, 1.0},
+		{0.8, 0.0, 0.5, 1.0},
+		{0.8, 0.0, 0.2, 1.0},
+		{0.8, 0.0, 0.2, 1.0}	},		-- sun (horizontal)
+	{	{0.8, 0.0, 0.55, 1.0},
+		{0.8, 0.0, 0.55, 1.0},
+		{0.8, 0.0, 0.15, 1.0},
+		{0.8, 0.0, 0.15, 1.0}	},		-- sun (vertical)
+	{	{1.0, 0.3, 0.0, 0.2},
+		{1.0, 0.3, 0.0, 0.2},
+		{1.0, 0.0, 0.3, 0.5},
+		{1.0, 0.0, 0.0, 0.5}	},		-- left cloud
+	{	{1.0, 0.3, 0.0, 0.2},
+		{1.0, 0.3, 0.0, 0.2},
+		{1.0, 0.0, 0.0, 0.5},
+		{1.0, 0.0, 0.3, 0.5}	},		-- right cloud
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 0.7},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- left squat hill
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 0.7},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- left tall hill
+	{	{0.0, 0.0, 0.0, 0.7},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- right squat hill
+	{	{0.0, 0.0, 0.0, 0.7},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- right tall hill
+	{	{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- ground
+};
+
+local felysConstructVertices = function(brightness, disturbance)
+	local srcQuads  = nil;
+	local srcColors = nil;
+	if brightness > 0.5 then
+		srcQuads  = felysSunsetQuadsLight;
+		srcColors = felysSunsetColorsLight;
+	elseif brightness > -0.5 then 
+		srcQuads  = felysSunsetQuadsDark;
+		srcColors = felysSunsetColorsDark;
+	else
+		srcQuads  = felysSunsetQuadsAngry;
+		srcColors = felysSunsetColorsAngry;
+	end
+	local verts = {};
+	
+	for i = 1,#srcQuads do
+		if not disturbance then
+			disturbThisX = 1;
+			disturbThisY = 1;
+		else
+			Trace("Disturbance "..i..": "..disturbance[i]);
+			disturbThisX = 1 - disturbance[i]*0.2;
+			disturbThisY = 1 + disturbance[i]*0.2;
+		end
+		local ctsz = srcQuads[i];
+		
+		for corner = 1,4 do
+			local xsign = (corner == 2 or corner == 3) and 1 or -1;
+			local ysign = (corner == 3 or corner == 4) and 1 or -1;
+			local pos = {(ctsz[1][1] + disturbThisX*xsign*ctsz[2][1]/2) * sw, (ctsz[1][2] + disturbThisY*ysign*ctsz[2][2]/2) * sh, 0}
+			local col = srcColors[i][corner];
+			verts[#verts + 1] = {pos, col};		
+			
+--			Trace("## ["..i.."][1] = {"..verts[i][1][1]..", "..verts[i][1][2]..", "..verts[i][1][3].."}!");
+--			Trace("## ["..i.."][2] = {"..verts[i][2][1]..", "..verts[i][2][2]..", "..verts[i][2][3]..", "..verts[i][2][4].."}!");
+
+		end
+	end
+	
+	return verts
+end
+
+local felysBG = Def.ActorMultiVertex {
+	Name = "felysBG",
+	InitCommand = function(self)
+		local verts = felysConstructVertices(1, nil);
+		self:aux(1)
+			:xy(0, 0)
+			:draworder(-100)
+			:SetVertices(verts)
+			:SetDrawState{Mode = "DrawMode_Quads", First = 1, Num = -1}
+			:visible(true);
+	end,
+	MorphCommand = function(self)
+		Trace("Morphing!");
+		local BPS = GAMESTATE:GetSongBPS();	
+		local randos = {};
+		for i = 1,#felysSunsetQuadsLight do
+			randos[#randos + 1] = math.random() - 0.5;
+		end
+		local verts = felysConstructVertices(self:getaux(), randos);
+		self:decelerate(2.0 / BPS)
+			:SetVertices(verts);
+	end,
+	DimCommand = function(self)
+		Trace("Dimming!");
+		local BPS = GAMESTATE:GetSongBPS();	
+		local verts = felysConstructVertices(0, nil);
+		self:aux(0)
+			:smooth(64.0 / BPS)
+			:SetVertices(verts);
+	end,
+	BrightCommand = function(self)
+		Trace("Brightening!");
+		local BPS = GAMESTATE:GetSongBPS();	
+		local verts = felysConstructVertices(1, nil);
+		self:aux(1)
+			:smooth(64.0 / BPS)
+			:SetVertices(verts);
+	end,
+	AngerCommand = function(self)
+		Trace("Angering!");
+		local BPS = GAMESTATE:GetSongBPS();	
+		local verts = felysConstructVertices(-1, nil);
+		self:aux(-1)
+			:smooth(64.0 / BPS)
+			:SetVertices(verts);
+	end
+}
+table.insert(theBoys, felysBG);
+
+local felysOL = Def.Quad {
+	Name = "felysOL",
+	InitCommand = function(self)
+		local verts = felysConstructVertices(1, nil);
+		self:SetWidth(sw)
+			:SetHeight(sh)
+			:Center()
+			:draworder(100)
+			:diffuse(1.0, 1.0, 1.0, 1.0)
+			:blend("BlendMode_Modulate")
+			:visible(true);
+	end,
+	BassCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		self:decelerate(1.0/BPS)
+			:diffuse(1.0, 0.5, 0.5, 1.0)
+			:accelerate(1.0/BPS)
+			:diffuse(1.0, 1.0, 1.0, 1.0);					
+	end
+}
+table.insert(theBoys, felysOL);
+
+--
+--		Proxy up the players.
+--
+local DefaultProxyP1 = Def.ActorProxy {					
+	Name = "DefaultProxyP1",
+	BeginCommand=function(self)
+		local p = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+		if p then self:SetTarget(p); else self:hibernate(1573); end
+	end,
+	OnCommand=function(self)
+		self:xy(0, 0);
+	end
+}
+table.insert(theBoys, DefaultProxyP1);
+
+local DefaultProxyP2 = Def.ActorProxy {					
+	Name = "DefaultProxyP2",
+	BeginCommand=function(self)
+		local p = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+		if p then self:SetTarget(p); else self:hibernate(1573); end
+	end,
+	OnCommand=function(self)
+		self:xy(0, 0);
+	end
+}
+table.insert(theBoys, DefaultProxyP2);
+
+
 -------------------------------------------------------------------------------
 --
 -- 		Some graphical doods 'n' dads 'n' doodads.
@@ -52,7 +373,7 @@ for quantColor,quantCount in pairs(numArrows) do
 	for i = 1,quantCount do
 		local pos = {math.cos(i/quantCount * 2 * math.pi) * stronk, math.sin(i/quantCount * 2 * math.pi) * stronk};
 		
-		Trace("> making scary "..quantColor.." note #"..i);
+--		Trace("> making scary "..quantColor.." note #"..i);
 		felysNotes[#felysNotes + 1] = NOTESKIN:LoadActorForNoteSkin("Down", "Tap Note", "cyber") .. {
 			Name = "ScaryNote"..quantColor.."_"..i,
 			InitCommand = function(self)
@@ -61,13 +382,108 @@ for quantColor,quantCount in pairs(numArrows) do
 					:texturetranslate(texArrows[quantColor], 0);
 			end,
 		};
-		Trace(">>> made scary "..quantColor.." note #"..i);
+--		Trace(">>> made scary "..quantColor.." note #"..i);
 	end
+	Trace(">>> made "..quantCount.." scary "..quantColor.." notes");
 	stronk = stronk + 64;
 end
 
 for i = 1,#felysNotes do
 --	table.insert(theBoys, felysNotes[i]);
+end
+
+
+-------------------------------------------------------------------------------
+--
+--		Some ghosting!
+--
+local ghostColors = {{1.0, 0.5, 0.0, 1.0},
+					 {1.0, 0.0, 0.0, 1.0},
+					 {1.0, 0.0, 0.5, 1.0}};
+local nGhosts = #ghostColors;
+for pn = 1,2 do
+	for ghostIndex = 1,nGhosts do
+		local aftMemoryName = "MemoryP"..pn.."_"..ghostIndex;
+		local aftOutputName = "OutputP"..pn.."_"..ghostIndex;
+		local ghostBoyName  = "GhostP" ..pn.."_"..ghostIndex;
+		local aftOutSprName = "SpriteP"..pn.."_"..ghostIndex;
+		
+		local aftMemory = 
+			Def.ActorFrameTexture{
+				Name = aftMemoryName,
+				InitCommand=function(self)
+					self:SetTextureName( self:GetName() )
+						:SetWidth( sw )
+						:SetHeight( sh )
+						:EnableAlphaBuffer( true )
+						:Create();
+				end,
+				Def.Sprite{Name = "Sprite"; InitCommand=cmd(Center) }
+			};
+
+		local aftOutput = 
+			Def.ActorFrameTexture{
+				Name = aftOutputName,
+				InitCommand=function(self)
+					self:SetTextureName( self:GetName() )
+						:SetWidth( sw ) -- change these to simulate textures being drawn away from source
+						:SetHeight( sh ) -- change these to simulate textures being drawn away from source
+						:EnableAlphaBuffer( true )
+						:Create();
+						
+					myMemoryName = "Memory"..string.match(self:GetName(), "Output(P[12]_[0-9]+)");
+					Trace(myMemoryName);
+					self:GetParent():GetChild(myMemoryName):GetChild("Sprite"):SetTexture( self:GetTexture() );
+				end,
+				Def.Sprite{	
+					Name = aftOutSprName,
+					Texture = aftMemoryName,
+					InitCommand=function(self)
+					end,
+					BeginCommand=function(self)
+						local myColorIndex = tonumber(string.match(self:GetName(), "SpriteP[12]_([0-9]+)"));
+						self:Center()
+							:rotationz(myColorIndex * 1 - 2)
+							:zoom(1.005)
+							:diffuse({1,1,1,0.98})
+							:visible(true);
+					end,
+					StopTrailMessageCommand=function(self)
+						self:diffuse({1,1,1,0.0});
+					end,
+					StartTrailMessageCommand=function(self)
+						self:diffuse({1,1,1,0.98});
+					end
+				},
+				Def.ActorProxy {					
+					Name = "ProxyP"..pn,
+					BeginCommand=function(self)
+						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP'..string.match(self:GetName(), "ProxyP([12])"));
+						self:SetTarget(p);
+					end,
+					OnCommand=function(self)
+						self:xy(0, 0);
+					end
+				}
+			};
+			
+		local ghostBoy = 
+			Def.Sprite{
+				Name = ghostBoyName,
+				Texture = aftOutputName,
+				InitCommand=cmd(Center),
+				OnCommand=function(self)
+					local myColorIndex = tonumber(string.match(self:GetName(), "GhostP[12]_([0-9]+)"));
+					Trace("myColorIndex: "..myColorIndex);
+					self:blend("BlendMode_Add")
+						:diffuse(ghostColors[myColorIndex]);
+				end
+			};
+			
+--		table.insert(theBoys, aftMemory);
+--		table.insert(theBoys, aftOutput);
+--		table.insert(theBoys, ghostBoy);
+	end
 end
 
 -------------------------------------------------------------------------------
@@ -99,12 +515,20 @@ local enjoyGfxHQ = Def.Quad {
 		
 		-- Who's interesting today?
 		if overtime >=  0.0 and fgcurcommand ==  0 then
+			-- Hide the actual playfields. Let the proxies do the work.
 			for i,v in ipairs(plr) do
 				if v then
-					v:decelerate(16.0 / BPS):y(sh/2 - 30):z(0);
+					v:visible(false)
+					 :decelerate(16.0 / BPS)
+					 :y(sh/2 - 30)
+					 :z(0);
 				end
 			end
-			
+			self:GetParent():GetChild("felysBG"):queuecommand("Dim")
+												:queuecommand("Anger");
+			self:GetParent():GetChild("felysOL"):sleep(4.0/BPS)
+												:queuecommand("Bass");
+				
 			fgcurcommand = fgcurcommand + 1;
 		end
 					
@@ -134,6 +558,8 @@ local modsTable = {
 	-- [5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
 		
 		{   0.0,	"ScrollSpeed",	 cspd,    2.0,	3}, 
+		
+		{   8.0,	"Dark",			  1.0,    4.0,	3}, 
 		
 		
 	};
