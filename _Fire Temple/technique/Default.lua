@@ -19,7 +19,8 @@ local screen;
 local nextbeat = 0;
 local DEG_TO_RAD = math.pi / 180.0;
 
-
+local cspd = 3.0;
+local cspdA = 1.8;
 
 local theBoys = Def.ActorFrame {
 	InitCommand = function(self)
@@ -72,6 +73,19 @@ local felysSunsetQuadsDark = {
 };
 
 local felysSunsetQuadsAngry = {			
+	{{0.5,  0.5},  {1.3,  1.3}},		-- sky
+	{{0.61, 0.72}, {0.23, 0.2}},		-- sun (horizontal)
+	{{0.61, 0.72}, {0.15, 0.3}},		-- sun (vertical)
+	{{0.34, 0.65}, {0.25, 0.06}},		-- left cloud
+	{{0.78, 0.56}, {0.25, 0.06}},		-- right cloud
+	{{0.08, 0.75}, {0.34, 0.23}},		-- left squat hill
+	{{0.08, 0.75}, {0.17, 0.45}},		-- left tall hill
+	{{0.92, 0.8},  {0.34, 0.23}},		-- right squat hill
+	{{0.92, 0.8},  {0.17, 0.45}},		-- right tall hill
+	{{0.5,  0.9},  {1.3,  0.3}},		-- ground
+};
+
+local felysSunsetQuadsFree = {			
 	{{0.5,  0.5},  {1.3,  1.3}},		-- sky
 	{{0.61, 0.72}, {0.23, 0.2}},		-- sun (horizontal)
 	{{0.61, 0.72}, {0.15, 0.3}},		-- sun (vertical)
@@ -217,18 +231,64 @@ local felysSunsetColorsAngry = {
 		{0.0, 0.0, 0.0, 1.0}	},		-- ground
 };
 
+local felysSunsetColorsFree = {			
+	{	{0.0, 0.3, 1.0, 1.0},
+		{0.0, 0.3, 1.0, 1.0},
+		{0.4, 0.8, 1.0, 1.0},
+		{0.4, 0.8, 1.0, 1.0}	},		-- sky
+	{	{1.0, 0.7, 0.0, 1.0},
+		{1.0, 0.7, 0.0, 1.0},
+		{1.0, 0.5, 0.0, 1.0},
+		{1.0, 0.5, 0.0, 1.0}	},		-- sun (horizontal)
+	{	{1.0, 0.75, 0.0, 1.0},
+		{1.0, 0.75, 0.0, 1.0},
+		{1.0, 0.45, 0.0, 1.0},
+		{1.0, 0.45, 0.0, 1.0}	},		-- sun (vertical)
+	{	{0.7, 0.7, 0.7, 0.8},
+		{0.7, 0.7, 0.7, 0.8},
+		{1.0, 1.0, 1.0, 0.5},
+		{1.0, 1.0, 0.8, 0.5}	},		-- left cloud
+	{	{0.7, 0.7, 0.7, 0.8},
+		{0.7, 0.7, 0.7, 0.8},
+		{1.0, 1.0, 0.8, 0.5},
+		{1.0, 1.0, 1.0, 0.5}	},		-- right cloud
+	{	{0.0, 0.4, 0.0, 1.0},
+		{0.0, 0.4, 0.0, 0.7},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- left squat hill
+	{	{0.0, 0.6, 0.0, 1.0},
+		{0.0, 0.6, 0.0, 0.7},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- left tall hill
+	{	{0.0, 0.4, 0.0, 0.7},
+		{0.0, 0.4, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- right squat hill
+	{	{0.0, 0.6, 0.0, 0.7},
+		{0.0, 0.6, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- right tall hill
+	{	{0.0, 0.2, 0.0, 1.0},
+		{0.0, 0.2, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0},
+		{0.0, 0.0, 0.0, 1.0}	},		-- ground
+};
+
 local felysConstructVertices = function(brightness, disturbance)
 	local srcQuads  = nil;
 	local srcColors = nil;
-	if brightness > 0.5 then
-		srcQuads  = felysSunsetQuadsLight;
-		srcColors = felysSunsetColorsLight;
-	elseif brightness > -0.5 then 
-		srcQuads  = felysSunsetQuadsDark;
-		srcColors = felysSunsetColorsDark;
-	else
+	if brightness > 2.5 then
+		srcQuads  = felysSunsetQuadsFree;
+		srcColors = felysSunsetColorsFree;
+	elseif brightness > 1.5 then
 		srcQuads  = felysSunsetQuadsAngry;
 		srcColors = felysSunsetColorsAngry;
+	elseif brightness > 0.5 then
+		srcQuads  = felysSunsetQuadsLight;
+		srcColors = felysSunsetColorsLight;
+	else 
+		srcQuads  = felysSunsetQuadsDark;
+		srcColors = felysSunsetColorsDark;
 	end
 	local verts = {};
 	
@@ -278,15 +338,28 @@ local felysBG = Def.ActorMultiVertex {
 			randos[#randos + 1] = math.random() - 0.5;
 		end
 		local verts = felysConstructVertices(self:getaux(), randos);
+		self:decelerate(4.0 / BPS)
+			:SetVertices(verts)
+			:queuecommand("Morph");
+	end,
+	FastMorphCommand = function(self)
+		Trace("Quickly Morphing!");
+		local BPS = GAMESTATE:GetSongBPS();	
+		local randos = {};
+		for i = 1,#felysSunsetQuadsLight do
+			randos[#randos + 1] = math.random() - 0.5;
+		end
+		local verts = felysConstructVertices(self:getaux(), randos);
 		self:decelerate(2.0 / BPS)
-			:SetVertices(verts);
+			:SetVertices(verts)
+			:queuecommand("Morph");
 	end,
 	DimCommand = function(self)
 		Trace("Dimming!");
 		local BPS = GAMESTATE:GetSongBPS();	
 		local verts = felysConstructVertices(0, nil);
 		self:aux(0)
-			:smooth(64.0 / BPS)
+			:smooth(32.0 / BPS)
 			:SetVertices(verts);
 	end,
 	BrightCommand = function(self)
@@ -300,12 +373,29 @@ local felysBG = Def.ActorMultiVertex {
 	AngerCommand = function(self)
 		Trace("Angering!");
 		local BPS = GAMESTATE:GetSongBPS();	
-		local verts = felysConstructVertices(-1, nil);
-		self:aux(-1)
-			:smooth(64.0 / BPS)
+		local verts = felysConstructVertices(2, nil);
+		self:aux(2)
+			:smooth(80.0 / BPS)
 			:SetVertices(verts);
-	end
+	end,
+	FreeCommand = function(self)
+		Trace("Flying!");
+		local BPS = GAMESTATE:GetSongBPS();	
+		local verts = felysConstructVertices(3, nil);
+		self:aux(3)
+			:accelerate(16.0 / BPS)
+			:SetVertices(verts);
+	end,
+	FastAngerCommand = function(self)
+		Trace("Quick to Angering!");
+		local BPS = GAMESTATE:GetSongBPS();	
+		local verts = felysConstructVertices(2, nil);
+		self:aux(2)
+			:accelerate(32.0 / BPS)
+			:SetVertices(verts);
+	end,
 }
+--felysBG = Def.ActorFrame{};	-- DEBUG ONLY
 table.insert(theBoys, felysBG);
 
 local felysOL = Def.Quad {
@@ -325,7 +415,9 @@ local felysOL = Def.Quad {
 		self:decelerate(1.0/BPS)
 			:diffuse(1.0, 0.5, 0.5, 1.0)
 			:accelerate(1.0/BPS)
-			:diffuse(1.0, 1.0, 1.0, 1.0);					
+			:diffuse(1.0, 1.0, 1.0, 1.0)
+			:sleep(2.0/BPS)
+			:queuecommand("Bass");
 	end
 }
 table.insert(theBoys, felysOL);
@@ -480,9 +572,9 @@ for pn = 1,2 do
 				end
 			};
 			
---		table.insert(theBoys, aftMemory);
---		table.insert(theBoys, aftOutput);
---		table.insert(theBoys, ghostBoy);
+		table.insert(theBoys, aftMemory);
+		table.insert(theBoys, aftOutput);
+		table.insert(theBoys, ghostBoy);
 	end
 end
 
@@ -494,6 +586,82 @@ local BTIUtil_Scale = function(t, inLower, inUpper, outLower, outUpper)
 	local ti = (t - inLower) / (inUpper - inLower);
 	return outLower + ti * (outUpper - outLower);
 end
+
+local felysStaggerColumnsA = {
+	-- {beat-1, column staggering}
+	-- Columns tween in one beat before the first notes hit.
+	-- First and second stay together on +0, third is +0.75, fourth is +1.5
+	{224, {1, 2, 4, 3}},
+	{228, {2, 4, 1, 3}},
+	{232, {1, 3, 2, 4}},
+	{236, {2, 4, 3, 1}},
+	{240, {2, 3, 4, 1}},
+	{244, {3, 4, 1, 2}},
+	{248, {1, 3, 4, 2}},
+	{252, {2, 3, 4, 1}},
+	{256, {1, 2, 3, 4}},
+	{260, {3, 4, 1, 2}},
+	{264, {2, 4, 3, 1}},
+	{268, {1, 3, 4, 2}},
+	{272, {2, 3, 1, 4}},
+	{276, {1, 2, 4, 3}},
+	{280, {2, 3, 1, 4}},
+	{284, {2, 4, 1, 3}},	
+};
+local felysStaggerLead = 1.0;
+local felysStaggerBeats = {0, 0, 0.75, 1.5};
+local felysStaggerIndex = 0;
+
+
+local felysRotationA = {
+	-- {beat-1, player rotation}
+	-- Playfields rotate almost immediately on beat.
+	-- First rotation for P1, second for P2.
+	-- Individual elements as x,y,z - all degrees.
+	{416, {{0,  10, -10}, {0,   0,  -5}}},
+	{420, {{0,   0,   5}, {0, -10,  10}}},
+	{424, {{0,  10, -10}, {0,   0,  -5}}},
+	{428, {{0, -10,   0}, {0,  10,   0}}},
+	{429, {{0, -15, -10}, {0,  15,  10}}},
+	
+	{432, {{0,   0,   5}, {0, -10,  10}}},
+	{436, {{0,  10, -10}, {0,   0,  -5}}},
+	{440, {{0,   0,   5}, {0, -10,  10}}},
+	{444, {{0, -10,   0}, {0,  10,   0}}},
+	{445, {{0, -15, -10}, {0,  15,  10}}},
+	
+	{448, {{0,  15, -10}, {0,   0,  -5}}},
+	{452, {{0,   0,   5}, {0, -15,  10}}},
+	{456, {{0,  15, -10}, {0,   0,  -5}}},
+	{460, {{0, -15,   0}, {0,  15,   0}}},
+	{461, {{0, -20, -10}, {0,  20,  10}}},
+	
+	{464, {{0,   0,   5}, {0, -15,  10}}},
+	{468, {{0,  15, -10}, {0,   0,  -5}}},
+	{472, {{0,   0,   5}, {0, -15,  10}}},
+	{476, {{0, -15,   0}, {0,  15,   0}}},
+	-- no 477	
+	
+	{480, {{0,  20, -10}, {0,   0,  -5}}},
+	{484, {{0,   0,   5}, {0, -20,  10}}},
+	{488, {{0,  20, -10}, {0,   0,  -5}}},
+	{492, {{0, -20,   0}, {0,  20,   0}}},
+	{493, {{0, -25, -10}, {0,  25,  10}}},
+	
+	{496, {{0,   0,   5}, {0, -25,  10}}},
+	{500, {{0,  25, -10}, {0,   0,  -5}}},
+	{504, {{0,   0,   5}, {0, -25,  10}}},
+	{508, {{0, -25,   0}, {0,  25,   0}}},
+	{509, {{0, -30, -10}, {0,  30,  10}}},	
+	
+	{512, {{0,  30, -10}, {0,   0,  -5}}},
+	{516, {{0,   0,   5}, {0, -30,  10}}},
+	{520, {{0,  30, -10}, {0,   0,  -5}}},
+	{524, {{0, -30,   0}, {0,  30,   0}}},
+	{525, {{0, -45, -10}, {0,  45,  10}}},
+};
+local felysRotationLead = 0.25;
+local felysRotationIndex = 0;
 
 
 local enjoyGfxHQ = Def.Quad {
@@ -518,19 +686,159 @@ local enjoyGfxHQ = Def.Quad {
 			-- Hide the actual playfields. Let the proxies do the work.
 			for i,v in ipairs(plr) do
 				if v then
-					v:visible(false)
+					v:visible(true)
 					 :decelerate(16.0 / BPS)
 					 :y(sh/2 - 30)
 					 :z(0);
 				end
+				
+				for ghostIndex = 1,#ghostColors do
+					self:GetParent():GetChild("GhostP"..i.."_"..ghostIndex):diffusealpha(0);
+				end
 			end
-			self:GetParent():GetChild("felysBG"):queuecommand("Dim")
+			
+--			self:GetParent():GetChild("felysOL"):sleep(4.0/BPS)
+--												:queuecommand("Bass");
+				
+			fgcurcommand = fgcurcommand + 1;
+		end
+		if overtime >= 32.0 and fgcurcommand ==  1 then
+			-- The sun sets.
+			for i,v in ipairs(plr) do
+				if v then
+					v:accelerate(16.0 / BPS)
+					 :x(sw/2);
+				end
+			end
+			self:GetParent():GetChild("felysBG"):finishtweening()
+												:queuecommand("Dim");
+				
+			fgcurcommand = fgcurcommand + 1;
+		end
+		if overtime >= 80.0 and fgcurcommand ==  2 then
+			-- fire temple is...........ANGERY
+			for i,v in ipairs(plr) do
+			end
+			self:GetParent():GetChild("felysBG"):finishtweening()
 												:queuecommand("Anger");
-			self:GetParent():GetChild("felysOL"):sleep(4.0/BPS)
+				
+			fgcurcommand = fgcurcommand + 1;
+		end
+		if overtime >= 160.0 and fgcurcommand ==  3 then
+			-- fire temple is getting ANGERIER
+			for i,v in ipairs(plr) do
+			end
+			self:GetParent():GetChild("felysBG"):finishtweening()
+												:queuecommand("Morph");
+			self:GetParent():GetChild("felysOL"):finishtweening()
 												:queuecommand("Bass");
 				
 			fgcurcommand = fgcurcommand + 1;
 		end
+		if overtime >= 192.0 and fgcurcommand ==  4 then
+			-- fire temple is getting SO angery
+			for i,v in ipairs(plr) do
+				
+				for ghostIndex = 1,#ghostColors do
+					self:GetParent():GetChild("GhostP"..i.."_"..ghostIndex):linear(32.0 / BPS):diffusealpha(1);
+				end
+			end
+			self:GetParent():GetChild("felysOL"):finishtweening();
+			
+			fgcurcommand = fgcurcommand + 1;
+		end		
+		if overtime >= 223.0 and fgcurcommand ==  5 then
+			-- fire temple is getting EVEN ANGERIEST
+			local staggerInfo = felysStaggerColumnsA[felysStaggerIndex+1];
+			if overtime >= staggerInfo[1] - felysStaggerLead then				
+				for i,v in ipairs(plr) do
+					if v then
+						colActors = v:GetChild("NoteField"):GetColumnActors();
+						
+						for j = 1,4 do
+							colActors[ staggerInfo[2][j] ]:decelerate(felysStaggerLead/BPS)
+														  :y(-64 * felysStaggerBeats[j] * cspdA)
+														  :sleep(1.5/BPS)
+														  :decelerate(1.0/BPS)
+														  :y(0);
+						end
+					end
+				end				
+				self:GetParent():GetChild("felysBG"):finishtweening()
+													:queuecommand("Morph");
+												
+				felysStaggerIndex = felysStaggerIndex + 1;
+			end
+			
+			if felysStaggerIndex >= #felysStaggerColumnsA then
+				fgcurcommand = fgcurcommand + 1;
+			end
+		end
+		if overtime >= 304.0 and fgcurcommand ==  6 then
+			-- fire temple is not angry for now
+			for i,v in ipairs(plr) do				
+				for ghostIndex = 1,#ghostColors do
+					self:GetParent():GetChild("GhostP"..i.."_"..ghostIndex):linear(15.0 / BPS):diffusealpha(0);
+				end
+			end
+			self:GetParent():GetChild("felysBG"):finishtweening()
+												:queuecommand("Free");
+			
+			fgcurcommand = fgcurcommand + 1;
+		end	
+		if overtime >= 384.0 and fgcurcommand ==  7 then
+			-- fire temple is gettin ANGERY AGAIN
+			for i,v in ipairs(plr) do				
+				for ghostIndex = 1,#ghostColors do
+					self:GetParent():GetChild("GhostP"..i.."_"..ghostIndex):linear(32.0 / BPS):diffusealpha(1);
+				end
+			end
+			self:GetParent():GetChild("felysBG"):finishtweening()
+												:queuecommand("FastAnger");
+			
+			fgcurcommand = fgcurcommand + 1;
+		end	
+		if overtime >= 415.0 and fgcurcommand ==  8 then
+			-- fire temple is BACK and ANGERYer THAN EVER BEFORE
+			local rotationInfo = felysRotationA[felysRotationIndex+1];
+			if overtime >= rotationInfo[1] - felysRotationLead then				
+				for i,v in ipairs(plr) do
+					if v then
+						local rotationHere = rotationInfo[2][i];
+						v:finishtweening()
+						 :decelerate(felysRotationLead/BPS)
+						 :rotationx(rotationHere[1])
+						 :rotationy(rotationHere[2])
+						 :rotationz(rotationHere[3])
+						 :sleep(1.5/BPS)
+						 :decelerate(1.0/BPS)
+						 :rotationx(0)
+						 :rotationy(0)
+						 :rotationz(0);						
+					end
+				end
+				self:GetParent():GetChild("felysBG"):finishtweening()
+													:queuecommand("Morph2");
+													
+				felysRotationIndex = felysRotationIndex + 1;
+			end
+			
+			if felysRotationIndex >= #felysRotationA then
+				fgcurcommand = fgcurcommand + 1;
+			end
+		end
+		if overtime >= 528.0 and fgcurcommand ==  9 then
+			-- fire temple is not angery anymore!! thank god
+			for i,v in ipairs(plr) do				
+				for ghostIndex = 1,#ghostColors do
+					self:GetParent():GetChild("GhostP"..i.."_"..ghostIndex):linear(16.0 / BPS):diffusealpha(0);
+				end
+			end
+			self:GetParent():GetChild("felysBG"):finishtweening()
+												:queuecommand("Free");
+			
+			fgcurcommand = fgcurcommand + 1;
+		end	
 					
 		
 		
@@ -549,7 +857,6 @@ table.insert(theBoys, enjoyGfxHQ);
 --
 --		Manage arrow mods for the whole song here.
 --
-local cspd = 2.2;
 local modsTable = {
 	-- [1]: beat start
 	-- [2]: mod type
@@ -559,8 +866,264 @@ local modsTable = {
 		
 		{   0.0,	"ScrollSpeed",	 cspd,    2.0,	3}, 
 		
-		{   8.0,	"Dark",			  1.0,    4.0,	3}, 
+		{   9.0,	"Stealth",		  1.0,    7.0,	3}, 
+		{  16.0,	"Stealth",		  0.0,    8.0,	3}, 
+		{  24.0,	"Dark",			  1.0,    8.0,	3}, 
+		{  25.0,	"Stealth",		  1.0,    7.0,	3}, 
+		{  32.0,	"Stealth",		  0.0,    8.0,	3}, 
 		
+		{  56.0,	"ScrollSpeed",	  1.0,    8.0,	3}, 
+		{  56.0,	"Brake",		  1.0,    8.0,	3}, 
+		{  60.0,	"Dark",			  0.0,    8.0,	3}, 
+		
+		{  64.0,	"ScrollSpeed",	 cspd,    4.0,	3}, 
+		{  64.0,	"Brake",		  0.0,    4.0,	3}, 
+		{  64.0,	"Dark",			  1.0,    4.0,	3}, 
+		
+		{ 108.0,	"Dark",			  0.0,    4.0,	3}, 
+		{ 110.0,	"Wave",			  1.5,    2.0,	3}, 
+		{ 112.0,	"Wave",			  0.0,    0.5,	3}, 
+		{ 114.0,	"Brake",		  0.8,    2.0,	3}, 
+		{ 118.0,	"Brake",		  0.0,    2.0,	3}, 
+		
+		{ 118.0,	"Wave",			  1.5,    2.0,	3}, 
+		{ 120.0,	"Wave",			  0.0,    0.5,	3}, 
+		{ 122.0,	"Brake",		  0.8,    2.0,	3}, 
+		{ 126.0,	"Brake",		  0.0,    2.0,	3}, 
+		
+		{ 126.0,	"Wave",			  1.5,    2.0,	3}, 
+		{ 128.0,	"Wave",			  0.0,    0.5,	3}, 
+		
+		{ 134.0,	"Wave",			  1.5,    2.0,	3}, 
+		{ 136.0,	"Wave",			  0.0,    0.5,	3}, 
+		
+		{ 142.0,	"Wave",			  1.5,    2.0,	3}, 
+		{ 144.0,	"Wave",			  0.0,    2.0,	3}, 
+		
+		{ 146.0,	"Wave",			  1.5,    2.0,	3}, 
+		{ 148.0,	"Wave",			  0.0,    2.0,	3}, 
+		
+		{ 150.0,	"Wave",			  1.5,    2.0,	3}, 
+		{ 152.0,	"Wave",			  0.0,    2.0,	3}, 
+		
+		{ 154.0,	"Wave",			  1.5,    2.0,	3}, 
+		{ 156.0,	"Wave",			  0.0,    1.0,	3}, 
+		{ 157.0,	"Wave",			  1.5,    1.0,	3}, 
+		{ 158.0,	"Wave",			  0.0,    2.0,	3}, 		
+		
+		{ 192.0,	"Dark",			  0.7,   32.0,	3}, 
+		
+		{ 220.0,	"ScrollSpeed",	cspdA,    3.0,	3}, 
+		{ 220.0,	"Centered",		  1.0,    3.0,	3}, 
+		
+		{ 256.0,	"Tiny",			  0.5,    2.0,	3},
+		{ 258.0,	"Boost",		  0.5,    0.5,	3},
+		{ 258.5,	"Tiny",			  0.0,    1.0,	3},
+		{ 259.0,	"Boost",		  0.0,    0.5,	3},
+		
+		{ 272.0,	"Tiny",			  0.5,    2.0,	3},
+		{ 274.0,	"Boost",		  0.5,    0.5,	3},
+		{ 274.5,	"Tiny",			  0.0,    1.0,	3},
+		{ 275.0,	"Boost",		  0.0,    0.5,	3},
+		
+		{ 284.0,	"ScrollSpeed",	 cspd,    4.0,	3}, 
+		{ 284.0,	"Centered",		  0.0,    4.0,	3}, 
+		
+		{ 304.0,	"Tilt",			  1.0,    8.0,	1},
+		{ 304.0,	"Tilt",			 -1.0,    8.0,	2},
+		{ 312.0,	"Tilt",			  0.5,    4.0,	1},
+		{ 312.0,	"Tilt",			 -0.5,    4.0,	2},
+		{ 316.0,	"Tilt",			  0.0,    2.0,	3},
+		
+		{ 320.0,	"Tipsy",		  0.5,   64.0,	3},
+		{ 320.0,	"Tornado",		  0.3,   64.0,	3},
+		
+		
+		{ 348.0,	"Dark",			  0.7,    0.01,	3},
+		{ 348.0,	"Sudden",		  1.0,    0.01,	3},
+		{ 348.0,	"SuddenOffset",	 -0.7,    0.01,	3},
+		{ 348.0,	"Centered",		  1.7,    3.0,	3},
+		{ 348.5,	"Dark",			  0.0,    2.0,	3},
+		{ 351.0,	"Centered",		  0.0,    1.0,	3},
+		{ 351.0,	"Sudden",		  0.0,    1.0,	3},
+		{ 351.0,	"SuddenOffset",	  0.0,    1.0,	3},
+		
+		{ 376.0,	"Beat",			  1.0,    8.0,	3},
+		{ 384.0,	"Beat",			  0.0,    1.0,	3},
+		{ 384.0,	"Tipsy",		  0.0,   32.0,	3},
+		{ 384.0,	"Tornado",		  0.0,   32.0,	3},
+		
+		{ 416.0,	"Mini",			  0.5,    0.01,	1},
+		{ 416.0,	"Mini",			 -0.3,    0.01,	2},
+		{ 417.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 420.0,	"Mini",			 -0.3,    0.01,	1},
+		{ 420.0,	"Mini",			  0.5,    0.01,	2},
+		{ 421.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 424.0,	"Mini",			  0.5,    0.01,	1},
+		{ 424.0,	"Mini",			 -0.3,    0.01,	2},
+		{ 425.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 428.0,	"Tiny",			  0.5,    0.01,	1},
+		{ 428.0,	"Tiny",			 -0.3,    0.01,	2},
+		{ 429.0,	"Tiny",			 -0.3,    0.01,	1},
+		{ 429.0,	"Tiny",			  0.5,    0.01,	2},
+		{ 429.0,	"Stealth",		  0.8,    0.01,	3},
+		{ 430.0,	"Tiny",			  0.0,    2.0,	3},
+		{ 430.0,	"Stealth",		  0.0,    1.0,	3},
+		
+		{ 432.0,	"Mini",			  0.5,    0.01,	2},
+		{ 432.0,	"Mini",			 -0.3,    0.01,	1},
+		{ 433.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 436.0,	"Mini",			 -0.3,    0.01,	2},
+		{ 436.0,	"Mini",			  0.5,    0.01,	1},
+		{ 437.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 440.0,	"Mini",			  0.5,    0.01,	2},
+		{ 440.0,	"Mini",			 -0.3,    0.01,	1},
+		{ 441.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 444.0,	"Tiny",			  0.5,    0.01,	2},
+		{ 444.0,	"Tiny",			 -0.3,    0.01,	1},
+		{ 444.0,	"Stealth",		  0.4,    3.0,	3},
+		{ 444.5,	"Dizzy",		 -1.0,    0.5,	3},
+		{ 446.0,	"Tiny",			  0.0,    2.0,	3},
+		{ 447.0,	"Stealth",		  0.0,    1.0,	3},
+		{ 447.0,	"Dizzy",		  0.0,    0.8,	3},
+		
+		{ 448.0,	"Mini",			  0.6,    0.01,	1},
+		{ 448.0,	"Mini",			 -0.4,    0.01,	2},
+		{ 449.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 452.0,	"Mini",			 -0.4,    0.01,	1},
+		{ 452.0,	"Mini",			  0.6,    0.01,	2},
+		{ 453.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 456.0,	"Mini",			  0.6,    0.01,	1},
+		{ 456.0,	"Mini",			 -0.4,    0.01,	2},
+		{ 457.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 460.0,	"Tiny",			  0.6,    0.01,	1},
+		{ 460.0,	"Tiny",			 -0.4,    0.01,	2},
+		{ 461.0,	"Tiny",			 -0.4,    0.01,	1},
+		{ 461.0,	"Tiny",			  0.6,    0.01,	2},
+		{ 461.0,	"Stealth",		  0.8,    0.01,	3},
+		{ 462.0,	"Tiny",			  0.0,    2.0,	3},
+		{ 462.0,	"Stealth",		  0.0,    1.0,	3},
+		
+		{ 464.0,	"Mini",			  0.6,    0.01,	2},
+		{ 464.0,	"Mini",			 -0.4,    0.01,	1},
+		{ 465.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 468.0,	"Mini",			 -0.4,    0.01,	2},
+		{ 468.0,	"Mini",			  0.6,    0.01,	1},
+		{ 469.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 472.0,	"Mini",			  0.6,    0.01,	2},
+		{ 472.0,	"Mini",			 -0.4,    0.01,	1},
+		{ 473.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 476.0,	"Tiny",			  0.6,    0.01,	2},
+		{ 476.0,	"Tiny",			 -0.4,    0.01,	1},
+		{ 477.0,	"Tiny",			 -0.4,    0.01,	2},
+		{ 477.0,	"Tiny",			  0.6,    0.01,	1},
+		{ 477.0,	"Stealth",		  0.8,    0.01,	3},
+		{ 478.0,	"Tiny",			  0.0,    2.0,	3},
+		{ 478.0,	"Stealth",		  0.0,    1.0,	3},
+		
+		{ 480.0,	"Mini",			  0.7,    0.01,	1},
+		{ 480.0,	"Mini",			 -0.5,    0.01,	2},
+		{ 481.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 484.0,	"Mini",			 -0.5,    0.01,	1},
+		{ 484.0,	"Mini",			  0.7,    0.01,	2},
+		{ 485.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 488.0,	"Mini",			  0.7,    0.01,	1},
+		{ 488.0,	"Mini",			 -0.5,    0.01,	2},
+		{ 489.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 492.0,	"Tiny",			  0.7,    0.01,	1},
+		{ 492.0,	"Tiny",			 -0.5,    0.01,	2},
+		{ 493.0,	"Tiny",			 -0.5,    0.01,	1},
+		{ 493.0,	"Tiny",			  0.7,    0.01,	2},
+		{ 493.0,	"Stealth",		  0.8,    0.01,	3},
+		{ 494.0,	"Tiny",			  0.0,    2.0,	3},
+		{ 494.0,	"Stealth",		  0.0,    1.0,	3},
+		
+		{ 496.0,	"Mini",			  0.7,    0.01,	2},
+		{ 496.0,	"Mini",			 -0.5,    0.01,	1},
+		{ 497.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 500.0,	"Mini",			 -0.5,    0.01,	2},
+		{ 500.0,	"Mini",			  0.7,    0.01,	1},
+		{ 501.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 504.0,	"Mini",			  0.7,    0.01,	2},
+		{ 504.0,	"Mini",			 -0.5,    0.01,	1},
+		{ 505.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 508.0,	"Tiny",			  0.7,    0.01,	2},
+		{ 508.0,	"Tiny",			 -0.5,    0.01,	1},
+		{ 509.0,	"Tiny",			 -0.5,    0.01,	2},
+		{ 509.0,	"Tiny",			  0.7,    0.01,	1},
+		{ 509.0,	"Stealth",		  0.8,    0.01,	3},
+		{ 510.0,	"Tiny",			  0.0,    2.0,	3},
+		{ 510.0,	"Stealth",		  0.0,    1.0,	3},
+		
+		{ 512.0,	"Mini",			  0.9,    0.01,	1},
+		{ 512.0,	"Mini",			 -0.6,    0.01,	2},
+		{ 513.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 516.0,	"Mini",			 -0.6,    0.01,	1},
+		{ 516.0,	"Mini",			  0.9,    0.01,	2},
+		{ 517.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 520.0,	"Mini",			  0.9,    0.01,	1},
+		{ 520.0,	"Mini",			 -0.6,    0.01,	2},
+		{ 521.0,	"Mini",			  0.0,    2.0,	3},
+		
+		{ 524.0,	"Tiny",			  0.9,    0.01,	1},
+		{ 524.0,	"Tiny",			 -0.6,    0.01,	2},
+		{ 525.0,	"Tiny",			 -0.6,    0.01,	1},
+		{ 525.0,	"Tiny",			  0.9,    0.01,	2},
+		{ 525.0,	"Stealth",		  0.8,    0.01,	3},
+		{ 526.0,	"Tiny",			  0.0,    2.0,	3},
+		{ 526.0,	"Stealth",		  0.0,    1.0,	3},
+				
+		{ 528.0,	"Dark",			  0.8,   16.0,	3},
+		
+		{ 566.0,	"Stealth",		  0.9,    0.01,	3},
+		{ 566.5,	"Stealth",		  0.0,    1.5,	3},
+		
+		{ 590.0,	"Flip",			  0.0,    3.0,	2},
+		{ 590.0,	"Flip",			  0.0,    3.0,	1},
+		{ 590.0,	"Invert",		  0.5,    3.0,	2},
+		{ 590.0,	"Invert",		 -0.5,    3.0,	1},
+		{ 593.0,	"Flip",			  0.5,    4.0,	2},
+		{ 593.0,	"Flip",			 -0.5,    4.0,	1},
+		{ 593.0,	"Invert",		 -0.5,    4.0,	2},
+		{ 593.0,	"Invert",		  0.5,    4.0,	1},
+		{ 597.0,	"Flip",			 -0.5,    4.0,	2},
+		{ 597.0,	"Flip",			  0.5,    4.0,	1},
+		{ 597.0,	"Invert",		  0.5,    4.0,	2},
+		{ 597.0,	"Invert",		 -0.5,    4.0,	1},
+		{ 601.0,	"Flip",			  0.0,    3.0,	3},
+		{ 601.0,	"Invert",		  0.0,    3.0,	3},
+		
+		{ 607.0,	"Invert",		  0.5,    0.01,	1},
+		{ 607.0,	"Invert",		 -0.5,    0.01,	2},
+		{ 607.1,	"Invert",		  0.0,    0.9,	3},
+		{ 609.0,	"Flip",			  0.5,    0.01,	1},
+		{ 609.0,	"Flip",			 -0.5,    0.01,	2},
+		{ 609.1,	"Flip",			  0.0,    0.9,	3},
+		{ 610.0,	"Tornado",		  1.0,    2.0,	3},
+		{ 610.0,	"Boost",		  0.5,    2.0,	3},
+		{ 612.0,	"Tornado",		  0.0,    16.0,	3},
+		{ 612.0,	"Boost",		  0.0,    12.0,	3},
+		{ 626.0,	"Brake",		  0.9,    4.0,	3},
 		
 	};
 local modsLaunched = 0;
