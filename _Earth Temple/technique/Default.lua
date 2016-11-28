@@ -42,33 +42,305 @@ local theBoys = Def.ActorFrame {
 -- 		Some graphical doods 'n' dads 'n' doodads.
 --
 -------------------------------------------------------------------------------
-local numArrows = {["4th"] = 45,  ["32nd"] = 30,    ["48th"] = 15};		-- Number of arrows to instantiate
-local texArrows = {["4th"] = 0.0, ["32nd"] = 0.625, ["48th"] = 0.75};	-- Texture coordinate shifts
+nattoBG = Def.ActorFrame {
+	Name = "nattoBG",
+	InitCommand = function(self)
+		self:aux(0);
+	end,
+	OnCommand = function(self)
+		self:diffusealpha(0.1);			-- DEBUG ONLY
+	end,
+	QuakeCommand = function(self)
+		-- Aux represents magnitude
+		local magnitude = self:getaux();
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoLayer") then
+				starlet:vibrate():effectmagnitude(starlet:getaux() * magnitude / 10, 0, 0);
+			end
+		end
+	end,
+	StableCommand = function(self)		
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoLayer") then
+				starlet:stopeffect();
+			end
+		end
+	end,
+	
+	PullCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoLayer") then
+				local myIndex = starlet:getaux();
+				local sideSign = (myIndex % 2 == 1) and 1 or -1;
+				starlet:decelerate(tweenTime)
+					   :xy(sw * (0.5 + sideSign * myIndex * myIndex * 0.003), 
+						   sh * (0.5 + myIndex * 0.005));
+			end
+		end
+	end,
+	PushCommand = function(self)
+		-- Aux represents tween time
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoLayer") then
+				starlet:decelerate(tweenTime)
+					   :Center();
+			end
+		end
+	end,
+	DropCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoLayer") then
+				local myIndex = starlet:getaux();
+				local myDropTime = {1, 1, 1, 1, 2, 2, 2, 2, 3, 3};
+				starlet:accelerate(tweenTime * myDropTime[myIndex])
+					   :y(sh * (0.5 + myIndex * 0.01));
+			end
+		end
+	end,
+	ResetCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoLayer") then
+				starlet:decelerate(tweenTime)
+					   :xy(sw/2,sh/2);
+			end
+		end
+	end,	
+	PlungeCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoLayer") then
+				local myIndex = starlet:getaux();
+				starlet:accelerate(tweenTime)
+					   :y(sh * (1.5 + myIndex * 1.0));
+			end
+		end
+	end,
+	BabaCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoLayer") then
+				local myIndex = starlet:getaux();
+				local myAppearTime = {1, 1, 1, 1, 1, 1, 0, 0, 0, 0};
+				starlet:sleep(tweenTime * myAppearTime[myIndex])
+					   :y(sh/2);
+			end
+		end
+	end,
+	HaltCommand = function(self)
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoLayer") then
+				starlet:stoptweening();
+			end
+		end
+	end,
+	
+	
+	EnterCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoLayer") then
+				local myIndex = starlet:getaux();
+				local myDebut = (1.1 - myIndex * 0.1);
+				starlet:accelerate(tweenTime * myDebut)
+					   :diffusealpha(1.0);
+			elseif string.find(moniker, "nattoFader") then
+				local myIndex = starlet:getaux();
+				local myDebut = (1.1 - myIndex * 0.1);
+				starlet:decelerate(tweenTime * myDebut)
+					   :diffusealpha(0.10);
+			elseif string.find(moniker, "nattoCloudy") then
+				starlet:linear(tweenTime)
+					   :diffusealpha(1.0);
+			elseif string.find(moniker, "nattoNight") then
+				starlet:sleep(tweenTime)
+					   :diffusealpha(1.0);
+			end
+		end
+	end,
+	
+	LightenCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoFader") then
+				starlet:linear(tweenTime)
+					   :diffuse(0.0, 0.5, 1.0, 0.10);
+			end
+		end
+	end,
+	DarkenCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoFader") then
+				starlet:linear(tweenTime)
+					   :diffuse(0.1, 0.1, 0.3, 0.10);
+			end
+		end
+	end,	
+	NightCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoFader") then
+				starlet:linear(tweenTime)
+					   :diffusealpha(0.20);
+			elseif string.find(moniker, "nattoCloudy") then
+				starlet:linear(tweenTime/2)
+					   :diffuse(0.8, 0.5, 0.2, 0.8)
+					   :linear(tweenTime/2)
+					   :diffuse(0.0, 0.0, 0.0, 0.0);
+			end
+		end
+	end,
+	DayCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();	
+		local tweenTime = self:getaux() / BPS;
+		for moniker,starlet in pairs(self:GetChildren()) do
+			if string.find(moniker, "nattoFader") then
+				starlet:linear(tweenTime)
+					   :diffuse(0.0, 0.5, 1.0, 0.10);
+			elseif string.find(moniker, "nattoCloudy") then
+				starlet:linear(tweenTime/2)
+					   :diffuse(0.8, 0.3, 0.0, 0.8)
+					   :linear(tweenTime/2)
+					   :diffuse(1.0, 1.0, 1.0, 1.0);
+			end
+		end
+	end,
+};
 
-local felysNotes = {};
-local stronk = 64;
-for quantColor,quantCount in pairs(numArrows) do
-	Trace("> making scary "..quantColor.." notes");
-	for i = 1,quantCount do
-		local pos = {math.cos(i/quantCount * 2 * math.pi) * stronk, math.sin(i/quantCount * 2 * math.pi) * stronk};
-		
-		Trace("> making scary "..quantColor.." note #"..i);
-		felysNotes[#felysNotes + 1] = NOTESKIN:LoadActorForNoteSkin("Down", "Tap Note", "cyber") .. {
-			Name = "ScaryNote"..quantColor.."_"..i,
-			InitCommand = function(self)
-				self:visible(true)
-					:xy(sw/2 + pos[1], sh/2 + pos[2])
-					:texturetranslate(texArrows[quantColor], 0);
-			end,
-		};
-		Trace(">>> made scary "..quantColor.." note #"..i);
-	end
-	stronk = stronk + 64;
+nattoNightSky = Def.Sprite {
+	Name = "nattoNight",
+	Texture = "nightsky.png",
+	InitCommand = function(self)
+		self:Center()
+			:SetWidth(sw)
+			:SetHeight(sh);
+	end,
+	OnCommand = function(self)
+		self:diffusealpha(0.0);
+	end,
+}
+table.insert(nattoBG, nattoNightSky);
+
+nattoCloudySky = Def.Sprite {
+	Name = "nattoCloudy",
+	Texture = "cloudysky.png",
+	InitCommand = function(self)
+		self:Center()
+			:SetWidth(sw)
+			:SetHeight(sh);
+	end,
+	OnCommand = function(self)
+		self:diffusealpha(0.0);
+	end,
+}
+table.insert(nattoBG, nattoCloudySky);
+
+local nattoLayers = {};
+for i = 1,10 do
+	nattoLayers[#nattoLayers+1] = Def.Sprite {
+		Name = "nattoLayer"..i,
+		Texture = "natto-"..i..".png",
+		InitCommand = function(self)
+			local myIndex = tonumber(string.match(self:GetName(), "[0-9]+"));
+			self:Center()
+				:SetWidth(sw)
+				:SetHeight(sh)
+				:aux(myIndex)
+				:draworder(myIndex / 100);
+		end,
+		OnCommand = function(self)
+			self:diffusealpha(0.0);
+		end,
+	}
 end
 
-for i = 1,#felysNotes do
---	table.insert(theBoys, felysNotes[i]);
+local nattoQuads = {};
+for i = 1,10 do
+	nattoQuads[#nattoQuads+1] = Def.Quad {
+		Name = "nattoFader"..i,
+		InitCommand = function(self)
+			local myIndex = tonumber(string.match(self:GetName(), "[0-9]+"));
+			self:Center()
+				:SetWidth(sw)
+				:SetHeight(sh)
+				:aux(myIndex)
+				:draworder(myIndex / 100)
+				:diffuse(0.0, 0.5, 1.0, 0.00);
+		end
+	}
 end
+for i = 1,10 do
+	table.insert(nattoBG, nattoQuads[i]);
+	table.insert(nattoBG, nattoLayers[i]);
+end
+
+table.insert(theBoys, nattoBG);
+
+
+
+--
+--		Proxy up the players.
+--
+local DefaultProxyP1 = Def.ActorFrame {
+	Name = "DefaultProxyP1",
+	Def.ActorProxy {					
+		Name = "Proxy",
+		BeginCommand=function(self)
+			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+			if McCoy then self:SetTarget(McCoy); else self:hibernate(1573); end
+		end,
+		OnCommand=function(self)
+			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+			if McCoy then self:xy(-McCoy:GetX(), -McCoy:GetY()); end
+		end
+	},
+	InitCommand = function(self)
+	end,
+	OnCommand = function(self)
+		local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+		if McCoy then self:xy(McCoy:GetX(), McCoy:GetY()); end
+	end,
+}
+table.insert(theBoys, DefaultProxyP1);
+
+local DefaultProxyP2 = Def.ActorFrame {
+	Name = "DefaultProxyP2",
+	Def.ActorProxy {					
+		Name = "Proxy",
+		BeginCommand=function(self)
+			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+			if McCoy then self:SetTarget(McCoy); else self:hibernate(1573); end
+		end,
+		OnCommand=function(self)
+			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+			if McCoy then self:xy(-McCoy:GetX(), -McCoy:GetY()); end
+		end
+	},
+	InitCommand = function(self)
+	end,
+	OnCommand = function(self)
+		local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+		if McCoy then self:xy(McCoy:GetX(), McCoy:GetY()); end
+	end,
+}
+table.insert(theBoys, DefaultProxyP2);
+
+
+
 
 -------------------------------------------------------------------------------
 --
@@ -80,7 +352,177 @@ local BTIUtil_Scale = function(t, inLower, inUpper, outLower, outUpper)
 end
 
 
-local enjoyGfxHQ = Def.Quad {
+local nattoBGDirections = {
+	-- Beat number, then message to send, then optionally the argument to the command	
+	{  0,	"Enter",	 32},
+	
+	{ 63,	"Drop",		  1},
+	{ 64,	"Darken",	 64},
+	{ 66,	"Reset",	  1},
+	{ 67,	"Drop",		  1},
+	{ 70,	"Reset",	  1},
+	{ 71,	"Drop",		  1},
+	{ 74,	"Reset",	  1},
+	{ 75,	"Drop",		  1},
+	{ 78,	"Reset",	  1},
+	{ 79,	"Drop",		  1},
+	{ 82,	"Reset",	  1},
+	{ 83,	"Drop",		  1},
+	{ 86,	"Reset",	  1},
+	{ 87,	"Drop",		  1},
+	{ 90,	"Reset",	  1},
+	{ 91,	"Drop",		  1},
+	{ 94,	"Reset",	  1},
+	
+	{ 96,	"Pull",		 32},
+	{ 97,	"Quake",	  5},
+	{103,	"Halt", 	nil},
+	{103,	"Stable",	nil},
+	{104,	"Pull",		 32},
+	{105,	"Quake",	  7},
+	{111,	"Halt",		nil},
+	{111,	"Stable",	nil},
+	{112,	"Pull",		 16},
+	{113,	"Quake",	 10},
+	{124,	"Stable",	nil},
+	
+	{138,	"Halt",		nil},
+	{138,	"Push",		 10},
+	{138,	"Quake",	 15},
+	{143,	"Stable",	nil},
+	{143,	"Halt",		nil},
+	{143,	"Pull",		  1},
+	
+	{170,	"Halt",		nil},
+	{170,	"Push",		 10},
+	{170,	"Quake",	 15},
+	{175,	"Stable",	nil},
+	{175,	"Halt",		nil},
+	{175,	"Pull",		  1},
+	
+	{192,	"Plunge",	  2},
+	{194,	"Baba",		0.5},
+	{196,	"Plunge",	  2},
+	{198,	"Pull",		0.1},
+	
+	{200,	"Plunge",	 16},
+	{202,	"Halt",		nil},
+	{202,	"Pull",		  2},	
+	{204,	"Plunge",	 16},
+	{206,	"Halt",		nil},
+	{206,	"Pull",		  2},
+	
+	{208,	"Plunge",	 16},
+	{210,	"Halt",		nil},
+	{210,	"Pull",		  2},	
+	{212,	"Plunge",	 16},
+	{214,	"Halt",		nil},
+	{214,	"Pull",		  2},
+	{216,	"Plunge",	 16},
+	{218,	"Halt",		nil},
+	{218,	"Pull",		  2},
+	{220,	"Plunge",	 16},
+	{220,	"Halt",		nil},
+	{222,	"Push",		  4},
+	
+	{222,	"Night",	 32},
+	
+	
+	{288,	"Plunge",	  2},
+	{290,	"Baba",		0.5},
+	{292,	"Plunge",	  2},
+	{294,	"Push",		0.1},
+	
+	{296,	"Plunge",	 16},
+	{298,	"Halt",		nil},
+	{298,	"Push",		  2},	
+	{300,	"Plunge",	 16},
+	{302,	"Halt",		nil},
+	{302,	"Push",		  2},
+	
+	{304,	"Plunge",	 16},
+	{306,	"Halt",		nil},
+	{306,	"Push",		  2},	
+	{308,	"Plunge",	 16},
+	{310,	"Halt",		nil},
+	{310,	"Push",		  2},
+	{312,	"Plunge",	 16},
+	{314,	"Halt",		nil},
+	{314,	"Push",		  2},
+	{316,	"Plunge",	 16},
+	{318,	"Halt",		nil},
+	{318,	"Push",		 18},
+	
+	{336,	"Pull",		 32},
+	{337,	"Quake",	  5},
+	{343,	"Halt", 	nil},
+	{343,	"Stable",	nil},
+	{344,	"Pull",		 32},
+	{345,	"Quake",	  7},
+	{351,	"Halt",		nil},
+	{351,	"Stable",	nil},
+	{352,	"Pull",		 16},
+	{353,	"Quake",	 10},
+	{364,	"Stable",	nil},
+	
+	{378,	"Halt",		nil},
+	{378,	"Push",		 10},
+	{378,	"Quake",	 15},
+	{383,	"Stable",	nil},
+	{383,	"Halt",		nil},
+	{383,	"Pull",		  1},
+	
+	{410,	"Halt",		nil},
+	{410,	"Plunge",	 16},
+	{410,	"Quake",	 15},
+	{415,	"Stable",	nil},
+	{415,	"Halt",		nil},
+	{415,	"Pull",		  1},
+	
+	{432,	"Push",		 64},
+	{432,	"Day",		 64},
+};
+local nattoBGIndex = 0;
+
+local nattoProxyEffects = {
+	-- proxyEffect[1]: beat number
+	-- proxyEffect[2]: mod name (applied as element function of Actor, with a couple exceptions)
+	-- proxyEffect[3]: mod strength
+	-- proxyEffect[4]: mod length (in beats)
+	-- proxyEffect[5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
+	--
+	-- stag = column-based "skewing", where +1.0 staggers the columns by one arrow height, left highest
+	--
+--	{ 32.0, "skewx",	 1.0,	 4.0,	3},
+--	{ 39.0, "skewx",	 0.0,	 1.0,	3},
+--	{ 40.0, "skewx",	-1.0,	 4.0,	3},
+--	{ 47.0, "skewx",	 0.0,	 1.0,	3},
+--	{ 48.0, "skewy",	 1.0,	 4.0,	3},
+--	{ 48.0, "stag",		-1.0,	 4.0,	3},
+--	{ 55.0, "skewy",	 0.0,	 1.0,	3},
+--	{ 55.0, "stag",		 0.0,	 1.0,	3},
+--	{ 56.0, "skewy",	-1.0,	 4.0,	3},
+--	{ 56.0, "stag",		 1.0,	 4.0,	3},
+--	{ 63.0, "skewy",	 0.0,	 1.0,	3},
+--	{ 63.0, "stag",		 0.0,	 1.0,	3},
+	
+	
+	{ 97.0, "addx",		 sw/12,	 6.0,	1},
+	{ 97.0, "addx",		-sw/12,	 6.0,	2},
+	{ 97.0, "vibrate",	 5.0,	 6.0,	3},
+	{103.0, "vibrate",	 0.0,	 1.0,	3},
+	{105.0, "addx",		 sw/12,	 6.0,	1},
+	{105.0, "addx",		-sw/12,	 6.0,	2},
+	{105.0, "vibrate",	 7.0,	 6.0,	3},
+	{111.0, "vibrate",	 0.0,	 1.0,	3},
+	{112.0, "addx",		 sw/12,	12.0,	1},
+	{112.0, "addx",		-sw/12,	12.0,	2},
+	{112.0, "vibrate",	10.0,	 6.0,	3},
+	{124.0, "vibrate",	 0.0,	 1.0,	3},
+};
+local nattoEffectIndex = 0;
+
+local nattoGfxHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
 			:SetWidth(6)
@@ -101,13 +543,84 @@ local enjoyGfxHQ = Def.Quad {
 		if overtime >=  0.0 and fgcurcommand ==  0 then
 			for i,v in ipairs(plr) do
 				if v then
-					v:decelerate(16.0 / BPS):y(sh/2 - 30):z(0);
+					v:visible(false):decelerate(16.0 / BPS):y(sh/2 - 30):z(0);
 				end
 			end
 			
 			fgcurcommand = fgcurcommand + 1;
 		end
 					
+		-- Control the BG on its own terms.
+		while true do
+			if nattoBGIndex < #nattoBGDirections then
+				local nattoBGHandle = self:GetParent():GetChild("nattoBG");
+				local nattoBGInfo = nattoBGDirections[nattoBGIndex+1];				
+				if overtime >= nattoBGInfo[1] then			
+					local funcExec = nattoBGInfo[2];
+					local funcArg  = nattoBGInfo[3];
+					if funcArg then
+						nattoBGHandle:aux(funcArg)
+									 :playcommand(funcExec);
+					else
+						nattoBGHandle:playcommand(funcExec);
+					end
+														
+					nattoBGIndex = nattoBGIndex + 1;
+				else
+					break;
+				end
+			else
+				break;
+			end
+		end
+		
+		-- Apply skews and staggers.
+		while true do
+			if nattoEffectIndex < #nattoProxyEffects then
+				local proxyEffect = nattoProxyEffects[nattoEffectIndex+1];				
+				if overtime >= proxyEffect[1] then			
+					local effFunc 		= proxyEffect[2];
+					local effArg  		= proxyEffect[3];
+					local effBeats		= proxyEffect[4];
+					local effPlayers	= proxyEffect[5];
+					
+					for pn = 1,2 do
+						if effPlayers == 3 or effPlayers == pn then
+							pv = SCREENMAN:GetTopScreen():GetChild("PlayerP"..pn);
+							pp = self:GetParent():GetChild("DefaultProxyP"..pn);
+							if pv then
+							
+								if effFunc == "stag" then
+									pca = pv:GetChild("NoteField"):GetColumnActors();
+									for colIndex = 1,4 do
+										pca[colIndex]:linear(effBeats / BPS)
+													 :y(64 * effArg * (colIndex - 2.5));
+									end
+								else
+									if effFunc == "vibrate" then
+										if effArg <= 0.01 then
+											pp:stopeffect();
+										else
+											pp[effFunc](pp);
+											pp:effectmagnitude(effArg, effArg, 0);
+										end
+									else
+										pp:linear(effBeats / BPS);
+										pp[effFunc](pp, effArg);
+									end
+								end
+							end
+						end
+					end		
+														
+					nattoEffectIndex = nattoEffectIndex + 1;
+				else
+					break;
+				end
+			else
+				break;
+			end
+		end
 		
 		
 		-- Wait a bit and then update again!
@@ -118,14 +631,15 @@ local enjoyGfxHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
-table.insert(theBoys, enjoyGfxHQ);
+table.insert(theBoys, nattoGfxHQ);
 
 
 -------------------------------------------------------------------------------
 --
 --		Manage arrow mods for the whole song here.
 --
-local cspd = 2.2;
+local cspd = 2.8;
+local cspdA = cspd * 0.7;
 local modsTable = {
 	-- [1]: beat start
 	-- [2]: mod type
@@ -135,7 +649,67 @@ local modsTable = {
 		
 		{   0.0,	"ScrollSpeed",	 cspd,    2.0,	3}, 
 		
+		{  32.0,	"ScrollSpeed",	cspdA,   32.0,	3}, 
 		
+	--for i in range(32, 64, 2):
+	--	print('\t\t[  {:03.1f},\t"Boost",\t\t  {:0.2f},\t  2.0,\t3],'.format(i, (1 - (i%2) * 2) * (i-32) / 64))
+		{  32.0,	"Boost",		  0.00,	  2.0,	3},
+		{  34.0,	"Boost",		 -0.03,	  2.0,	3},
+		{  36.0,	"Boost",		  0.06,	  2.0,	3},
+		{  38.0,	"Boost",		 -0.09,	  2.0,	3},
+		{  40.0,	"Boost",		  0.12,	  2.0,	3},
+		{  42.0,	"Boost",		 -0.16,	  2.0,	3},
+		{  44.0,	"Boost",		  0.19,	  2.0,	3},
+		{  46.0,	"Boost",		 -0.22,	  2.0,	3},
+		{  48.0,	"Boost",		  0.25,	  2.0,	3},
+		{  50.0,	"Boost",		 -0.28,	  2.0,	3},
+		{  52.0,	"Boost",		  0.31,	  2.0,	3},
+		{  54.0,	"Boost",		 -0.34,	  2.0,	3},
+		{  56.0,	"Boost",		  0.38,	  2.0,	3},
+		{  58.0,	"Boost",		 -0.41,	  2.0,	3},
+		{  60.0,	"Boost",		  0.44,	  2.0,	3},
+		{  62.0,	"Boost",		 -0.47,	  2.0,	3},
+		{  64.0,	"Boost",		  0.50,	  2.0,	3},
+		{  66.0,	"Boost",		 -0.50,	  2.0,	3},
+		{  68.0,	"Boost",		  0.50,	  2.0,	3},
+		{  70.0,	"Boost",		 -0.50,	  2.0,	3},
+		{  72.0,	"Boost",		  0.50,	  2.0,	3},
+		{  74.0,	"Boost",		 -0.50,	  2.0,	3},
+		{  76.0,	"Boost",		  0.50,	  2.0,	3},
+		{  78.0,	"Boost",		 -0.50,	  2.0,	3},
+		{  80.0,	"Boost",		  0.50,	  2.0,	3},
+		{  82.0,	"Boost",		 -0.50,	  2.0,	3},
+		{  84.0,	"Boost",		  0.50,	  2.0,	3},
+		{  86.0,	"Boost",		 -0.50,	  2.0,	3},
+		{  88.0,	"Boost",		  0.50,	  2.0,	3},
+		{  90.0,	"Boost",		 -0.50,	  2.0,	3},
+		{  92.0,	"Boost",		  0.50,	  2.0,	3},
+		
+		{  94.0,	"ScrollSpeed",	cspdA,    2.0,	3}, 
+		{  94.0,	"Boost",		  1.0,	  2.0,	3},
+		{  94.0,	"Drunk",		  1.0,	  2.0,	3},
+		{  94.0,	"Tornado",		  0.5,	  2.0,	3},
+		
+		{ 120.0,	"Drunk",		  0.0,	  4.0,	3},
+		{ 120.0,	"Tornado",		  0.0,	  4.0,	3},
+		
+		
+		{ 138.0,	"Tilt",			  1.5,	  5.0,	1},
+		{ 138.0,	"Tilt",			  1.8,	  5.0,	2},
+		{ 138.0,	"Boost",		  1.5,	  5.0,	3},
+		{ 143.0,	"Boost",		  1.0,	  1.0,	3},
+		{ 143.0,	"Tilt",			 -0.4,	  0.5,	1},
+		{ 143.0,	"Tilt",			 -0.5,	  0.5,	2},
+		{ 143.5,	"Tilt",			  0.0,	  0.5,	3},
+				
+		{ 170.0,	"Tilt",			 -1.8,	  5.0,	1},
+		{ 170.0,	"Tilt",			 -1.5,	  5.0,	2},
+		{ 170.0,	"Boost",		  1.5,	  5.0,	3},
+		{ 175.0,	"Boost",		  1.0,	  1.0,	3},
+		{ 175.0,	"Tilt",			  0.5,	  0.5,	1},
+		{ 175.0,	"Tilt",			  0.4,	  0.5,	2},
+		{ 175.5,	"Tilt",			  0.0,	  0.5,	3},
+
 	};
 local modsLaunched = 0;
 local modsWait = 0;
@@ -400,3 +974,4 @@ table.insert(theBoys, hamburgerHelper);
 
 
 return theBoys;
+

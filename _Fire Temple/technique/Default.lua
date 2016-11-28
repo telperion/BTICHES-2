@@ -664,7 +664,7 @@ local felysRotationLead = 0.25;
 local felysRotationIndex = 0;
 
 
-local enjoyGfxHQ = Def.Quad {
+local felysGfxHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
 			:SetWidth(6)
@@ -850,7 +850,7 @@ local enjoyGfxHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
-table.insert(theBoys, enjoyGfxHQ);
+table.insert(theBoys, felysGfxHQ);
 
 
 -------------------------------------------------------------------------------
