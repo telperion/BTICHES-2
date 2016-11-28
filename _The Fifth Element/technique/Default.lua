@@ -42,33 +42,7 @@ local theBoys = Def.ActorFrame {
 -- 		Some graphical doods 'n' dads 'n' doodads.
 --
 -------------------------------------------------------------------------------
-local numArrows = {["4th"] = 45,  ["32nd"] = 30,    ["48th"] = 15};		-- Number of arrows to instantiate
-local texArrows = {["4th"] = 0.0, ["32nd"] = 0.625, ["48th"] = 0.75};	-- Texture coordinate shifts
 
-local felysNotes = {};
-local stronk = 64;
-for quantColor,quantCount in pairs(numArrows) do
-	Trace("> making scary "..quantColor.." notes");
-	for i = 1,quantCount do
-		local pos = {math.cos(i/quantCount * 2 * math.pi) * stronk, math.sin(i/quantCount * 2 * math.pi) * stronk};
-		
-		Trace("> making scary "..quantColor.." note #"..i);
-		felysNotes[#felysNotes + 1] = NOTESKIN:LoadActorForNoteSkin("Down", "Tap Note", "cyber") .. {
-			Name = "ScaryNote"..quantColor.."_"..i,
-			InitCommand = function(self)
-				self:visible(true)
-					:xy(sw/2 + pos[1], sh/2 + pos[2])
-					:texturetranslate(texArrows[quantColor], 0);
-			end,
-		};
-		Trace(">>> made scary "..quantColor.." note #"..i);
-	end
-	stronk = stronk + 64;
-end
-
-for i = 1,#felysNotes do
---	table.insert(theBoys, felysNotes[i]);
-end
 
 -------------------------------------------------------------------------------
 --
@@ -80,7 +54,7 @@ local BTIUtil_Scale = function(t, inLower, inUpper, outLower, outUpper)
 end
 
 
-local enjoyGfxHQ = Def.Quad {
+local fifthGfxHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
 			:SetWidth(6)
@@ -118,7 +92,7 @@ local enjoyGfxHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
-table.insert(theBoys, enjoyGfxHQ);
+--table.insert(theBoys, fifthGfxHQ);
 
 
 -------------------------------------------------------------------------------
@@ -265,7 +239,7 @@ local clearAllMods = function(playerNum, justTrace)
 	end
 end
 
-local enjoyModsHQ = Def.Quad {
+local fifthModsHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
 			:SetWidth(6)
@@ -282,7 +256,7 @@ local enjoyModsHQ = Def.Quad {
 		local overtime = GAMESTATE:GetSongBeat();
 		
 		if modsLaunched >= #modsTable then
-			Trace('>>> enjoyModsHQ: Hibernated!!');
+			Trace('>>> fifthModsHQ: Hibernated!!');
 			self:hibernate(600);
 			do return end
 		else
@@ -294,7 +268,7 @@ local enjoyModsHQ = Def.Quad {
 				if overtime + modsLeadBy >= nextMod[1] then
 					-- TODO: this assumes the effect applies over a constant BPM section!!
 					local BPS = GAMESTATE:GetSongBPS();
-					Trace('>>> enjoyModsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
+					Trace('>>> fifthModsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
 					
 					for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
 						pn = tonumber(string.match(pe, "[0-9]+"));
@@ -332,7 +306,7 @@ local enjoyModsHQ = Def.Quad {
 		self:queuecommand('Update');
 	end
 }
-table.insert(theBoys, enjoyModsHQ);
+--table.insert(theBoys, fifthModsHQ);
 
 -------------------------------------------------------------------------------
 --

@@ -1,0 +1,90 @@
+- step Fifth Element
+- mod Fifth Element
+	- BUZZIBEE no jutsu
+	- Fungah no jutsu
+	- Telperion no jutsu
+	- Caulking
+- specials cleanup
+	- FIRE TEMPLE
+		- spare notes patterning
+	- EARTH TEMPLE
+		- faction standards sprites
+	- WATER TEMPLE
+		- add mines to prevent stomping
+	- AIR TEMPLE
+		- weed out slowness in breakdown
+	- [all]
+		- force FailOff/FailEndOfSong		
+- ordinaries cleanup
+	- I completely forgot
+		- fake footswitch
+	- The `dup step`
+		- needs gimmicks
+	- OK, so which is the brake
+		- ensure scrolling rates
+	- DAIKENKAI or
+		- add fake note trick
+	- Shining car [1]
+		- patterning at very end
+	- Look at the lion
+		- test!!
+	
+- step as replacements
+	- Revenge of the furries				(for Look at the lion)
+	- A seatbelt would be more effective	(for Shining car, of your dreams [1])
+	
+- test anything on actual machine
+- test everything on actual machine
+- stream prep
+	- overlay/underlay
+	- OBS and capture card setup
+	- SF_EVOLVED pwd
+- endroll
+
+
+
+
+Songs chosen:
+
+A bigger, blacker box
+Baby, I'm not tough enough
+DAIKENKAI or
+Don't be f*cking rude.
+Hot Transfer Student Trope
+I completely forgot (ry
+Look at the lion
+OK, so which is the brake
+Shining car, of your dreams [1]
+Shining car, of your dreams [2]
+Shot in the head, and you're to blame
+Stop! Don't touch me there
+The hardest song in DDR
+The `dup step`
+Wawa
+
+
+
+
+
+
+	10 The hardest song in DDR
+	 9 Wawa
+	10 Hot Transfer Student Trope
+
+	 9 Stop! Don't touch me there
+	 9 The `dup step`
+	11 DAIKENKAI or
+	 
+	10 Baby, I'm not tough enough
+-->	10 Shining car, of your dreams [1]
+	11 A bigger, blacker box
+
+	11 Don't be f*cking rude.
+-->	12 Look at the lion
+	12 I completely forgot (ry
+
+	12 Shining car, of your dreams [2]
+	13 OK, so which is the brake
+	14 Shot in the head, and you're to blame
+ 
+ 
