@@ -1,0 +1,47 @@
+Ratings
+	ratings (1x5)
+	full-scale (320 x 62 per)
+	cx: 320 ± 160
+	cy: 160
+
+Receptors, countdown:
+	ctd[0-3]
+	full-scale (64 x 64 for countdown)
+	cx: 320 ± 112
+	cy: 80
+	Each arrow:
+		(get from noteskin receptor)
+		75% scale (48 x 48)
+		move by 36 from receptor/countdown (cx, cy)
+
+Succ/Fail
+	succ; fail
+	full-scale (24 x 24)
+	cx: 320 ± (32 + 356 * (i-1)/(N-1)); N = number of attempts, i = attempt index
+	cy: 420 (clear the bottom of the table)
+
+Balls
+	ball
+	full-scale (32 x 32)
+	cx, cy: follow two quadratic-like splines? this will be the hard part oops
+	(reuse path hint splines tho)
+
+Hands
+	hand
+	full-scale (72 x 72)
+	cx: 320 ± 284
+	cy: variable
+
+Cups
+	rsc
+	full-scale (128 x 168)
+	cx: 320 ± 80
+	cy: 292
+	actual lip height: 212
+	sides @ ± 81° angle
+
+Table
+	table2-cy144
+	full-scale (800 x 750)
+	cx: 320
+	cy: 591 - centers midpoint of table at (320, 360)

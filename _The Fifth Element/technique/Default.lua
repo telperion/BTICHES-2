@@ -9,8 +9,8 @@
 
 local sw = SCREEN_WIDTH;
 local sh = SCREEN_HEIGHT;
-local bpm = 170;
-local ofs = -2.040;
+local bpm = 140;
+local ofs = 0.000;	-- TODO
 local plr = {nil, nil};
 local curmessage = 1;
 local fgcurcommand = 0;
@@ -36,10 +36,255 @@ local theBoys = Def.ActorFrame {
 };
 
 
+--
+-- 		some funktion !
+--
+local BTIUtil_SideSign = function(i) return (i == 2) and 1 or -1; end
+
+local BTIUtil_Scale = function(t, inLower, inUpper, outLower, outUpper)
+	local ti = (t - inLower) / (inUpper - inLower);
+	return outLower + ti * (outUpper - outLower);
+end
 
 -------------------------------------------------------------------------------
 --
--- 		Some graphical doods 'n' dads 'n' doodads.
+-- 		BUZZIBEE no jutsu
+--
+local attempts = 8;
+
+local BZBFrame = Def.ActorFrame {};
+
+BZBFrame[#BZBFrame + 1] = Def.Sprite {
+	Name = "bzbTable",
+	Texture = "table2-cy144.png",
+	InitCommand = function(self)
+		self:xy(320, 591)
+			:z(0.0);
+	end,
+}
+for i = 1,2 do
+	BZBFrame[#BZBFrame + 1] = Def.Sprite {
+		Name = "bzbRSC"..i,
+		Texture = "rsc.png",
+		InitCommand = function(self)
+			self:xy(320 + BTIUtil_SideSign(i) * 80, 292)
+				z(0.1);
+		end,
+	}
+	BZBFrame[#BZBFrame + 1] = Def.Sprite {
+		Name = "bzbHand"..i,
+		Texture = "hand.png",
+		InitCommand = function(self)
+			self:xy(320 + BTIUtil_SideSign(i) * 284, 292)
+				:z(0.2)
+				:zoomx(BTIUtil_SideSign(i));
+		end,
+	}
+	BZBFrame[#BZBFrame + 1] = Def.Sprite {
+		Name = "bzbBall"..i,
+		Texture = "ball.png",
+		InitCommand = function(self)
+			--TODO: follow splines
+			self:xy(320 + BTIUtil_SideSign(i) * 284, 292)
+				:z(0.3);
+		end,
+	}
+	for sfi = 1,attempts do
+		BZBFrame[#BZBFrame + 1] = Def.Sprite {
+			Name = "bzbResult"..i.."_"..sfi,
+			Texture = "fail.png",
+			InitCommand = function(self)
+				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * (sfi-1) / (attempts-1)), 420)
+					:z(0.4)
+					--:diffusealpha(0.0);
+			end,
+			SuccCommand = function(self)
+				self:SetTexture("succ.png")
+					:diffusealpha(0.0)
+					:zoom(0.5)
+					:bounceend(0.5)
+					:diffusealpha(1.0)
+					:zoom(1.0);
+			end,
+			FailCommand = function(self)
+				self:SetTexture("fail.png")
+					:diffusealpha(0.0)
+					:zoom(0.5)
+					:bounceend(0.5)
+					:diffusealpha(1.0)
+					:zoom(1.0);
+			end,
+		}		
+	end	
+	
+	local bzbReceptorPlacement = {
+		{-1,  0,  90},
+		{ 0,  1,   0},
+		{ 0, -1, 180},
+		{ 1,  0, -90}
+	};
+	local bzbReceptorsThisSide = Def.ActorFrame {
+		InitCommand = function(self)
+			self:xy(320 + BTIUtil_SideSign(i) * 112, 80);
+		end,
+	}
+	for rcpi = 1,4 do
+		bzbReceptorsThisSide[#bzbReceptorsThisSide + 1] = NOTESKIN:LoadActorForNoteSkin("Down", "Receptor", "cyber") ..{
+			Name = "bzbReceptor"..i.."_"..rcpi,
+			InitCommand = function(self)
+				self:x(bzbReceptorPlacement[rcpi][1] * 33)
+					:y(bzbReceptorPlacement[rcpi][2] * 33)
+					:rotationz(bzbReceptorPlacement[rcpi][3])
+					:zoom(0.75)
+					:z(0.5)
+					:diffusealpha(0.5);
+			end,
+			-- TODO: add listeners for the player stepping on the pads!!
+			PressMessageCommand = function(self)
+				self:diffusealpha(1.0);
+			end,
+			ReleaseMessageCommand = function(self)
+				self:diffusealpha(0.5);
+			end,
+		}
+	end
+	for ctdi = 1,4 do
+		bzbReceptorsThisSide[#bzbReceptorsThisSide + 1] = Def.Sprite {
+			Name = "bzbCountdown"..i.."_"..(4-ctdi),
+			Texture = "ctd"..(4-ctdi)..".png",
+			InitCommand = function(self)
+				self:xy(0, 0)
+					:z(0.6)
+					:diffuse(BTIUtil_Scale(ctdi, 1.0, 4.0, 1.0, 0.0),
+							 BTIUtil_Scale(ctdi, 1.0, 4.0, 0.0, 1.0),
+							 0.0, 1.0)
+					--:visible(false);
+			end,
+			TickCommand = function(self)
+				self:xy(0, 0)
+					:zoom(0.5)
+					:visible(true)
+					:bounceend(0.5 * 60 / bpm)
+					:zoom(1.0)
+					:queuecommand("TickOver");
+			end,
+			TickOverCommand = function(self)
+				self:visible(false);
+			end,
+		}
+	end	
+	BZBFrame[#BZBFrame + 1] = bzbReceptorsThisSide;
+		
+	BZBFrame[#BZBFrame + 1] = Def.Sprite {
+		Name = "bzbRating"..i,
+		Texture = "ratings 1x5.png",
+		InitCommand = function(self)
+			self:xy(320 + BTIUtil_SideSign(i) * 160, 160)
+				:z(1.0)
+				:animate(0)
+				--:visible(false);
+		end,
+	}
+end
+
+
+table.insert(theBoys, BZBFrame);
+
+
+
+
+--
+-- 		BUZZIBEE no jutsu
+--
+-------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------
+--
+-- 		Fungah no jutsu
+--
+
+
+
+
+
+--
+-- 		Fungah no jutsu
+--
+-------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------
+--
+-- 		Telperion no jutsu
+--
+
+
+
+
+
+--
+-- 		Telperion no jutsu
+--
+-------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------
+--
+-- 		Proxies (as usual)
+--
+--		idk, let's make three. to have
+--
+for i = 1,3 do
+	theBoys[#theBoys + 1] = Def.ActorFrame {
+		Name = "ProxyP1_"..i,
+		Def.ActorProxy {					
+			Name = "Proxy",
+			BeginCommand=function(self)
+				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+				if McCoy then self:SetTarget(McCoy); else self:hibernate(1573); end
+			end,
+			OnCommand=function(self)
+				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+				if McCoy then self:xy(-McCoy:GetX(), -McCoy:GetY()); end
+			end
+		},
+		InitCommand = function(self)
+			self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) )
+				:visible(false);
+		end,
+		OnCommand = function(self)
+			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+			if McCoy then self:xy(McCoy:GetX(), McCoy:GetY()); end
+		end,
+	}
+
+	theBoys[#theBoys + 1] = Def.ActorFrame {
+		Name = "ProxyP2_"..i,
+		Def.ActorProxy {					
+			Name = "Proxy",
+			BeginCommand=function(self)
+				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+				if McCoy then self:SetTarget(McCoy); else self:hibernate(1573); end
+			end,
+			OnCommand=function(self)
+				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+				if McCoy then self:xy(-McCoy:GetX(), -McCoy:GetY()); end
+			end
+		},
+		InitCommand = function(self)
+			self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) )
+				:visible(false);
+		end,
+		OnCommand = function(self)
+			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+			if McCoy then self:xy(McCoy:GetX(), McCoy:GetY()); end
+		end,
+	}
+end
+
+--
+-- 		Proxies (as usual)
 --
 -------------------------------------------------------------------------------
 
@@ -48,12 +293,6 @@ local theBoys = Def.ActorFrame {
 --
 -- 		This is where the shit will be happening.
 --
-local BTIUtil_Scale = function(t, inLower, inUpper, outLower, outUpper)
-	local ti = (t - inLower) / (inUpper - inLower);
-	return outLower + ti * (outUpper - outLower);
-end
-
-
 local fifthGfxHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
@@ -92,7 +331,7 @@ local fifthGfxHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
---table.insert(theBoys, fifthGfxHQ);
+table.insert(theBoys, fifthGfxHQ);
 
 
 -------------------------------------------------------------------------------
@@ -107,7 +346,7 @@ local modsTable = {
 	-- [4]: mod approach (in beats to complete)
 	-- [5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
 		
-		{   0.0,	"ScrollSpeed",	 cspd,    2.0,	3}, 
+		{   0.0,	"ScrollSpeed",	 cspd,    3.0,	3}, 
 		
 		
 	};
@@ -306,7 +545,7 @@ local fifthModsHQ = Def.Quad {
 		self:queuecommand('Update');
 	end
 }
---table.insert(theBoys, fifthModsHQ);
+table.insert(theBoys, fifthModsHQ);
 
 -------------------------------------------------------------------------------
 --
