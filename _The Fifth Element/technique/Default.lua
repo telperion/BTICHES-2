@@ -137,14 +137,14 @@ for i = 1,2 do
 					:rotationz(bzbReceptorPlacement[rcpi][3])
 					:zoom(0.75)
 					:z(0.5)
-					:diffusealpha(0.5);
+					:diffusealpha(0.3);
 			end,
 			-- TODO: add listeners for the player stepping on the pads!!
 			PressMessageCommand = function(self)
 				self:diffusealpha(1.0);
 			end,
 			ReleaseMessageCommand = function(self)
-				self:diffusealpha(0.5);
+				self:diffusealpha(0.3);
 			end,
 		}
 	end
