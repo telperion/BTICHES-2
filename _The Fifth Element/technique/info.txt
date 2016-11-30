@@ -12,7 +12,7 @@ Receptors, countdown:
 	Each arrow:
 		(get from noteskin receptor)
 		75% scale (48 x 48)
-		move by 36 from receptor/countdown (cx, cy)
+		move by 33 from receptor/countdown (cx, cy)
 
 Succ/Fail
 	succ; fail

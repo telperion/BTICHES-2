@@ -46,13 +46,168 @@ local BTIUtil_Scale = function(t, inLower, inUpper, outLower, outUpper)
 	return outLower + ti * (outUpper - outLower);
 end
 
+-- I grabbed this out of ScreenTestInput underlay
+local function input(event)
+	if not event.PlayerNumber or not event.button then
+		return false
+	end
+	
+	local state = "Off"
+	if event.type ~= "InputEventType_Release" then
+		state = "On"		
+	end
+		
+	MESSAGEMAN:Broadcast(ToEnumShortString(event.PlayerNumber) .. event.button .. state)
+	return false
+end
+
 -------------------------------------------------------------------------------
 --
 -- 		BUZZIBEE no jutsu
 --
-local attempts = 8;
+local attempts = 12;
+local lineWidth = 6;
 
 local BZBFrame = Def.ActorFrame {};
+
+local BZBData = {};
+for i = 1,2 do
+	local s = (i == 2) and 1 or -1;
+	BZBData[i] = {
+		vx = -10*s,						-- **	**	Initial horizontal velocity
+		vy =  -3*s,						-- 		**	Initial vertical velocity
+		
+		x_throw 	= 320 - 264*s,		-- (const)	Horizontal position from which ball is thrown
+		x_bounce 	= nil,				-- (calc)	Horizontal position at which ball bounces first time
+		x_rebounce 	= nil,				-- (calc)	Horizontal position at which ball bounces second time
+		x_near 		= 320 - 144*s,		-- (const)	Horizontal position of left side of cup
+		x_far	 	= 320 -  16*s,		-- (const)	Horizontal position of right side of cup
+		x_edge 		= nil,				-- (calc)	Horizontal position of ball meeting edge
+		
+		y_throw 	=  84,				-- **		Vertical position from which ball is thrown
+		y_table 	= 360,				-- (const)	Vertical position of table surface, ball bounces, and base of cup
+		y_edge 		= 212,				-- (const)	Vertical position of cup edge
+
+		succ 		= 0,				-- Would currently make the shot
+		
+		elasticity = 0.9,				-- Ball bounce elasticity
+		acceleration = 10,				-- Ball acceleration due to gravity (in pixels per beat squared!)
+
+		totalSucc = 0					-- Successes
+	};
+end
+
+local BZBRateMyProfessor = function(succ)
+		if succ > 9 then do return 1 end
+	elseif succ > 6 then do return 2 end
+	elseif succ > 4 then do return 3 end
+	elseif succ > 2 then do return 4 end
+	else 				 do return 5 end
+	end
+end	
+local BZBUpdateDataModel = function(pn, timestep)
+	-- Generate linestrip vertices from player data index pn with the given timestep (time is in beats).
+	
+	local bd = BZBData[pn];
+	local xn = bd.x_throw;
+	local yn = bd.y_throw;
+	
+	local verts = {
+		{{xn, yn, 0}, Color.White}
+	};
+	
+	local squarelastic = bd.elasticity * bd.elasticity;
+	
+	local vb1 = math.sqrt(bd.vy + 4 * bd.acceleration * (bd.y_throw - bd.y_table));		-- vertical velocity on bounce 1
+	local tb1 = 0.5 * (bd.vy + vb1) / bd.acceleration;									-- time at bounce 1
+	local tb2 = bd.elasticity * vb1 / bd.acceleration;									-- time at bounce 2 (relative to bounce 1)
+	
+	local tce = 0.5 * (squarelastic * vb1 - math.sqrt(squarelastic * squarelastic * vb1 * vb1 - 4 * bd.acceleration * (bd.y_edge - bd.y_table))) / bd.acceleration;
+	local t_total = tb1 + tb2 + tce;													-- time ball would reach height of cup edge on second bounce (relative to bounce 2)
+	
+	bd.x_bounce 	= bd.x_throw 	+ bd.vx * tb1;
+	bd.x_rebounce 	= bd.x_bounce 	+ bd.vx * tb2;
+	
+	local tss = 0.5 * (bd.elasticity * vb1 + math.sqrt(squarelastic * vb1 * vb1 - 4 * bd.acceleration * (bd.y_edge - bd.y_table))) / bd.acceleration;
+																						-- time ball would come down to height of cup edge on first bounce (relative to first bounce)
+	bd.x_edge		= bd.x_bounce	+ bd.vx * tss;
+	
+	if pn == 1 then
+		bd.succ = (bd.x_edge >= bd.x_near) and (bd.x_edge <= bd.x_far);
+	else
+		bd.succ = (bd.x_edge <= bd.x_near) and (bd.x_edge >= bd.x_far);
+	end
+	
+	
+	-- Check when the ball will hit the edge of the cup.
+	-- TODO; can just go behind the cup for now :)
+	
+	for t = 0,t_total,timestep do
+		-- Don't draw into the other player's field.
+		if (pn == 1 and xn > SCREEN_CENTER_X) or
+		   (pn == 2 and xn < SCREEN_CENTER_X) then
+			break
+		end
+		-- Don't overdraw if we already made it.
+		if currSucc and t > tss then
+			break
+		end
+		
+		local xm = xn;
+		local ym = yn;
+		local tt = t;
+		local colorator = {
+			BTIUtil_Scale(t, 0, t_total, 1.0, 0.0),
+			1.0,
+			1.0,
+			BTIUtil_Scale(t, 0, t_total, 1.0, 0.2),
+		};
+		
+		-- Oh, down is up. Gross
+		if t < tb1 then
+			tt = t;
+
+			local an = bd.acceleration;
+			local bn = -bd.vy;
+			local cn = bd.y_throw;
+			verts[#verts + 1] = {{bd.x_throw + bd.vx * tt, an*tt*tt + bn*tt + cn, 0}, colorator};
+			
+			-- Make sure the bounce contacts the table!
+			if tt + timestep > tb1 then
+				verts[#verts + 1] = {{bd.x_bounce, 	 bd.y_table, 0}, colorator};
+			end
+		elseif t < tb1 + tb2 then
+			tt = t - tb1;
+
+			local an = bd.acceleration;
+			local bn = -vb1 * bd.elasticity;
+			local cn = bd.y_table;
+			verts[#verts + 1] = {{bd.x_bounce + bd.vx * tt, an*tt*tt + bn*tt + cn, 0}, colorator};			
+						
+			-- Make sure the bounce contacts the table!
+			if tt + timestep > tb2 then
+				verts[#verts + 1] = {{bd.x_rebounce, bd.y_table, 0}, colorator};
+			end
+		else
+			tt = t - tb2;
+
+			local an = bd.acceleration;
+			local bn = -vb1 * squarelastic;
+			local cn = bd.y_table;
+			verts[#verts + 1] = {{bd.x_rebounce + bd.vx * tt, an*tt*tt + bn*tt + cn, 0}, colorator};
+			
+		end
+		
+	end
+	
+	return verts;	
+end
+local BZBProhibitMove = function(pn)
+	-- Constrain the range of player throws by making sure the ball bounces only once.
+	-- Zero times, or twice, is not allowed.	
+end
+
+
 
 BZBFrame[#BZBFrame + 1] = Def.Sprite {
 	Name = "bzbTable",
@@ -64,20 +219,16 @@ BZBFrame[#BZBFrame + 1] = Def.Sprite {
 }
 for i = 1,2 do
 	BZBFrame[#BZBFrame + 1] = Def.Sprite {
-		Name = "bzbRSC"..i,
-		Texture = "rsc.png",
-		InitCommand = function(self)
-			self:xy(320 + BTIUtil_SideSign(i) * 80, 292)
-				z(0.1);
-		end,
-	}
-	BZBFrame[#BZBFrame + 1] = Def.Sprite {
 		Name = "bzbHand"..i,
 		Texture = "hand.png",
 		InitCommand = function(self)
-			self:xy(320 + BTIUtil_SideSign(i) * 284, 292)
-				:z(0.2)
+			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
+				:xy(320 + BTIUtil_SideSign(i) * 284,  84)
+				:z(0.1)
 				:zoomx(BTIUtil_SideSign(i));
+		end,
+		UpdateBZBMessageCommand = function(self)
+			self:y( BZBData[self:getaux()].y_throw );
 		end,
 	}
 	BZBFrame[#BZBFrame + 1] = Def.Sprite {
@@ -85,8 +236,38 @@ for i = 1,2 do
 		Texture = "ball.png",
 		InitCommand = function(self)
 			--TODO: follow splines
-			self:xy(320 + BTIUtil_SideSign(i) * 284, 292)
-				:z(0.3);
+			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
+				:xy(320 + BTIUtil_SideSign(i) * 264, 84)
+				:z(0.2);
+		end,
+		UpdateBZBMessageCommand = function(self)
+			self:y( BZBData[self:getaux()].y_throw );
+		end,
+	}
+	BZBFrame[#BZBFrame + 1] = Def.ActorMultiVertex {
+		Name = "bzbTrail"..i,
+		InitCommand = function(self)
+			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
+				:SetLineWidth(lineWidth)
+				:SetDrawState{Mode = "DrawMode_LineStrip", First= 1, Num= -1}
+				:SetVertices({})
+				:xy(0, 0)
+				:z(0.25);
+		end,
+		UpdateBZBMessageCommand = function(self)
+			if not inTheMiddleOfThrowing then
+				local verts = BZBUpdateDataModel(self:getaux(), 0.1);			
+				self:SetVertices(verts);
+			end
+		end,
+	}
+	BZBFrame[#BZBFrame + 1] = Def.Sprite {
+		Name = "bzbRSC"..i,
+		Texture = "rsc.png",
+		InitCommand = function(self)
+			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
+				:xy(320 + BTIUtil_SideSign(i) * 80, 292)
+				z(0.3);
 		end,
 	}
 	for sfi = 1,attempts do
@@ -96,7 +277,7 @@ for i = 1,2 do
 			InitCommand = function(self)
 				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * (sfi-1) / (attempts-1)), 420)
 					:z(0.4)
-					--:diffusealpha(0.0);
+					:diffusealpha(0.0);
 			end,
 			SuccCommand = function(self)
 				self:SetTexture("succ.png")
@@ -117,6 +298,12 @@ for i = 1,2 do
 		}		
 	end	
 	
+	local bzbReceptorNames = {
+		"Left",
+		"Down",
+		"Up",
+		"Right"
+	};
 	local bzbReceptorPlacement = {
 		{-1,  0,  90},
 		{ 0,  1,   0},
@@ -140,10 +327,10 @@ for i = 1,2 do
 					:diffusealpha(0.3);
 			end,
 			-- TODO: add listeners for the player stepping on the pads!!
-			PressMessageCommand = function(self)
+			["P"..i..bzbReceptorNames[rcpi].."OnMessageCommand"] = function(self)
 				self:diffusealpha(1.0);
 			end,
-			ReleaseMessageCommand = function(self)
+			["P"..i..bzbReceptorNames[rcpi].."OffMessageCommand"] = function(self)
 				self:diffusealpha(0.3);
 			end,
 		}
@@ -561,6 +748,9 @@ local hamburgerHelper = Def.Quad {
 	end,
 	OnCommand = function(self)
 		local hamburger = SCREENMAN:GetTopScreen();
+		
+		-- Add input callback to enable BUZZIBEE no jutsu
+		hamburger:AddInputCallback(input);
 		
 		if hamburger:GetScreenType() == "ScreenType_Gameplay" then
 			hamburger:GetChild("Overlay" ):decelerate(1.0):diffusealpha(0.0);
