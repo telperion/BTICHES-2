@@ -67,33 +67,42 @@ end
 --
 local attempts = 12;
 local lineWidth = 6;
+local inputPersistenceFactor = 0.8;
+local inputStrengthX = 50;				-- Units per beat
+local inputStrengthY = 1000;			-- Units per beat
+local DEBUG_firstVerts = true;
 
 local BZBFrame = Def.ActorFrame {};
 
 local BZBData = {};
+local BZBInput = {};
 for i = 1,2 do
 	local s = (i == 2) and 1 or -1;
 	BZBData[i] = {
-		vx = -10*s,						-- **	**	Initial horizontal velocity
-		vy =  -3*s,						-- 		**	Initial vertical velocity
+		vx = -30*s,						-- **	**	Initial horizontal velocity
+		vy =  20,						-- 		**	Initial vertical velocity
 		
-		x_throw 	= 320 - 264*s,		-- (const)	Horizontal position from which ball is thrown
+		x_throw 	= 320 + 264*s,		-- (const)	Horizontal position from which ball is thrown
 		x_bounce 	= nil,				-- (calc)	Horizontal position at which ball bounces first time
 		x_rebounce 	= nil,				-- (calc)	Horizontal position at which ball bounces second time
-		x_near 		= 320 - 144*s,		-- (const)	Horizontal position of left side of cup
-		x_far	 	= 320 -  16*s,		-- (const)	Horizontal position of right side of cup
+		x_near 		= 320 + 144*s,		-- (const)	Horizontal position of left side of cup
+		x_far	 	= 320 +  16*s,		-- (const)	Horizontal position of right side of cup
 		x_edge 		= nil,				-- (calc)	Horizontal position of ball meeting edge
 		
 		y_throw 	=  84,				-- **		Vertical position from which ball is thrown
 		y_table 	= 360,				-- (const)	Vertical position of table surface, ball bounces, and base of cup
 		y_edge 		= 212,				-- (const)	Vertical position of cup edge
 
-		succ 		= 0,				-- Would currently make the shot
+		succ 		= false,			-- Would currently make the shot
 		
 		elasticity = 0.9,				-- Ball bounce elasticity
-		acceleration = 10,				-- Ball acceleration due to gravity (in pixels per beat squared!)
+		acceleration = 100,				-- Ball acceleration due to gravity (in pixels per beat squared!)
 
 		totalSucc = 0					-- Successes
+	};
+	BZBInput[i] = {
+		{false, false, false, false},	-- State of input
+		{0, 0, 0, 0},					-- Persistence factor of input
 	};
 end
 
@@ -105,6 +114,19 @@ local BZBRateMyProfessor = function(succ)
 	else 				 do return 5 end
 	end
 end	
+
+local BZBPush = function(pn, timestep)
+	inputStates = BZBInput[pn][1];
+	inputPersist = BZBInput[pn][2];
+	
+	for rcpi = 1,4 do
+		inputPersist[rcpi] = inputPersist[rcpi] * inputPersistenceFactor + (inputStates[rcpi] and (1-inputPersistenceFactor) or 0);
+	end
+	
+	BZBData[pn].vx = BZBData[pn].vx + (inputPersist[4] - inputPersist[1]) * inputStrengthX * timestep;
+	BZBData[pn].vy = BZBData[pn].vy + (inputPersist[3] - inputPersist[2]) * inputStrengthX * timestep;
+end
+
 local BZBUpdateDataModel = function(pn, timestep)
 	-- Generate linestrip vertices from player data index pn with the given timestep (time is in beats).
 	
@@ -118,7 +140,7 @@ local BZBUpdateDataModel = function(pn, timestep)
 	
 	local squarelastic = bd.elasticity * bd.elasticity;
 	
-	local vb1 = math.sqrt(bd.vy + 4 * bd.acceleration * (bd.y_throw - bd.y_table));		-- vertical velocity on bounce 1
+	local vb1 = math.sqrt(bd.vy * bd.vy - 4 * bd.acceleration * (bd.y_throw - bd.y_table));		-- vertical velocity on bounce 1
 	local tb1 = 0.5 * (bd.vy + vb1) / bd.acceleration;									-- time at bounce 1
 	local tb2 = bd.elasticity * vb1 / bd.acceleration;									-- time at bounce 2 (relative to bounce 1)
 	
@@ -139,6 +161,11 @@ local BZBUpdateDataModel = function(pn, timestep)
 	end
 	
 	
+	if DEBUG_firstVerts then
+		Trace("pn = "..pn..", xn = "..xn..", yn = "..yn);
+		Trace("vb1 = "..vb1..", tb1 = "..tb1..", tb2 = "..tb2..", tce = "..tce..", t_total = "..t_total);
+	end
+	
 	-- Check when the ball will hit the edge of the cup.
 	-- TODO; can just go behind the cup for now :)
 	
@@ -149,7 +176,7 @@ local BZBUpdateDataModel = function(pn, timestep)
 			break
 		end
 		-- Don't overdraw if we already made it.
-		if currSucc and t > tss then
+		if bd.succ and t > tss then
 			break
 		end
 		
@@ -198,8 +225,12 @@ local BZBUpdateDataModel = function(pn, timestep)
 			
 		end
 		
+		if DEBUG_firstVerts then
+			Trace("BZB: vertex "..#verts.." @ ("..verts[#verts][1][1]..", "..verts[#verts][1][2]..")!");
+		end
 	end
 	
+	DEBUG_firstVerts = false;
 	return verts;	
 end
 local BZBProhibitMove = function(pn)
@@ -249,7 +280,7 @@ for i = 1,2 do
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
 				:SetLineWidth(lineWidth)
-				:SetDrawState{Mode = "DrawMode_LineStrip", First= 1, Num= -1}
+				:SetDrawState{Mode = "DrawMode_LineStrip", First = 1, Num = -1}
 				:SetVertices({})
 				:xy(0, 0)
 				:z(0.25);
@@ -257,7 +288,8 @@ for i = 1,2 do
 		UpdateBZBMessageCommand = function(self)
 			if not inTheMiddleOfThrowing then
 				local verts = BZBUpdateDataModel(self:getaux(), 0.1);			
-				self:SetVertices(verts);
+				self:SetDrawState{Num = #verts}
+					:SetVertices(verts);
 			end
 		end,
 	}
@@ -267,7 +299,7 @@ for i = 1,2 do
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
 				:xy(320 + BTIUtil_SideSign(i) * 80, 292)
-				z(0.3);
+				:z(0.3);
 		end,
 	}
 	for sfi = 1,attempts do
@@ -329,9 +361,15 @@ for i = 1,2 do
 			-- TODO: add listeners for the player stepping on the pads!!
 			["P"..i..bzbReceptorNames[rcpi].."OnMessageCommand"] = function(self)
 				self:diffusealpha(1.0);
+				
+				local pn, di = string.match(self:GetName(), "([0-9]+)_([0-9]+)");
+				BZBInput[tonumber(pn)][1][tonumber(di)] = true;
 			end,
 			["P"..i..bzbReceptorNames[rcpi].."OffMessageCommand"] = function(self)
 				self:diffusealpha(0.3);
+				
+				local pn, di = string.match(self:GetName(), "([0-9]+)_([0-9]+)");
+				BZBInput[tonumber(pn)][1][tonumber(di)] = false;
 			end,
 		}
 	end
@@ -508,7 +546,12 @@ local fifthGfxHQ = Def.Quad {
 			fgcurcommand = fgcurcommand + 1;
 		end
 					
-		
+					
+		-- BUZZIBEE no jutsu: update
+		MESSAGEMAN:Broadcast("UpdateBZB");
+		for i = 1,2 do
+			BZBPush(i, 0.02);
+		end
 		
 		-- Wait a bit and then update again!
 		self:queuecommand("WaitABit");
