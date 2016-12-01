@@ -82,14 +82,18 @@ for i = 1,2 do
 		vx = -30*s,						-- **	**	Initial horizontal velocity
 		vy =  20,						-- 		**	Initial vertical velocity
 		
-		x_throw 	= 320 + 264*s,		-- (const)	Horizontal position from which ball is thrown
+		x_throw 	= 320 + 288*s,		-- (const)	Horizontal position from which ball is thrown
 		x_bounce 	= nil,				-- (calc)	Horizontal position at which ball bounces first time
 		x_rebounce 	= nil,				-- (calc)	Horizontal position at which ball bounces second time
+		x_end	 	= nil,				-- (calc)	Horizontal position at which ball would peak on the /third/ bounce
 		x_near 		= 320 + 144*s,		-- (const)	Horizontal position of left side of cup
 		x_far	 	= 320 +  16*s,		-- (const)	Horizontal position of right side of cup
 		x_edge 		= nil,				-- (calc)	Horizontal position of ball meeting edge
 		
 		y_throw 	=  84,				-- **		Vertical position from which ball is thrown
+		y_bounce	= nil,				-- (calc)	Vertical extent of first bounce
+		y_rebounce	= nil,				-- (calc)	Vertical extent of second bounce
+		y_end		= nil,				-- (calc)	Vertical extent of third bounce
 		y_table 	= 360,				-- (const)	Vertical position of table surface, ball bounces, and base of cup
 		y_edge 		= 212,				-- (const)	Vertical position of cup edge
 
@@ -143,15 +147,23 @@ local BZBUpdateDataModel = function(pn, timestep)
 	local vb1 = math.sqrt(bd.vy * bd.vy - 4 * bd.acceleration * (bd.y_throw - bd.y_table));		-- vertical velocity on bounce 1
 	local tb1 = 0.5 * (bd.vy + vb1) / bd.acceleration;									-- time at bounce 1
 	local tb2 = bd.elasticity * vb1 / bd.acceleration;									-- time at bounce 2 (relative to bounce 1)
+	local tb3 = squarelastic  * vb1 / bd.acceleration;									-- time at bounce 3 (relative to bounce 2)
 	
 	local tce = 0.5 * (squarelastic * vb1 - math.sqrt(squarelastic * squarelastic * vb1 * vb1 - 4 * bd.acceleration * (bd.y_edge - bd.y_table))) / bd.acceleration;
-	local t_total = tb1 + tb2 + tce;													-- time ball would reach height of cup edge on second bounce (relative to bounce 2)
+	
+	-- time ball would reach height of cup edge on second bounce (relative to bounce 2)
+	local t_total = math.min(0.8 * (bd.x_near - bd.x_throw) / bd.vx, tb1 + tb2 + tce);
 	
 	bd.x_bounce 	= bd.x_throw 	+ bd.vx * tb1;
 	bd.x_rebounce 	= bd.x_bounce 	+ bd.vx * tb2;
-	
+	bd.x_end		= bd.x_rebounce	+ bd.vx * tb3 * 0.5;
+	bd.y_bounce 	= bd.y_table 	- 0.25 * vb1 * vb1 * squarelastic 				 / bd.acceleration;
+	bd.y_rebounce 	= bd.y_table 	- 0.25 * vb1 * vb1 * squarelastic * squarelastic / bd.acceleration;
+	bd.y_end	 	= bd.y_table 	- 0.25 * vb1 * vb1 * squarelastic * squarelastic / bd.acceleration;
+
+	-- time ball would come down to height of cup edge on first bounce (relative to first bounce)	
 	local tss = 0.5 * (bd.elasticity * vb1 + math.sqrt(squarelastic * vb1 * vb1 - 4 * bd.acceleration * (bd.y_edge - bd.y_table))) / bd.acceleration;
-																						-- time ball would come down to height of cup edge on first bounce (relative to first bounce)
+
 	bd.x_edge		= bd.x_bounce	+ bd.vx * tss;
 	
 	if pn == 1 then
@@ -176,9 +188,9 @@ local BZBUpdateDataModel = function(pn, timestep)
 			break
 		end
 		-- Don't overdraw if we already made it.
-		if bd.succ and t > tss then
-			break
-		end
+--		if bd.succ and t > tss then
+--			break
+--		end
 		
 		local xm = xn;
 		local ym = yn;
@@ -254,25 +266,61 @@ for i = 1,2 do
 		Texture = "hand.png",
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
-				:xy(320 + BTIUtil_SideSign(i) * 284,  84)
+				:xy(320 + BTIUtil_SideSign(i) * 308,  84)
 				:z(0.1)
 				:zoomx(BTIUtil_SideSign(i));
 		end,
-		UpdateBZBMessageCommand = function(self)
+		BZBUpdateMessageCommand = function(self)
 			self:y( BZBData[self:getaux()].y_throw );
 		end,
 	}
-	BZBFrame[#BZBFrame + 1] = Def.Sprite {
+	BZBFrame[#BZBFrame + 1] = Def.ActorFrame {
 		Name = "bzbBall"..i,
-		Texture = "ball.png",
+		Def.Sprite {
+			Name = "bzbBallInner"..i,
+			Texture = "ball.png",
+			InitCommand = function(self)
+				--TODO: follow splines
+				self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
+					:xy(320 + BTIUtil_SideSign(i) * 288, 0)
+					:z(0);
+			end,
+			BZBThrowMessageCommand = function(self)
+				local bd = BZBData[self:getaux()];
+				local BPS = GAMESTATE:GetSongBPS();
+				self:x( bd.x_throw )
+					:linear( (bd.x_end - bd.x_throw) / (bd.vx * BPS) )
+					:x( bd.x_end )
+					:sleep(1 / BPS)
+					:x( bd.x_throw );
+			end,
+		},
 		InitCommand = function(self)
 			--TODO: follow splines
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
-				:xy(320 + BTIUtil_SideSign(i) * 264, 84)
+				:xy(0, 84)
 				:z(0.2);
 		end,
-		UpdateBZBMessageCommand = function(self)
+		BZBUpdateMessageCommand = function(self)
 			self:y( BZBData[self:getaux()].y_throw );
+		end,
+		BZBThrowMessageCommand = function(self)
+			local bd = BZBData[self:getaux()];
+			local BPS = GAMESTATE:GetSongBPS();
+			local t_bounce 	 = (bd.x_bounce 	- bd.x_throw)	 / bd.vx;
+			local t_rebounce = (bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
+			local t_end 	 = (bd.x_end 		- bd.x_rebounce) / bd.vx;
+			self:y( bd.y_throw )
+				:accelerate( t_bounce / BPS )
+				:y( bd.y_table )
+				:decelerate( 0.5 * t_rebounce / BPS )
+				:y( bd.y_bounce )
+				:accelerate( 0.5 * t_rebounce / BPS )
+				:y( bd.y_table )
+				:decelerate( t_end / BPS )
+				:y( bd.y_end )
+				:sleep(1 / BPS)
+				:y( bd.y_throw );
 		end,
 	}
 	BZBFrame[#BZBFrame + 1] = Def.ActorMultiVertex {
@@ -285,11 +333,12 @@ for i = 1,2 do
 				:xy(0, 0)
 				:z(0.25);
 		end,
-		UpdateBZBMessageCommand = function(self)
+		BZBUpdateMessageCommand = function(self)
 			if not inTheMiddleOfThrowing then
 				local verts = BZBUpdateDataModel(self:getaux(), 0.1);			
-				self:SetDrawState{Num = #verts}
-					:SetVertices(verts);
+				self:SetDrawState{Num = -1}
+					:SetVertices(verts)
+					:SetDrawState{Num = (#verts - 1)};
 			end
 		end,
 	}
@@ -378,23 +427,25 @@ for i = 1,2 do
 			Name = "bzbCountdown"..i.."_"..(4-ctdi),
 			Texture = "ctd"..(4-ctdi)..".png",
 			InitCommand = function(self)
-				self:xy(0, 0)
+				self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) )
+					:xy(0, 0)
 					:z(0.6)
-					:diffuse(BTIUtil_Scale(ctdi, 1.0, 4.0, 1.0, 0.0),
-							 BTIUtil_Scale(ctdi, 1.0, 4.0, 0.0, 1.0),
-							 0.0, 1.0)
+					:diffuse(BTIUtil_Scale(ctdi, 1.0, 4.0, 1.0, 0.0), 1.0, 0.0, 0.0)
 					--:visible(false);
 			end,
-			TickCommand = function(self)
+			BZBThrowMessageCommand = function(self)
+				local myIndex = self:getaux();
+				local BPS = GAMESTATE:GetSongBPS();
 				self:xy(0, 0)
 					:zoom(0.5)
-					:visible(true)
-					:bounceend(0.5 * 60 / bpm)
+					:sleep((4-myIndex) / BPS)
+					:diffusealpha(1.0)
+					:bounceend(1.0 / BPS)
 					:zoom(1.0)
 					:queuecommand("TickOver");
 			end,
 			TickOverCommand = function(self)
-				self:visible(false);
+				self:diffusealpha(0.0);
 			end,
 		}
 	end	
@@ -536,7 +587,7 @@ local fifthGfxHQ = Def.Quad {
 		local BPS = GAMESTATE:GetSongBPS();	
 		
 		-- Who's interesting today?
-		if overtime >=  0.0 and fgcurcommand ==  0 then
+		if overtime >=   0.0 and fgcurcommand ==  0 then
 			for i,v in ipairs(plr) do
 				if v then
 					v:decelerate(16.0 / BPS):y(sh/2 - 30):z(0);
@@ -545,10 +596,17 @@ local fifthGfxHQ = Def.Quad {
 			
 			fgcurcommand = fgcurcommand + 1;
 		end
+		
+		
+		if overtime >=   8.0 and fgcurcommand ==  1 then
+			MESSAGEMAN:Broadcast("BZBThrow");
+			
+			fgcurcommand = fgcurcommand + 1;
+		end
 					
 					
 		-- BUZZIBEE no jutsu: update
-		MESSAGEMAN:Broadcast("UpdateBZB");
+		MESSAGEMAN:Broadcast("BZBUpdate");
 		for i = 1,2 do
 			BZBPush(i, 0.02);
 		end
