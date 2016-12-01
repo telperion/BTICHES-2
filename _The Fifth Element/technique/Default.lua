@@ -12,7 +12,7 @@ local sh = SCREEN_HEIGHT;
 local bpm = 140;
 local ofs = 0.000;	-- TODO
 local plr = {nil, nil};
-local curmessage = 1;
+local curmessage = 0;
 local fgcurcommand = 0;
 local checked = false;
 local screen;
@@ -288,18 +288,27 @@ for i = 1,2 do
 			BZBThrowMessageCommand = function(self)
 				local bd = BZBData[self:getaux()];
 				local BPS = GAMESTATE:GetSongBPS();
-				self:x( bd.x_throw )
-					:linear( (bd.x_end - bd.x_throw) / (bd.vx * BPS) )
-					:x( bd.x_end )
-					:sleep(1 / BPS)
-					:x( bd.x_throw );
+				
+				if bd.succ then
+					self:x( bd.x_throw )
+						:linear( (bd.x_edge - bd.x_throw) / (bd.vx * BPS) )
+						:x( bd.x_edge )
+						:sleep(1 / BPS)
+						:x( bd.x_throw );
+				else
+					self:x( bd.x_throw )
+						:linear( (bd.x_end - bd.x_throw) / (bd.vx * BPS) )
+						:x( bd.x_end )
+						:sleep(1 / BPS)
+						:x( bd.x_throw );
+				end
 			end,
 		},
 		InitCommand = function(self)
 			--TODO: follow splines
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
 				:xy(0, 84)
-				:z(0.2);
+				:z(0.3);
 		end,
 		BZBUpdateMessageCommand = function(self)
 			self:y( BZBData[self:getaux()].y_throw );
@@ -307,20 +316,36 @@ for i = 1,2 do
 		BZBThrowMessageCommand = function(self)
 			local bd = BZBData[self:getaux()];
 			local BPS = GAMESTATE:GetSongBPS();
-			local t_bounce 	 = (bd.x_bounce 	- bd.x_throw)	 / bd.vx;
-			local t_rebounce = (bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
-			local t_end 	 = (bd.x_end 		- bd.x_rebounce) / bd.vx;
-			self:y( bd.y_throw )
-				:accelerate( t_bounce / BPS )
-				:y( bd.y_table )
-				:decelerate( 0.5 * t_rebounce / BPS )
-				:y( bd.y_bounce )
-				:accelerate( 0.5 * t_rebounce / BPS )
-				:y( bd.y_table )
-				:decelerate( t_end / BPS )
-				:y( bd.y_end )
-				:sleep(1 / BPS)
-				:y( bd.y_throw );
+			
+			if bd.succ then
+				local t_bounce 	 = (bd.x_bounce 	- bd.x_throw)	 / bd.vx;
+				local t_rebounce = (bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
+				local t_edge 	 = (bd.x_edge 		- bd.x_rebounce) / bd.vx;
+				self:y( bd.y_throw )
+					:accelerate( t_bounce / BPS )
+					:y( bd.y_table )
+					:decelerate( 0.5 * t_rebounce / BPS )
+					:y( bd.y_bounce )
+					:accelerate( t_edge / BPS )
+					:y( bd.y_edge )
+					:sleep(1 / BPS)
+					:y( bd.y_throw );
+			else
+				local t_bounce 	 = (bd.x_bounce 	- bd.x_throw)	 / bd.vx;
+				local t_rebounce = (bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
+				local t_end 	 = (bd.x_end 		- bd.x_rebounce) / bd.vx;
+				self:y( bd.y_throw )
+					:accelerate( t_bounce / BPS )
+					:y( bd.y_table )
+					:decelerate( 0.5 * t_rebounce / BPS )
+					:y( bd.y_bounce )
+					:accelerate( 0.5 * t_rebounce / BPS )
+					:y( bd.y_table )
+					:decelerate( t_end / BPS )
+					:y( bd.y_end )
+					:sleep(1 / BPS)
+					:y( bd.y_throw );
+			end
 		end,
 	}
 	BZBFrame[#BZBFrame + 1] = Def.ActorMultiVertex {
@@ -348,7 +373,7 @@ for i = 1,2 do
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
 				:xy(320 + BTIUtil_SideSign(i) * 80, 292)
-				:z(0.3);
+				:z(0.2);
 		end,
 	}
 	for sfi = 1,attempts do
@@ -569,6 +594,22 @@ end
 --
 -- 		This is where the shit will be happening.
 --
+
+local messageList = {
+	{   4.0, "BZBThrow"},
+	{   8.0, "BZBThrow"},
+	{  12.0, "BZBThrow"},
+	{  16.0, "BZBThrow"},
+	{  20.0, "BZBThrow"},
+	{  24.0, "BZBThrow"},
+	{  28.0, "BZBThrow"},
+	{  32.0, "BZBThrow"},
+	{  36.0, "BZBThrow"},
+	{  40.0, "BZBThrow"},
+	{  44.0, "BZBThrow"},
+	{  48.0, "BZBThrow"},
+};
+
 local fifthGfxHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
@@ -598,10 +639,20 @@ local fifthGfxHQ = Def.Quad {
 		end
 		
 		
-		if overtime >=   8.0 and fgcurcommand ==  1 then
-			MESSAGEMAN:Broadcast("BZBThrow");
-			
-			fgcurcommand = fgcurcommand + 1;
+		
+		-- Broadcast messages on their own terms.
+		while true do
+			if curmessage < #messageList then
+				if overtime >= messageList[curmessage+1][1] then			
+					MESSAGEMAN:Broadcast( messageList[curmessage+1][2] );
+					
+					curmessage = curmessage + 1;
+				else
+					break;
+				end
+			else
+				break;
+			end
 		end
 					
 					
