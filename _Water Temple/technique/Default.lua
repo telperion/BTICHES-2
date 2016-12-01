@@ -1064,10 +1064,10 @@ local hamburgerHelper = Def.Quad {
 			end
 		end
 				
-		noteskinSet = true;
-		if hadToSetNoteskin then
-			SCREENMAN:SetNewScreen("ScreenGameplay"):StartTransitioningScreen("SM_GoToNextScreen");
-		end
+--		noteskinSet = true;
+--		if hadToSetNoteskin then
+--			SCREENMAN:SetNewScreen("ScreenGameplay"):StartTransitioningScreen("SM_GoToNextScreen");
+--		end
 		
 		if playersFound == 3 then
 			Trace("#### hibernate!");

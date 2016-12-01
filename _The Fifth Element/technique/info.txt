@@ -23,14 +23,16 @@ Succ/Fail
 Balls
 	ball
 	full-scale (32 x 32)
-	cx, cy: follow two quadratic-like splines? this will be the hard part oops
+	cx: starts @ center of hand + 20px toward center of screen
+	cy: starts @ center of hand
+	follow two quadratic-like splines? this will be the hard part oops
 	(reuse path hint splines tho)
 
 Hands
 	hand
 	full-scale (72 x 72)
-	cx: 320 ± 284
-	cy: variable
+	cx: 320 ± 308
+	cy: starts @ 84, variable
 
 Cups
 	rsc
@@ -39,6 +41,7 @@ Cups
 	cy: 292
 	actual lip height: 212
 	sides @ ± 81° angle
+	cup base, player side edge: 320 ± 117 (or 120 for approx purposes I guess)
 
 Table
 	table2-cy144

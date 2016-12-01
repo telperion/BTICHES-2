@@ -259,8 +259,24 @@ BZBFrame[#BZBFrame + 1] = Def.Sprite {
 		self:xy(320, 591)
 			:z(0.0);
 	end,
+	BZBThrowMessageCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();
+		self:sleep(3 / BPS);	-- countdown
+		inTheMiddleOfThrowing = true;
+		self:sleep(2 / BPS);	-- throw
+		inTheMiddleOfThrowing = false;
+	end,
 }
 for i = 1,2 do
+	BZBFrame[#BZBFrame + 1] = Def.Sprite {
+		Name = "bzbRSCBack"..i,
+		Texture = "rsc.png",
+		InitCommand = function(self)
+			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
+				:xy(320 + BTIUtil_SideSign(i) * 80, 292)
+				:z(0.2);
+		end,
+	}
 	BZBFrame[#BZBFrame + 1] = Def.Sprite {
 		Name = "bzbHand"..i,
 		Texture = "hand.png",
@@ -290,16 +306,42 @@ for i = 1,2 do
 				local BPS = GAMESTATE:GetSongBPS();
 				
 				if bd.succ then
+--					self:x( bd.x_throw )
+--						:linear( (bd.x_edge - bd.x_throw) / (bd.vx * BPS) )
+--						:x( bd.x_edge )
+--						:sleep(1 / BPS)
+--						:x( bd.x_throw );
+					local t_bounce 	 = 0.75;	-- 			(bd.x_bounce 	- bd.x_throw)	 / bd.vx;
+					local t_rebounce = 0.75;	-- 0.5 * 	(bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
+					local t_edge 	 = 0.5;		-- 			(bd.x_edge 		- bd.x_rebounce) / bd.vx;
 					self:x( bd.x_throw )
-						:linear( (bd.x_edge - bd.x_throw) / (bd.vx * BPS) )
+						:linear( t_bounce / BPS )
+						:x( bd.x_bounce )
+						:linear( t_rebounce / BPS )
+						:x((bd.x_bounce + bd.x_rebounce) / 2)
+						:linear( t_edge / BPS )
 						:x( bd.x_edge )
-						:sleep(1 / BPS)
+						:sleep(0.5 / BPS)
 						:x( bd.x_throw );
 				else
+--					self:x( bd.x_throw )
+--						:linear( (bd.x_end - bd.x_throw) / (bd.vx * BPS) )
+--						:x( bd.x_end )
+--						:sleep(1 / BPS)
+--						:x( bd.x_throw );
+					local t_bounce 	 = 0.75;	--			(bd.x_bounce 	- bd.x_throw)	 / bd.vx;
+					local t_rebounce = 0.375;	-- 0.5 *	(bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
+					local t_end 	 = 0.5;		--			(bd.x_end 		- bd.x_rebounce) / bd.vx;
 					self:x( bd.x_throw )
-						:linear( (bd.x_end - bd.x_throw) / (bd.vx * BPS) )
+						:linear( t_bounce / BPS )
+						:x( bd.x_bounce )
+						:linear( t_rebounce / BPS )
+						:x((bd.x_bounce + bd.x_rebounce) / 2)
+						:linear( t_rebounce / BPS )
+						:x( bd.x_rebounce )
+						:linear( t_end / BPS )
 						:x( bd.x_end )
-						:sleep(1 / BPS)
+						:sleep(0.5 / BPS)
 						:x( bd.x_throw );
 				end
 			end,
@@ -318,32 +360,32 @@ for i = 1,2 do
 			local BPS = GAMESTATE:GetSongBPS();
 			
 			if bd.succ then
-				local t_bounce 	 = (bd.x_bounce 	- bd.x_throw)	 / bd.vx;
-				local t_rebounce = (bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
-				local t_edge 	 = (bd.x_edge 		- bd.x_rebounce) / bd.vx;
+				local t_bounce 	 = 0.75;	-- 			(bd.x_bounce 	- bd.x_throw)	 / bd.vx;
+				local t_rebounce = 0.75;	-- 0.5 * 	(bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
+				local t_edge 	 = 0.5;		-- 			(bd.x_edge 		- bd.x_rebounce) / bd.vx;
 				self:y( bd.y_throw )
 					:accelerate( t_bounce / BPS )
 					:y( bd.y_table )
-					:decelerate( 0.5 * t_rebounce / BPS )
+					:decelerate( t_rebounce / BPS )
 					:y( bd.y_bounce )
 					:accelerate( t_edge / BPS )
 					:y( bd.y_edge )
-					:sleep(1 / BPS)
+					:sleep(0.5 / BPS)
 					:y( bd.y_throw );
 			else
-				local t_bounce 	 = (bd.x_bounce 	- bd.x_throw)	 / bd.vx;
-				local t_rebounce = (bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
-				local t_end 	 = (bd.x_end 		- bd.x_rebounce) / bd.vx;
+				local t_bounce 	 = 0.75;	--			(bd.x_bounce 	- bd.x_throw)	 / bd.vx;
+				local t_rebounce = 0.375;	-- 0.5 *	(bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
+				local t_end 	 = 0.5;		--			(bd.x_end 		- bd.x_rebounce) / bd.vx;
 				self:y( bd.y_throw )
 					:accelerate( t_bounce / BPS )
 					:y( bd.y_table )
-					:decelerate( 0.5 * t_rebounce / BPS )
+					:decelerate( t_rebounce / BPS )
 					:y( bd.y_bounce )
-					:accelerate( 0.5 * t_rebounce / BPS )
+					:accelerate( t_rebounce / BPS )
 					:y( bd.y_table )
 					:decelerate( t_end / BPS )
 					:y( bd.y_end )
-					:sleep(1 / BPS)
+					:sleep(0.5 / BPS)
 					:y( bd.y_throw );
 			end
 		end,
@@ -368,12 +410,12 @@ for i = 1,2 do
 		end,
 	}
 	BZBFrame[#BZBFrame + 1] = Def.Sprite {
-		Name = "bzbRSC"..i,
-		Texture = "rsc.png",
+		Name = "bzbRSCFront"..i,
+		Texture = "rsc-hi.png",
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
 				:xy(320 + BTIUtil_SideSign(i) * 80, 292)
-				:z(0.2);
+				:z(0.35);
 		end,
 	}
 	for sfi = 1,attempts do
@@ -930,10 +972,10 @@ local hamburgerHelper = Def.Quad {
 			end
 		end
 				
-		noteskinSet = true;
-		if hadToSetNoteskin then
-			SCREENMAN:SetNewScreen("ScreenGameplay"):StartTransitioningScreen("SM_GoToNextScreen");
-		end
+--		noteskinSet = true;
+--		if hadToSetNoteskin then
+--			SCREENMAN:SetNewScreen("ScreenGameplay"):StartTransitioningScreen("SM_GoToNextScreen");
+--		end
 		
 		if playersFound == 3 then
 			Trace("#### hibernate!");

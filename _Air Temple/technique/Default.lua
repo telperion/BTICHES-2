@@ -144,8 +144,8 @@ table.insert(theBoys, cyberSkinTex);
 -------------------------------------------------------------------------------
 --	BEGIN 					   Airflight Creation						BEGIN
 -------------------------------------------------------------------------------
-local cyberFlightStrips 	= 10
-local cyberFlightOptions 	= 10
+local cyberFlightStrips 	= 6
+local cyberFlightOptions 	= 12
 local BTIUtil_FakeRandom = function(i, rangeSup)
 	-- totally crypto safe. don't @ me
 	rangeSup = rangeSup or (cyberFlightOptions+1)
@@ -1147,10 +1147,10 @@ local hamburgerHelper = Def.Quad {
 			end
 		end
 				
-		noteskinSet = true;
-		if hadToSetNoteskin then
-			SCREENMAN:SetNewScreen("ScreenGameplay"):StartTransitioningScreen("SM_GoToNextScreen");
-		end
+--		noteskinSet = true;
+--		if hadToSetNoteskin then
+--			SCREENMAN:SetNewScreen("ScreenGameplay"):StartTransitioningScreen("SM_GoToNextScreen");
+--		end
 		
 		if playersFound == 3 then
 			Trace("#### hibernate!");
