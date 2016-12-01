@@ -65,14 +65,18 @@ end
 --
 -- 		BUZZIBEE no jutsu
 --
-local attempts = 12;
+local totalAttempts = 12;
+local takenAttempts = 0;
 local lineWidth = 6;
 local inputPersistenceFactor = 0.8;
+local inputPerturbanceFactor = 0;
 local inputStrengthX = 50;				-- Units per beat
-local inputStrengthY = 1000;			-- Units per beat
+local inputStrengthY = 200;				-- Units per beat
 local DEBUG_firstVerts = true;
 
-local BZBFrame = Def.ActorFrame {};
+local BZBFrame = Def.ActorFrame {
+	Name = "bzbFrame",
+};
 
 local BZBData = {};
 local BZBInput = {};
@@ -80,7 +84,7 @@ for i = 1,2 do
 	local s = (i == 2) and 1 or -1;
 	BZBData[i] = {
 		vx = -30*s,						-- **	**	Initial horizontal velocity
-		vy =  20,						-- 		**	Initial vertical velocity
+		vy =   0,						-- 		**	Initial vertical velocity
 		
 		x_throw 	= 320 + 288*s,		-- (const)	Horizontal position from which ball is thrown
 		x_bounce 	= nil,				-- (calc)	Horizontal position at which ball bounces first time
@@ -100,7 +104,7 @@ for i = 1,2 do
 		succ 		= false,			-- Would currently make the shot
 		
 		elasticity = 0.9,				-- Ball bounce elasticity
-		acceleration = 100,				-- Ball acceleration due to gravity (in pixels per beat squared!)
+		acceleration = 50,				-- Ball acceleration due to gravity (in pixels per beat squared!)
 
 		totalSucc = 0					-- Successes
 	};
@@ -111,15 +115,51 @@ for i = 1,2 do
 end
 
 local BZBRateMyProfessor = function(succ)
-		if succ > 9 then do return 1 end
-	elseif succ > 6 then do return 2 end
-	elseif succ > 4 then do return 3 end
-	elseif succ > 2 then do return 4 end
-	else 				 do return 5 end
+		if succ > 9 then do return 0 end		-- why are spritesheets of all things zero-indexed??
+	elseif succ > 6 then do return 1 end
+	elseif succ > 4 then do return 2 end
+	elseif succ > 2 then do return 3 end
+	else 				 do return 4 end
 	end
 end	
 
-local BZBPush = function(pn, timestep)
+local BZBAllowMove = function(pn)
+	-- Constrain the range of player throws by making sure the ball bounces only once.
+	-- Zero times, or twice, is not allowed.	
+	
+	local allowMove = {true, true, true, true};
+	local bd = BZBData[pn];
+	
+	if not bd.x_bounce   then do return allowMove end end
+	if not bd.x_rebounce then do return allowMove end end	
+	
+	if pn == 1 then
+		if bd.vx <= 1 then
+			allowMove[1] = false;
+		end
+		if bd.vx > 100 then
+			allowMove[4] = false;
+		end
+	else
+		if bd.vx >= -1 then
+			allowMove[4] = false;
+		end
+		if bd.vx < -100 then
+			allowMove[1] = false;
+		end
+	end
+	
+	if bd.vy < -100 then 
+		allowMove[3] = false;
+	end
+	if bd.vy >  100 then 
+		allowMove[2] = false;
+	end
+	
+	return allowMove;
+end
+
+local BZBPush = function(pn, throwing, overtime, timestep)
 	inputStates = BZBInput[pn][1];
 	inputPersist = BZBInput[pn][2];
 	
@@ -127,8 +167,23 @@ local BZBPush = function(pn, timestep)
 		inputPersist[rcpi] = inputPersist[rcpi] * inputPersistenceFactor + (inputStates[rcpi] and (1-inputPersistenceFactor) or 0);
 	end
 	
-	BZBData[pn].vx = BZBData[pn].vx + (inputPersist[4] - inputPersist[1]) * inputStrengthX * timestep;
-	BZBData[pn].vy = BZBData[pn].vy + (inputPersist[3] - inputPersist[2]) * inputStrengthX * timestep;
+	local ax = (inputPersist[4] - inputPersist[1]);
+	local ay = (inputPersist[3] - inputPersist[2]);
+	local allowMove = BZBAllowMove(pn);
+	
+	local axPerturb = inputPerturbanceFactor * math.cos(overtime * math.pi / 8.0) * (pn == 2 and 1 or -1);
+	local ayPerturb = inputPerturbanceFactor * math.sin(overtime * math.pi / 8.0);	
+	ax = ax + axPerturb;
+	ay = ay + ayPerturb;	
+	
+	if throwing == 0 then
+		if (ax < 0 and allowMove[1]) or (ax > 0 and allowMove[4]) then
+			BZBData[pn].vx = BZBData[pn].vx + ax * inputStrengthX * timestep;
+		end
+		if (ay < 0 and allowMove[3]) or (ay > 0 and allowMove[2]) then
+			BZBData[pn].vy = BZBData[pn].vy + ay * inputStrengthY * timestep;
+		end
+	end
 end
 
 local BZBUpdateDataModel = function(pn, timestep)
@@ -157,9 +212,9 @@ local BZBUpdateDataModel = function(pn, timestep)
 	bd.x_bounce 	= bd.x_throw 	+ bd.vx * tb1;
 	bd.x_rebounce 	= bd.x_bounce 	+ bd.vx * tb2;
 	bd.x_end		= bd.x_rebounce	+ bd.vx * tb3 * 0.5;
-	bd.y_bounce 	= bd.y_table 	- 0.25 * vb1 * vb1 * squarelastic 				 / bd.acceleration;
-	bd.y_rebounce 	= bd.y_table 	- 0.25 * vb1 * vb1 * squarelastic * squarelastic / bd.acceleration;
-	bd.y_end	 	= bd.y_table 	- 0.25 * vb1 * vb1 * squarelastic * squarelastic / bd.acceleration;
+	bd.y_bounce 	= bd.y_table 	- 0.25 * vb1 * vb1 * squarelastic 				 				/ bd.acceleration;
+	bd.y_rebounce 	= bd.y_table 	- 0.25 * vb1 * vb1 * squarelastic * squarelastic				/ bd.acceleration;
+	bd.y_end	 	= bd.y_table 	- 0.25 * vb1 * vb1 * squarelastic * squarelastic * squarelastic / bd.acceleration;
 
 	-- time ball would come down to height of cup edge on first bounce (relative to first bounce)	
 	local tss = 0.5 * (bd.elasticity * vb1 + math.sqrt(squarelastic * vb1 * vb1 - 4 * bd.acceleration * (bd.y_edge - bd.y_table))) / bd.acceleration;
@@ -245,10 +300,6 @@ local BZBUpdateDataModel = function(pn, timestep)
 	DEBUG_firstVerts = false;
 	return verts;	
 end
-local BZBProhibitMove = function(pn)
-	-- Constrain the range of player throws by making sure the ball bounces only once.
-	-- Zero times, or twice, is not allowed.	
-end
 
 
 
@@ -256,15 +307,58 @@ BZBFrame[#BZBFrame + 1] = Def.Sprite {
 	Name = "bzbTable",
 	Texture = "table2-cy144.png",
 	InitCommand = function(self)
-		self:xy(320, 591)
+		self:aux(0)				-- are we throwing right now or not?
+			:xy(320, 591)
 			:z(0.0);
 	end,
 	BZBThrowMessageCommand = function(self)
 		local BPS = GAMESTATE:GetSongBPS();
-		self:sleep(3 / BPS);	-- countdown
-		inTheMiddleOfThrowing = true;
-		self:sleep(2 / BPS);	-- throw
-		inTheMiddleOfThrowing = false;
+		Trace("Table heard a throw");
+		
+		self:sleep(3.95 / BPS)		-- countdown
+			:queuecommand("BZBRegisterAttempt");	
+	end,
+	BZBRegisterAttemptCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();
+		
+		self:aux(1);
+			
+		self:sleep(2.05 / BPS)		-- throw
+			:queuecommand("BZBReflectAttempt");
+	end,
+	BZBReflectAttemptCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();
+		
+		takenAttempts = takenAttempts + 1;
+		
+		for pn = 1,2 do
+			local bd = BZBData[pn];		
+			if bd.succ then
+				MESSAGEMAN:Broadcast("P"..pn.."RecordSucc"..takenAttempts);
+				bd.totalSucc = bd.totalSucc + 1;	
+			else			
+				MESSAGEMAN:Broadcast("P"..pn.."RecordFail"..takenAttempts);
+			end
+		end
+		
+		self:aux(0);
+	end,
+}
+BZBFrame[#BZBFrame + 1] = Def.Quad {
+	Name = "bzbPerturbance",
+	InitCommand = function(self)
+		self:aux(0)				-- are we throwing right now or not?
+			:xy(-sw, -sh)
+			:SetWidth(6)
+			:SetHeight(6)
+			:z(0.0);
+	end,
+	BZBThrowMessageCommand = function(self)
+		local BPS = GAMESTATE:GetSongBPS();
+		Trace("Perturbance heard a throw");
+		
+		self:linear(8.0 / BPS):aux( self:getaux() + 0.01 );					-- Increase the perturbance.
+		inputPersistenceFactor = inputPersistenceFactor * 0.9 + 0.1;		-- Make it harder to control.
 	end,
 }
 for i = 1,2 do
@@ -302,15 +396,16 @@ for i = 1,2 do
 					:z(0);
 			end,
 			BZBThrowMessageCommand = function(self)
+				local BPS = GAMESTATE:GetSongBPS();
+				self:stoptweening()
+					:sleep(4 / BPS)
+					:queuecommand("BZBDrop");
+			end,
+			BZBDropCommand = function(self)
 				local bd = BZBData[self:getaux()];
 				local BPS = GAMESTATE:GetSongBPS();
 				
 				if bd.succ then
---					self:x( bd.x_throw )
---						:linear( (bd.x_edge - bd.x_throw) / (bd.vx * BPS) )
---						:x( bd.x_edge )
---						:sleep(1 / BPS)
---						:x( bd.x_throw );
 					local t_bounce 	 = 0.75;	-- 			(bd.x_bounce 	- bd.x_throw)	 / bd.vx;
 					local t_rebounce = 0.75;	-- 0.5 * 	(bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
 					local t_edge 	 = 0.5;		-- 			(bd.x_edge 		- bd.x_rebounce) / bd.vx;
@@ -322,13 +417,9 @@ for i = 1,2 do
 						:linear( t_edge / BPS )
 						:x( bd.x_edge )
 						:sleep(0.5 / BPS)
+						:queuecommand("BZBReset")
 						:x( bd.x_throw );
 				else
---					self:x( bd.x_throw )
---						:linear( (bd.x_end - bd.x_throw) / (bd.vx * BPS) )
---						:x( bd.x_end )
---						:sleep(1 / BPS)
---						:x( bd.x_throw );
 					local t_bounce 	 = 0.75;	--			(bd.x_bounce 	- bd.x_throw)	 / bd.vx;
 					local t_rebounce = 0.375;	-- 0.5 *	(bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
 					local t_end 	 = 0.5;		--			(bd.x_end 		- bd.x_rebounce) / bd.vx;
@@ -342,8 +433,14 @@ for i = 1,2 do
 						:linear( t_end / BPS )
 						:x( bd.x_end )
 						:sleep(0.5 / BPS)
-						:x( bd.x_throw );
+						:queuecommand("BZBReset");
 				end
+			end,
+			BZBResetMessageCommand = function(self)
+				local bd = BZBData[self:getaux()];
+				local BPS = GAMESTATE:GetSongBPS();
+				self:stoptweening()
+					:x( bd.x_throw );
 			end,
 		},
 		InitCommand = function(self)
@@ -356,6 +453,12 @@ for i = 1,2 do
 			self:y( BZBData[self:getaux()].y_throw );
 		end,
 		BZBThrowMessageCommand = function(self)
+			local BPS = GAMESTATE:GetSongBPS();
+			self:stoptweening()
+				:sleep(4 / BPS)
+				:queuecommand("BZBDrop");
+		end,
+		BZBDropCommand = function(self)
 			local bd = BZBData[self:getaux()];
 			local BPS = GAMESTATE:GetSongBPS();
 			
@@ -371,7 +474,7 @@ for i = 1,2 do
 					:accelerate( t_edge / BPS )
 					:y( bd.y_edge )
 					:sleep(0.5 / BPS)
-					:y( bd.y_throw );
+					:queuecommand("BZBReset");
 			else
 				local t_bounce 	 = 0.75;	--			(bd.x_bounce 	- bd.x_throw)	 / bd.vx;
 				local t_rebounce = 0.375;	-- 0.5 *	(bd.x_rebounce 	- bd.x_bounce)	 / bd.vx;
@@ -386,8 +489,14 @@ for i = 1,2 do
 					:decelerate( t_end / BPS )
 					:y( bd.y_end )
 					:sleep(0.5 / BPS)
-					:y( bd.y_throw );
+					:queuecommand("BZBReset");
 			end
+		end,
+		BZBResetMessageCommand = function(self)
+			local bd = BZBData[self:getaux()];
+			local BPS = GAMESTATE:GetSongBPS();
+			self:stoptweening()
+				:y( bd.y_throw );
 		end,
 	}
 	BZBFrame[#BZBFrame + 1] = Def.ActorMultiVertex {
@@ -401,12 +510,10 @@ for i = 1,2 do
 				:z(0.25);
 		end,
 		BZBUpdateMessageCommand = function(self)
-			if not inTheMiddleOfThrowing then
-				local verts = BZBUpdateDataModel(self:getaux(), 0.1);			
-				self:SetDrawState{Num = -1}
-					:SetVertices(verts)
-					:SetDrawState{Num = (#verts - 1)};
-			end
+			local verts = BZBUpdateDataModel(self:getaux(), 0.1);			
+			self:SetDrawState{Num = -1}
+				:SetVertices(verts)
+				:SetDrawState{Num = (#verts - 1)};
 		end,
 	}
 	BZBFrame[#BZBFrame + 1] = Def.Sprite {
@@ -418,32 +525,39 @@ for i = 1,2 do
 				:z(0.35);
 		end,
 	}
-	for sfi = 1,attempts do
+	for sfi = 1,totalAttempts do
 		BZBFrame[#BZBFrame + 1] = Def.Sprite {
-			Name = "bzbResult"..i.."_"..sfi,
-			Texture = "fail.png",
+			Name = "bzbSucc"..i.."_"..sfi,
+			Texture = "succ.png",
 			InitCommand = function(self)
-				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * (sfi-1) / (attempts-1)), 420)
+				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * (sfi-1) / (totalAttempts-1)), 420)
 					:z(0.4)
 					:diffusealpha(0.0);
 			end,
-			SuccCommand = function(self)
-				self:SetTexture("succ.png")
-					:diffusealpha(0.0)
-					:zoom(0.5)
-					:bounceend(0.5)
-					:diffusealpha(1.0)
-					:zoom(1.0);
-			end,
-			FailCommand = function(self)
-				self:SetTexture("fail.png")
-					:diffusealpha(0.0)
+			["P"..i.."RecordSucc"..sfi.."MessageCommand"] = function(self)
+				self:diffusealpha(0.0)
 					:zoom(0.5)
 					:bounceend(0.5)
 					:diffusealpha(1.0)
 					:zoom(1.0);
 			end,
 		}		
+		BZBFrame[#BZBFrame + 1] = Def.Sprite {
+			Name = "bzbFail"..i.."_"..sfi,
+			Texture = "fail.png",
+			InitCommand = function(self)
+				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * (sfi-1) / (totalAttempts-1)), 420)
+					:z(0.4)
+					:diffusealpha(0.0);
+			end,
+			["P"..i.."RecordFail"..sfi.."MessageCommand"] = function(self)
+				self:diffusealpha(0.0)
+					:zoom(0.5)
+					:bounceend(0.5)
+					:diffusealpha(1.0)
+					:zoom(1.0);
+			end,
+		}
 	end	
 	
 	local bzbReceptorNames = {
@@ -505,7 +619,7 @@ for i = 1,2 do
 				local BPS = GAMESTATE:GetSongBPS();
 				self:xy(0, 0)
 					:zoom(0.5)
-					:sleep((4-myIndex) / BPS)
+					:sleep((3-myIndex) / BPS)
 					:diffusealpha(1.0)
 					:bounceend(1.0 / BPS)
 					:zoom(1.0)
@@ -522,10 +636,24 @@ for i = 1,2 do
 		Name = "bzbRating"..i,
 		Texture = "ratings 1x5.png",
 		InitCommand = function(self)
-			self:xy(320 + BTIUtil_SideSign(i) * 160, 160)
+			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
+				:xy(320 + BTIUtil_SideSign(i) * 160, 160)
 				:z(1.0)
 				:animate(0)
+				:diffusealpha(0.0)
 				--:visible(false);
+		end,
+		BZBRateMyProfessorMessageCommand = function(self)
+			local bd = BZBData[self:getaux()];
+			local BPS = GAMESTATE:GetSongBPS();
+			self:setstate(BZBRateMyProfessor(bd.totalSucc))
+				:zoom(0.5)
+				:decelerate(1.0 / BPS)
+				:diffusealpha(1.0)
+				:zoom(1.0)
+				:sleep(2.0 / BPS)
+				:accelerate(1.0 / BPS)
+				:diffusealpha(0.0);
 		end,
 	}
 end
@@ -638,18 +766,19 @@ end
 --
 
 local messageList = {
-	{   4.0, "BZBThrow"},
 	{   8.0, "BZBThrow"},
-	{  12.0, "BZBThrow"},
 	{  16.0, "BZBThrow"},
-	{  20.0, "BZBThrow"},
 	{  24.0, "BZBThrow"},
-	{  28.0, "BZBThrow"},
 	{  32.0, "BZBThrow"},
-	{  36.0, "BZBThrow"},
 	{  40.0, "BZBThrow"},
-	{  44.0, "BZBThrow"},
 	{  48.0, "BZBThrow"},
+	{  56.0, "BZBThrow"},
+	{  64.0, "BZBThrow"},
+	{  72.0, "BZBThrow"},
+	{  80.0, "BZBThrow"},
+	{  88.0, "BZBThrow"},
+	{  96.0, "BZBThrow"},
+	{ 104.0, "BZBRateMyProfessor"},
 };
 
 local fifthGfxHQ = Def.Quad {
@@ -701,7 +830,8 @@ local fifthGfxHQ = Def.Quad {
 		-- BUZZIBEE no jutsu: update
 		MESSAGEMAN:Broadcast("BZBUpdate");
 		for i = 1,2 do
-			BZBPush(i, 0.02);
+			inputPerturbanceFactor = self:GetParent():GetChild("bzbFrame"):GetChild("bzbPerturbance"):getaux();
+			BZBPush(i, self:GetParent():GetChild("bzbFrame"):GetChild("bzbTable"):getaux(), overtime, 0.02);
 		end
 		
 		-- Wait a bit and then update again!
