@@ -9,6 +9,7 @@
 
 local sw = SCREEN_WIDTH;
 local sh = SCREEN_HEIGHT;
+local BPS = GAMESTATE:GetSongBPS();	
 local bpm = 140;
 local ofs = 0.000;	-- TODO
 local plr = {nil, nil};
@@ -61,6 +62,14 @@ local function input(event)
 	return false
 end
 
+local RoundBezier =
+{
+	0	,	0,
+	0	,	1,
+	1	,	1,
+	1	,	0,
+}
+
 -------------------------------------------------------------------------------
 --
 -- 		BUZZIBEE no jutsu
@@ -73,10 +82,36 @@ local inputPersistenceFactor = 0.8;
 local inputPerturbanceFactor = 0;
 local inputStrengthX = 50;				-- Units per beat
 local inputStrengthY = 200;				-- Units per beat
+local inSession = false;
 local DEBUG_firstVerts = true;
 
 local BZBFrame = Def.ActorFrame {
 	Name = "bzbFrame",
+	OnCommand = function(self)
+		self:diffusealpha(0.0)
+			:visible(false);
+	end,
+	BZBStartMessageCommand = function(self)
+		self:visible(true)
+			:decelerate(8.0 / BPS)
+			:diffusealpha(1.0)
+			:queuecommand("BZBReady");
+	end,
+	BZBReadyCommand = function(self)
+		Trace("BZB is in session!");
+		inSession = true;
+	end,
+	BZBEndMessageCommand = function(self)
+		self:visible(true)
+			:decelerate(8.0 / BPS)
+			:diffusealpha(0.0)
+			:queuecommand("BZBFinished");
+	end,
+	BZBFinishedCommand = function(self)
+		Trace("BZB is over!");
+		inSession = false;
+		self:hibernate(1573);
+	end,
 };
 
 local BZBData = {};
@@ -161,6 +196,8 @@ local BZBAllowMove = function(pn)
 end
 
 local BZBPush = function(pn, throwing, overtime, timestep)
+	if not inSession then do return end end
+	
 	inputStates = BZBInput[pn][1];
 	inputPersist = BZBInput[pn][2];
 	
@@ -188,6 +225,7 @@ local BZBPush = function(pn, throwing, overtime, timestep)
 end
 
 local BZBUpdateDataModel = function(pn, timestep)
+	
 	-- Generate linestrip vertices from player data index pn with the given timestep (time is in beats).
 	
 	local bd = BZBData[pn];
@@ -313,23 +351,18 @@ BZBFrame[#BZBFrame + 1] = Def.Sprite {
 			:z(0.0);
 	end,
 	BZBThrowMessageCommand = function(self)
-		local BPS = GAMESTATE:GetSongBPS();
 		Trace("Table heard a throw");
 		
 		self:sleep(3.95 / BPS)		-- countdown
 			:queuecommand("BZBRegisterAttempt");	
 	end,
-	BZBRegisterAttemptCommand = function(self)
-		local BPS = GAMESTATE:GetSongBPS();
-		
+	BZBRegisterAttemptCommand = function(self)		
 		self:aux(1);
 			
 		self:sleep(2.05 / BPS)		-- throw
 			:queuecommand("BZBReflectAttempt");
 	end,
-	BZBReflectAttemptCommand = function(self)
-		local BPS = GAMESTATE:GetSongBPS();
-		
+	BZBReflectAttemptCommand = function(self)		
 		takenAttempts = takenAttempts + 1;
 		
 		for pn = 1,2 do
@@ -355,7 +388,6 @@ BZBFrame[#BZBFrame + 1] = Def.Quad {
 			:z(0.0);
 	end,
 	BZBThrowMessageCommand = function(self)
-		local BPS = GAMESTATE:GetSongBPS();
 		Trace("Perturbance heard a throw");
 		
 		self:linear(8.0 / BPS):aux( self:getaux() + 0.02 );					-- Increase the perturbance.
@@ -398,14 +430,12 @@ for i = 1,2 do
 					:z(0);
 			end,
 			BZBThrowMessageCommand = function(self)
-				local BPS = GAMESTATE:GetSongBPS();
 				self:stoptweening()
 					:sleep(4 / BPS)
 					:queuecommand("BZBDrop");
 			end,
 			BZBDropCommand = function(self)
 				local bd = BZBData[self:getaux()];
-				local BPS = GAMESTATE:GetSongBPS();
 				
 				if bd.succ then
 					local t_bounce 	 = 0.75;	-- 			(bd.x_bounce 	- bd.x_throw)	 / bd.vx;
@@ -440,7 +470,6 @@ for i = 1,2 do
 			end,
 			BZBResetMessageCommand = function(self)
 				local bd = BZBData[self:getaux()];
-				local BPS = GAMESTATE:GetSongBPS();
 				self:stoptweening()
 					:x( bd.x_throw );
 			end,
@@ -455,14 +484,12 @@ for i = 1,2 do
 			self:y( BZBData[self:getaux()].y_throw );
 		end,
 		BZBThrowMessageCommand = function(self)
-			local BPS = GAMESTATE:GetSongBPS();
 			self:stoptweening()
 				:sleep(4 / BPS)
 				:queuecommand("BZBDrop");
 		end,
 		BZBDropCommand = function(self)
 			local bd = BZBData[self:getaux()];
-			local BPS = GAMESTATE:GetSongBPS();
 			
 			if bd.succ then
 				local t_bounce 	 = 0.75;	-- 			(bd.x_bounce 	- bd.x_throw)	 / bd.vx;
@@ -496,7 +523,6 @@ for i = 1,2 do
 		end,
 		BZBResetMessageCommand = function(self)
 			local bd = BZBData[self:getaux()];
-			local BPS = GAMESTATE:GetSongBPS();
 			self:stoptweening()
 				:y( bd.y_throw );
 		end,
@@ -623,7 +649,6 @@ for i = 1,2 do
 			end,
 			BZBThrowMessageCommand = function(self)
 				local myIndex = self:getaux();
-				local BPS = GAMESTATE:GetSongBPS();
 				self:xy(0, 0)
 					:zoom(0.5)
 					:sleep((3-myIndex) / BPS)
@@ -652,7 +677,6 @@ for i = 1,2 do
 		end,
 		BZBRateMyProfessorMessageCommand = function(self)
 			local bd = BZBData[self:getaux()];
-			local BPS = GAMESTATE:GetSongBPS();
 			self:setstate(BZBRateMyProfessor(bd.totalSucc))
 				:zoom(0.5)
 				:decelerate(1.0 / BPS)
@@ -668,43 +692,15 @@ end
 
 table.insert(theBoys, BZBFrame);
 
-
-
-
 --
 -- 		BUZZIBEE no jutsu
 --
 -------------------------------------------------------------------------------
 
 
--------------------------------------------------------------------------------
---
--- 		Fungah no jutsu
---
 
 
 
-
-
---
--- 		Fungah no jutsu
---
--------------------------------------------------------------------------------
-
-
--------------------------------------------------------------------------------
---
--- 		Telperion no jutsu
---
-
-
-
-
-
---
--- 		Telperion no jutsu
---
--------------------------------------------------------------------------------
 
 
 -------------------------------------------------------------------------------
@@ -713,27 +709,84 @@ table.insert(theBoys, BZBFrame);
 --
 --		idk, let's make three. to have
 --
+local circleAroundXExtent = sw/4;
+local circleAroundYExtent = sh/12;
+
+local remP1Location = {nil, nil};
+
 for i = 1,3 do
-	theBoys[#theBoys + 1] = Def.ActorFrame {
-		Name = "ProxyP1_"..i,
-		Def.ActorProxy {					
-			Name = "Proxy",
-			BeginCommand=function(self)
-				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
-				if McCoy then self:SetTarget(McCoy); else self:hibernate(1573); end
+	theBoys[#theBoys + 1] = Def.ActorFrame {	
+		Name = "ProxyP1Outer_"..i,
+		Def.ActorFrame {	
+			Name = "ProxyP1Inner_"..i,
+			Def.ActorProxy {					
+				Name = "ProxyP1",
+				BeginCommand=function(self)
+					local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+					if McCoy then self:SetTarget(McCoy); else self:hibernate(1573); end
+				end,
+				OnCommand=function(self)
+					local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+					if McCoy then self:xy(-McCoy:GetX(), -McCoy:GetY()); end
+				end
+			},
+			InitCommand = function(self)
+				self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) );
 			end,
-			OnCommand=function(self)
+			OnCommand = function(self)
 				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
-				if McCoy then self:xy(-McCoy:GetX(), -McCoy:GetY()); end
-			end
+				remP1Location[1] = McCoy:GetX();
+				remP1Location[2] = McCoy:GetY();
+				if McCoy then self:xy(remP1Location[1], remP1Location[2]); end
+			end,
+			
+			
+			CircleAroundMessageCommand = function(self)
+				self:decelerate((2 + (self:getaux()-1) * (8/3)) / BPS)
+					:addy(circleAroundYExtent)
+					:queuecommand("CircleUp");
+			end,
+			CircleUpCommand = function(self)
+				self:smooth(4.0/BPS)
+					:addy(-2 * circleAroundYExtent)
+					:queuecommand("CircleDown");
+			end,
+			CircleDownCommand = function(self)
+				self:smooth(4.0/BPS)
+					:addy(2 * circleAroundYExtent)
+					:queuecommand("CircleUp");
+			end,
+			CircleEndMessageCommand = function(self)
+				self:stoptweening()
+					:smooth(1.0/BPS)
+					:xy(remP1Location[1], remP1Location[2]);
+			end,
 		},
 		InitCommand = function(self)
-			self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) )
-				:visible(false);
+			self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) );
 		end,
 		OnCommand = function(self)
-			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
-			if McCoy then self:xy(McCoy:GetX(), McCoy:GetY()); end
+			self:xy(0, 0);
+		end,
+		CircleAroundMessageCommand = function(self)
+			self:decelerate((self:getaux()-1) * (8/3) / BPS)
+				:addx(circleAroundXExtent)
+				:queuecommand("CircleLeft");
+		end,
+		CircleLeftCommand = function(self)
+			self:smooth(4.0/BPS, RoundBezier)
+				:addx(-2 * circleAroundXExtent)
+				:queuecommand("CircleRight");
+		end,
+		CircleRightCommand = function(self)
+			self:smooth(4.0/BPS, RoundBezier)
+				:addx(2 * circleAroundXExtent)
+				:queuecommand("CircleLeft");
+		end,
+		CircleEndMessageCommand = function(self)
+			self:stoptweening()
+				:smooth(1.0/BPS)
+				:xy(0, 0);
 		end,
 	}
 
@@ -748,6 +801,7 @@ for i = 1,3 do
 			OnCommand=function(self)
 				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
 				if McCoy then self:xy(-McCoy:GetX(), -McCoy:GetY()); end
+				self:visible(false);
 			end
 		},
 		InitCommand = function(self)
@@ -761,8 +815,240 @@ for i = 1,3 do
 	}
 end
 
+
+--
+-- Bell proxies & AFT
+--
+
+
+
+
+--
+-- Judgment proxies
+--
+for pn = 1,2 do
+	theBoys[#theBoys + 1] = Def.ActorProxy {
+		Name = "JudgeP"..pn.."Proxy",
+		BeginCommand = function(self)
+			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP'..pn):GetChild('Judgment');
+			if McCoy then 
+				self:SetTarget(McCoy); 
+				McCoy:visible(false);
+			else 
+				self:hibernate(1573);
+			end
+		end,
+		OnCommand = function(self)
+			local pn = string.match(self:GetName(), "[0-9]");
+			self:xy( sw * (4*pn - 3)/6, sh/2)
+				:zoom(0.8);
+		end,
+	}
+end
+
 --
 -- 		Proxies (as usual)
+--
+-------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------
+--
+--		Some ghosting!
+--
+local ghostColors = {{0.0, 1.0, 1.0, 0.0},
+					 {1.0, 0.3, 0.3, 0.0}};
+local nGhosts = #ghostColors;
+for pn = 1,2 do
+	for ghostIndex = 1,nGhosts do
+		local aftMemoryName = "MemoryP"..pn.."_"..ghostIndex;
+		local aftOutputName = "OutputP"..pn.."_"..ghostIndex;
+		local ghostBoyName  = "GhostP" ..pn.."_"..ghostIndex;
+		local aftOutSprName = "SpriteP"..pn.."_"..ghostIndex;
+		
+		local aftMemory = 
+			Def.ActorFrameTexture{
+				Name = aftMemoryName,
+				InitCommand=function(self)
+					self:SetTextureName( self:GetName() )
+						:SetWidth( sw )
+						:SetHeight( sh )
+						:EnableAlphaBuffer( true )
+						:Create();
+				end,
+				Def.Sprite{Name = "Sprite"; InitCommand=cmd(Center) }
+			};
+
+		local aftOutput = 
+			Def.ActorFrameTexture{
+				Name = aftOutputName,
+				InitCommand=function(self)
+					self:SetTextureName( self:GetName() )
+						:SetWidth( sw ) -- change these to simulate textures being drawn away from source
+						:SetHeight( sh ) -- change these to simulate textures being drawn away from source
+						:EnableAlphaBuffer( true )
+						:Create();
+						
+					myMemoryName = "Memory"..string.match(self:GetName(), "Output(P[12]_[0-9]+)");
+					Trace(myMemoryName);
+					self:GetParent():GetChild(myMemoryName):GetChild("Sprite"):SetTexture( self:GetTexture() );
+				end,
+				Def.Sprite{	
+					Name = aftOutSprName,
+					Texture = aftMemoryName,
+					InitCommand=function(self)
+					end,
+					BeginCommand=function(self)
+						local myColorIndex = tonumber(string.match(self:GetName(), "SpriteP[12]_([0-9]+)"));
+						self:Center()
+							:rotationz(myColorIndex * 1 - 2)
+							:zoom(1.005)
+							:diffuse({1,1,1,0.0})
+							:visible(true);
+					end,
+					["StopTrailP"..pn.."MessageCommand"]=function(self)
+						self:diffuse({1,1,1,0.0});
+					end,
+					["StartTrailP"..pn.."MessageCommand"]=function(self)
+						self:diffuse({1,1,1,0.98});
+					end
+				},
+				Def.ActorProxy {					
+					Name = "ProxyP"..pn,
+					BeginCommand=function(self)
+						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP'..string.match(self:GetName(), "ProxyP([12])"));
+						self:SetTarget(p);
+					end,
+					OnCommand=function(self)
+						self:xy(0, 0);
+					end
+				}
+			};
+			
+		local ghostBoy = 
+			Def.Sprite{
+				Name = ghostBoyName,
+				Texture = aftOutputName,
+				InitCommand=cmd(Center),
+				OnCommand=function(self)
+					local myColorIndex = tonumber(string.match(self:GetName(), "GhostP[12]_([0-9]+)"));
+					Trace("myColorIndex: "..myColorIndex);
+					self:blend("BlendMode_Add")
+						:diffuse(ghostColors[myColorIndex]);
+				end
+			};
+			
+		table.insert(theBoys, aftMemory);
+		table.insert(theBoys, aftOutput);
+		table.insert(theBoys, ghostBoy);
+	end
+end
+
+--
+-- Special bell ghost (player 2)
+--
+theBoys[#theBoys+1] = Def.ActorFrameTexture{
+		Name = "BellGhostMemory",
+		InitCommand=function(self)
+			self:SetTextureName( self:GetName() )
+				:SetWidth( sw )
+				:SetHeight( sh )
+				:EnableAlphaBuffer( true )
+				:Create();
+		end,
+		Def.Sprite{Name = "Sprite"; InitCommand=cmd(Center;blend,"BlendMode_Add") }
+	};
+
+theBoys[#theBoys+1] = Def.ActorFrameTexture{
+		Name = "BellGhostOutput",
+		InitCommand=function(self)
+			self:SetTextureName( self:GetName() )
+				:SetWidth( sw ) -- change these to simulate textures being drawn away from source
+				:SetHeight( sh ) -- change these to simulate textures being drawn away from source
+				:EnableAlphaBuffer( true )
+				:Create();
+				
+			self:GetParent():GetChild("BellGhostMemory"):GetChild("Sprite"):SetTexture( self:GetTexture() );
+		end,
+		Def.Sprite{	
+			Texture = "BellGhostMemory",
+			InitCommand=function(self)
+			end,
+			BeginCommand=function(self)
+				self:Center()
+					:zoom(0.99)
+					:diffuse({1,1,1,0.995})
+					:blend("BlendMode_Add")
+					:visible(true);
+			end,
+			StopTrailMessageCommand=function(self)
+				self:diffuse({1,1,1,0.0});
+			end,
+			StartTrailMessageCommand=function(self)
+				self:diffuse({1,1,1,0.995});
+			end
+		},
+		Def.ActorFrame {
+			Def.ActorFrame {
+				Def.ActorProxy {					
+					Name = "ProxyP2A",
+					BeginCommand=function(self)
+						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+						self:SetTarget(p);
+					end,
+					BellDingMessageCommand=function(self)
+						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+						self:xy(-p:GetX(), -p:GetY());
+					end,
+				},
+				OnCommand=function(self)
+					self:xy(sw * 1/6, 0.375*sh)
+						:zoom(0.8);
+				end,
+			},
+			Def.ActorFrame {
+				Def.ActorProxy {					
+					Name = "ProxyP2B",
+					BeginCommand=function(self)
+						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+						self:SetTarget(p);
+					end,
+					BellDingMessageCommand=function(self)
+						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+						self:xy(-p:GetX(), -p:GetY());
+					end,
+				},
+				OnCommand=function(self)
+					self:xy(sw * 5/6, 0.375*sh)
+						:zoom(0.8);
+				end,
+			},
+			OnCommand=function(self)
+				self:diffusealpha(0.0);
+			end,
+			BellDingMessageCommand=function(self)
+				self:diffusealpha(1.0)
+					:linear(8.0 / BPS)
+					:diffusealpha(0.0);
+			end,
+		},
+	};
+	
+theBoys[#theBoys+1] = Def.Sprite{
+		Name = "BellGhost",
+		Texture = "BellGhostOutput",
+		InitCommand=cmd(Center),
+		OnCommand=function(self)
+			self:blend("BlendMode_Add")
+		end
+	};
+	
+table.insert(theBoys, aftMemory);
+table.insert(theBoys, aftOutput);
+table.insert(theBoys, ghostBoy);
+
+--
+--		Some ghosting!
 --
 -------------------------------------------------------------------------------
 
@@ -773,18 +1059,13 @@ end
 --
 
 local messageList = {
-	{   8.0, "BZBThrow"},
-	{  16.0, "BZBThrow"},
-	{  24.0, "BZBThrow"},
-	{  32.0, "BZBThrow"},
-	{  40.0, "BZBThrow"},
-	{  48.0, "BZBThrow"},
-	{  56.0, "BZBThrow"},
-	{  64.0, "BZBThrow"},
-	{  72.0, "BZBThrow"},
-	{  80.0, "BZBThrow"},
-	{  88.0, "BZBThrow"},
-	{  96.0, "BZBThrow"},
+	{   4.0, "BellDing"},
+	{   8.0, "CircleAround"},
+	{  16.0, "BellDing"},
+	{  24.0, "CircleEnd"},
+--	{   8.0, "BZBStart"},
+--	{  16.0, "BZBThrow"},
+--	{  24.0, "BZBEnd"},
 	{ 104.0, "BZBRateMyProfessor"},
 };
 
@@ -803,13 +1084,13 @@ local fifthGfxHQ = Def.Quad {
 		local overtime = GAMESTATE:GetSongBeat();
 		
 		-- TODO: this assumes the effect applies over a constant BPM section!!
-		local BPS = GAMESTATE:GetSongBPS();	
+		BPS = GAMESTATE:GetSongBPS();	
 		
 		-- Who's interesting today?
 		if overtime >=   0.0 and fgcurcommand ==  0 then
 			for i,v in ipairs(plr) do
 				if v then
-					v:decelerate(16.0 / BPS):y(sh/2 - 30):z(0);
+					v:visible(false):decelerate(2.0 / BPS):x(sw/2):y(sh/2 - 30):z(0);
 				end
 			end
 			
@@ -1024,7 +1305,6 @@ local fifthModsHQ = Def.Quad {
 				
 				if overtime + modsLeadBy >= nextMod[1] then
 					-- TODO: this assumes the effect applies over a constant BPM section!!
-					local BPS = GAMESTATE:GetSongBPS();
 					Trace('>>> fifthModsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
 					
 					for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
