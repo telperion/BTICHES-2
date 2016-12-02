@@ -67,6 +67,7 @@ end
 --
 local totalAttempts = 12;
 local takenAttempts = 0;
+local resultRowLength = 8;
 local lineWidth = 6;
 local inputPersistenceFactor = 0.8;
 local inputPerturbanceFactor = 0;
@@ -83,15 +84,15 @@ local BZBInput = {};
 for i = 1,2 do
 	local s = (i == 2) and 1 or -1;
 	BZBData[i] = {
-		vx = -30*s,						-- **	**	Initial horizontal velocity
+		vx = -33*s,						-- **	**	Initial horizontal velocity
 		vy =   0,						-- 		**	Initial vertical velocity
 		
 		x_throw 	= 320 + 288*s,		-- (const)	Horizontal position from which ball is thrown
 		x_bounce 	= nil,				-- (calc)	Horizontal position at which ball bounces first time
 		x_rebounce 	= nil,				-- (calc)	Horizontal position at which ball bounces second time
 		x_end	 	= nil,				-- (calc)	Horizontal position at which ball would peak on the /third/ bounce
-		x_near 		= 320 + 144*s,		-- (const)	Horizontal position of left side of cup
-		x_far	 	= 320 +  16*s,		-- (const)	Horizontal position of right side of cup
+		x_near 		= 320 + 104*s,		-- (const)	Horizontal position of left side of cup
+		x_far	 	= 320 +  24*s,		-- (const)	Horizontal position of right side of cup
 		x_edge 		= nil,				-- (calc)	Horizontal position of ball meeting edge
 		
 		y_throw 	=  84,				-- **		Vertical position from which ball is thrown
@@ -99,7 +100,7 @@ for i = 1,2 do
 		y_rebounce	= nil,				-- (calc)	Vertical extent of second bounce
 		y_end		= nil,				-- (calc)	Vertical extent of third bounce
 		y_table 	= 360,				-- (const)	Vertical position of table surface, ball bounces, and base of cup
-		y_edge 		= 212,				-- (const)	Vertical position of cup edge
+		y_edge 		= 252,				-- (const)	Vertical position of cup edge
 
 		succ 		= false,			-- Would currently make the shot
 		
@@ -115,11 +116,11 @@ for i = 1,2 do
 end
 
 local BZBRateMyProfessor = function(succ)
-		if succ > 9 then do return 0 end		-- why are spritesheets of all things zero-indexed??
-	elseif succ > 6 then do return 1 end
-	elseif succ > 4 then do return 2 end
-	elseif succ > 2 then do return 3 end
-	else 				 do return 4 end
+		if totalAttempts - succ < 2 then do return 0 end		-- why are spritesheets of all things zero-indexed??
+	elseif totalAttempts - succ < 4 then do return 1 end
+	elseif totalAttempts - succ < 6 then do return 2 end
+	elseif totalAttempts - succ < 9 then do return 3 end
+	else 								 do return 4 end
 	end
 end	
 
@@ -171,8 +172,8 @@ local BZBPush = function(pn, throwing, overtime, timestep)
 	local ay = (inputPersist[3] - inputPersist[2]);
 	local allowMove = BZBAllowMove(pn);
 	
-	local axPerturb = inputPerturbanceFactor * math.cos(overtime * math.pi / 8.0) * (pn == 2 and 1 or -1);
-	local ayPerturb = inputPerturbanceFactor * math.sin(overtime * math.pi / 8.0);	
+	local axPerturb = inputPerturbanceFactor * math.cos(overtime * math.pi / 13.0) * (pn == 2 and 1 or -1);
+	local ayPerturb = inputPerturbanceFactor * math.sin(overtime * math.pi / 13.0);	
 	ax = ax + axPerturb;
 	ay = ay + ayPerturb;	
 	
@@ -204,7 +205,7 @@ local BZBUpdateDataModel = function(pn, timestep)
 	local tb2 = bd.elasticity * vb1 / bd.acceleration;									-- time at bounce 2 (relative to bounce 1)
 	local tb3 = squarelastic  * vb1 / bd.acceleration;									-- time at bounce 3 (relative to bounce 2)
 	
-	local tce = 0.5 * (squarelastic * vb1 - math.sqrt(squarelastic * squarelastic * vb1 * vb1 - 4 * bd.acceleration * (bd.y_edge - bd.y_table))) / bd.acceleration;
+	local tce = 0.5 * (squarelastic * vb1 - math.sqrt(squarelastic * squarelastic * vb1 * vb1 - 4 * bd.acceleration * (bd.y_table - bd.y_edge))) / bd.acceleration;
 	
 	-- time ball would reach height of cup edge on second bounce (relative to bounce 2)
 	local t_total = math.min(0.8 * (bd.x_near - bd.x_throw) / bd.vx, tb1 + tb2 + tce);
@@ -217,7 +218,7 @@ local BZBUpdateDataModel = function(pn, timestep)
 	bd.y_end	 	= bd.y_table 	- 0.25 * vb1 * vb1 * squarelastic * squarelastic * squarelastic / bd.acceleration;
 
 	-- time ball would come down to height of cup edge on first bounce (relative to first bounce)	
-	local tss = 0.5 * (bd.elasticity * vb1 + math.sqrt(squarelastic * vb1 * vb1 - 4 * bd.acceleration * (bd.y_edge - bd.y_table))) / bd.acceleration;
+	local tss = 0.5 * (bd.elasticity * vb1 + math.sqrt(squarelastic * vb1 * vb1 - 4 * bd.acceleration * (bd.y_table - bd.y_edge))) / bd.acceleration;
 
 	bd.x_edge		= bd.x_bounce	+ bd.vx * tss;
 	
@@ -230,7 +231,7 @@ local BZBUpdateDataModel = function(pn, timestep)
 	
 	if DEBUG_firstVerts then
 		Trace("pn = "..pn..", xn = "..xn..", yn = "..yn);
-		Trace("vb1 = "..vb1..", tb1 = "..tb1..", tb2 = "..tb2..", tce = "..tce..", t_total = "..t_total);
+		Trace("vb1 = "..vb1..", tb1 = "..tb1..", tb2 = "..tb2..", tce = "..tce..", tss = "..tss..", t_total = "..t_total);
 	end
 	
 	-- Check when the ball will hit the edge of the cup.
@@ -238,8 +239,8 @@ local BZBUpdateDataModel = function(pn, timestep)
 	
 	for t = 0,t_total,timestep do
 		-- Don't draw into the other player's field.
-		if (pn == 1 and xn > SCREEN_CENTER_X) or
-		   (pn == 2 and xn < SCREEN_CENTER_X) then
+		if (pn == 1 and (xn > SCREEN_CENTER_X or xn > bd.x_end)) or
+		   (pn == 2 and (xn < SCREEN_CENTER_X or xn < bd.x_end)) then
 			break
 		end
 		-- Don't overdraw if we already made it.
@@ -283,7 +284,7 @@ local BZBUpdateDataModel = function(pn, timestep)
 				verts[#verts + 1] = {{bd.x_rebounce, bd.y_table, 0}, colorator};
 			end
 		else
-			tt = t - tb2;
+			tt = t - tb1 - tb2;
 
 			local an = bd.acceleration;
 			local bn = -vb1 * squarelastic;
@@ -357,8 +358,8 @@ BZBFrame[#BZBFrame + 1] = Def.Quad {
 		local BPS = GAMESTATE:GetSongBPS();
 		Trace("Perturbance heard a throw");
 		
-		self:linear(8.0 / BPS):aux( self:getaux() + 0.01 );					-- Increase the perturbance.
-		inputPersistenceFactor = inputPersistenceFactor * 0.9 + 0.1;		-- Make it harder to control.
+		self:linear(8.0 / BPS):aux( self:getaux() + 0.02 );					-- Increase the perturbance.
+		inputPersistenceFactor = inputPersistenceFactor * 0.8 + 0.2;		-- Make it harder to control.
 	end,
 }
 for i = 1,2 do
@@ -367,7 +368,8 @@ for i = 1,2 do
 		Texture = "rsc.png",
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
-				:xy(320 + BTIUtil_SideSign(i) * 80, 292)
+				:xy(320 + BTIUtil_SideSign(i) * 64, 313)
+				:zoom(0.75)
 				:z(0.2);
 		end,
 	}
@@ -521,7 +523,8 @@ for i = 1,2 do
 		Texture = "rsc-hi.png",
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
-				:xy(320 + BTIUtil_SideSign(i) * 80, 292)
+				:xy(320 + BTIUtil_SideSign(i) * 64, 313)
+				:zoom(0.75)
 				:z(0.35);
 		end,
 	}
@@ -530,7 +533,9 @@ for i = 1,2 do
 			Name = "bzbSucc"..i.."_"..sfi,
 			Texture = "succ.png",
 			InitCommand = function(self)
-				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * (sfi-1) / (totalAttempts-1)), 420)
+				local xi = 			  (sfi-1) % resultRowLength;
+				local yi = math.floor((sfi-1) / resultRowLength);
+				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * xi / resultRowLength), 420 + 32 * yi)
 					:z(0.4)
 					:diffusealpha(0.0);
 			end,
@@ -546,7 +551,9 @@ for i = 1,2 do
 			Name = "bzbFail"..i.."_"..sfi,
 			Texture = "fail.png",
 			InitCommand = function(self)
-				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * (sfi-1) / (totalAttempts-1)), 420)
+				local xi = 			  (sfi-1) % resultRowLength;
+				local yi = math.floor((sfi-1) / resultRowLength);
+				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * xi / resultRowLength), 420 + 32 * yi)
 					:z(0.4)
 					:diffusealpha(0.0);
 			end,
