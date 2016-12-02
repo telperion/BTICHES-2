@@ -93,7 +93,7 @@ local BZBFrame = Def.ActorFrame {
 	end,
 	BZBStartMessageCommand = function(self)
 		self:visible(true)
-			:decelerate(8.0 / BPS)
+			:decelerate(16.0 / BPS)
 			:diffusealpha(1.0)
 			:queuecommand("BZBReady");
 	end,
@@ -103,7 +103,7 @@ local BZBFrame = Def.ActorFrame {
 	end,
 	BZBEndMessageCommand = function(self)
 		self:visible(true)
-			:decelerate(8.0 / BPS)
+			:decelerate(4.0 / BPS)
 			:diffusealpha(0.0)
 			:queuecommand("BZBFinished");
 	end,
@@ -111,6 +111,13 @@ local BZBFrame = Def.ActorFrame {
 		Trace("BZB is over!");
 		inSession = false;
 		self:hibernate(1573);
+	end,
+	BZBAllVibrateMessageCommand = function(self)
+		self:vibrate()
+			:effectmagnitude(15, 15, 0);
+	end,
+	BZBAllVibrateStopMessageCommand = function(self)
+		self:stopeffect();
 	end,
 };
 
@@ -416,6 +423,13 @@ for i = 1,2 do
 		end,
 		BZBUpdateMessageCommand = function(self)
 			self:y( BZBData[self:getaux()].y_throw );
+		end,
+		BZBVibrateMessageCommand = function(self)
+			self:vibrate()
+				:effectmagnitude(15, 15, 0);
+		end,
+		BZBVibrateStopMessageCommand = function(self)
+			self:stopeffect();
 		end,
 	}
 	BZBFrame[#BZBFrame + 1] = Def.ActorFrame {
@@ -813,7 +827,7 @@ for pn = 1,2 do
 				end,
 				["CirclingEndP"..pn.."MessageCommand"] = function(self)
 					self:stoptweening()
-						:smooth(1.0/BPS)
+						:smooth(4.0/BPS)
 						:stopeffect()
 						:xy(remPlayerLoc[pn][1], remPlayerLoc[pn][2]);
 				end,
@@ -843,7 +857,7 @@ for pn = 1,2 do
 			end,
 			["CirclingEndP"..pn.."MessageCommand"] = function(self)
 				self:stoptweening()
-					:smooth(1.0/BPS)
+					:smooth(4.0/BPS)
 					:xy(0, 0);
 			end,
 			
@@ -1304,18 +1318,68 @@ theBoys[#theBoys+1] = dblRcps;
 
 local messageList = {
 	{	4.0, "RecenterProxy"},
-	{   8.0, "BellDing"},
-	{  15.0, "Doubling", {"RTL"}},
---	{  32.0, "CirclingAroundP2"},
-	{  24.0, "BellDing"},
-	{  31.0, "Doubling", {"LTR"}},
---	{  48.0, "CirclingEndP2"},
---	{   0.0, "BZBStart"},
---	{  16.0, "BZBThrow"},
---	{  24.0, "BZBThrow"},
---	{  24.0, "BZBInGameSteps"},
---	{  48.0, "BZBEnd"},
-	{ 104.0, "BZBRateMyProfessor"},
+	
+	{  76.0, "BellDing"},
+	{  92.0, "BellDing"},
+	{ 108.0, "BellDing"},
+	{ 124.0, "BellDing"},
+	
+	{ 164.0, "CirclingAroundP1"},
+	{ 180.0, "CirclingAroundP2"},
+	{ 180.0, "CirclingEndP1"},
+	{ 192.0, "CirclingEndP2"},
+	{ 196.0, "CirclingAroundP1"},
+	{ 196.0, "CirclingAroundP2"},
+	{ 212.0, "CirclingEndP1"},
+	{ 212.0, "CirclingEndP2"},
+	
+	{ 240.0, "BellDing"},
+	{ 256.0, "BellDing"},
+
+
+	{ 195.0, "Doubling", {"LTR"}},
+	
+	{ 296.0, "BZBStart"},
+	{ 308.0, "BZBThrow"},
+	{ 316.0, "BZBThrow"},
+	{ 324.0, "BZBThrow"},
+	{ 332.0, "BZBThrow"},
+	{ 340.0, "BZBThrow"},
+	{ 348.0, "BZBThrow"},
+	{ 356.0, "BZBThrow"},
+	{ 364.0, "BZBThrow"},
+	{ 372.0, "BZBThrow"},
+	{ 372.0, "BZBInGameSteps"},
+	{ 380.0, "BZBThrow"},
+	{ 388.0, "BZBThrow"},
+	{ 391.0, "BZBVibrate"},
+	{ 392.0, "BZBVibrateStop"},
+	{ 396.0, "BZBThrow"},
+	{ 404.0, "BZBThrow"},
+	{ 404.0, "BZBInGameSteps"},
+	{ 412.0, "BZBThrow"},
+	{ 415.0, "BZBVibrate"},
+	{ 416.0, "BZBVibrateStop"},
+	{ 420.0, "BZBThrow"},
+	{ 423.0, "BZBVibrate"},
+	{ 424.0, "BZBVibrateStop"},
+	{ 424.0, "BZBAllVibrate"},
+	{ 432.0, "BZBThrow"},
+	{ 436.0, "BZBAllVibrateStop"},
+	{ 436.0, "BZBRateMyProfessor"},
+	{ 436.0, "BZBEnd"},
+	
+	
+	{ 467.0, "Doubling", {"RTL"}},
+	
+	{ 512.0, "BellDing"},
+	{ 528.0, "BellDing"},
+	
+	{ 572.0, "BellDing"},
+	{ 588.0, "BellDing"},
+	{ 604.0, "BellDing"},
+	{ 620.0, "BellDing"},
+	
 };
 
 local fifthProxyEffects = {
@@ -1426,6 +1490,14 @@ local fifthGfxHQ = Def.Quad {
 												pp[effFunc](pp);
 												pp:effectmagnitude(effArg, effArg, 0);
 											end
+										elseif effFunc == "wag" then
+											if effArg <= 0.01 then
+												pp:stopeffect();
+											else
+												pp[effFunc](pp);
+												pp:effectperiod(2);
+												pp:effectmagnitude(0, 0, effArg);
+											end
 										else
 											if effTweenHint then
 												pp[effTweenHint](pp, effBeats / BPS);
@@ -1473,7 +1545,7 @@ table.insert(theBoys, fifthGfxHQ);
 --
 --		Manage arrow mods for the whole song here.
 --
-local cspd = 2.2;
+local cspd = 3.0;
 local modsTable = {
 	-- [1]: beat start
 	-- [2]: mod type
@@ -1481,9 +1553,10 @@ local modsTable = {
 	-- [4]: mod approach (in beats to complete)
 	-- [5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
 		
-		{   0.0,	"ScrollSpeed",		 dspd,    4.0,	3}, 
-		{   0.0,	"Mini",	  (1-dblMinify)*2,    4.0,	3}, 
-		{  20.0,	"Tiny",	  			 -1.0,    4.0,	3}, 
+		{   0.0,	"ScrollSpeed",		 cspd,    4.0,	3}, 
+--		{   0.0,	"ScrollSpeed",		 dspd,    4.0,	3}, 
+--		{   0.0,	"Mini",	  (1-dblMinify)*2,    4.0,	3}, 
+--		{  20.0,	"Tiny",	  			 -1.0,    4.0,	3}, 
 		
 		
 	};
