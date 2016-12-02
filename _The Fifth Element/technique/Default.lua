@@ -786,7 +786,7 @@ for pn = 1,2 do
 					self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) );
 				end,
 				OnCommand = function(self)
-					self:xy(remPlayerLoc[pn][1], remPlayerLoc[pn][2]);
+--					self:xy(remPlayerLoc[pn][1], remPlayerLoc[pn][2]);
 				end,
 				
 				
@@ -1007,6 +1007,14 @@ theBoys[#theBoys+1] = Def.Quad{
 				:accelerate(4.0 / BPS)
 				:diffusealpha(0.0)
 		end,
+		DoublingMessageCommand=function(self)
+			-- Lead-in: 1 beat
+			self:diffusealpha(0.0)
+				:accelerate(2.0 / BPS)
+				:diffusealpha(1.0)
+				:accelerate(3.0 / BPS)
+				:diffusealpha(0.0)
+		end,
 	};
 	
 	
@@ -1087,9 +1095,13 @@ theBoys[#theBoys+1] = Def.ActorFrameTexture{
 				end,
 			},
 			BellDingMessageCommand=function(self)
-				self:y(sh/2-320)
+				-- Assume both are minified to the same strength.
+				pops = GAMESTATE:GetPlayerState("PlayerNumber_P1"):GetPlayerOptions("ModsLevel_Song");
+				local myMini = pops:Mini();
+				local mySSpd = pops:ScrollSpeed();
+				self:y(sh/2-160*(1-myMini/2)*mySSpd)
 					:linear(6.0 / BPS)
-					:y(sh/2+320)
+					:y(sh/2+160*(1-myMini/2)*mySSpd)
 					:queuecommand("Reset");
 			end,
 			ResetCommand = function(self)
@@ -1126,18 +1138,178 @@ table.insert(theBoys, ghostBoy);
 
 -------------------------------------------------------------------------------
 --
+-- 		Doubles mode. You need both feet to play this game
+--
+local LOG2  = math.log(2.0);
+local tw = math.exp(math.ceil(math.log(sw)/LOG2) * LOG2);
+local th = math.exp(math.ceil(math.log(sh)/LOG2) * LOG2);
+
+local dspd			= 2.0;
+local dblMinify		= 0.8;				-- using mini mod. unity is fullsize
+local dblSideW		= 576*dblMinify;	-- slightly larger
+local dblSideH		= 256*dblMinify;	-- slightly larger
+local dblSideOff	= 576*dblMinify;
+local dblShift		= 512*dblMinify;
+
+local dblRTLVerts = {
+		{{-dblSideW/2, -dblSideH/2 + dblSideOff/2, 0}, Color.White, {0.5*(sw - dblSideW)/tw, 0.5*(sh - dblSideH + dblSideOff)/th}},
+		{{ dblSideW/2, -dblSideH/2 - dblSideOff/2, 0}, Color.White, {0.5*(sw + dblSideW)/tw, 0.5*(sh - dblSideH - dblSideOff)/th}},
+		{{ dblSideW/2,  dblSideH/2 - dblSideOff/2, 0}, Color.White, {0.5*(sw + dblSideW)/tw, 0.5*(sh + dblSideH - dblSideOff)/th}},
+		{{-dblSideW/2,  dblSideH/2 + dblSideOff/2, 0}, Color.White, {0.5*(sw - dblSideW)/tw, 0.5*(sh + dblSideH + dblSideOff)/th}},
+	};
+local dblLTRVerts = {
+		{{ dblSideW/2, -dblSideH/2 + dblSideOff/2, 0}, Color.White, {0.5*(sw + dblSideW)/tw, 0.5*(sh - dblSideH + dblSideOff)/th}},
+		{{-dblSideW/2, -dblSideH/2 - dblSideOff/2, 0}, Color.White, {0.5*(sw - dblSideW)/tw, 0.5*(sh - dblSideH - dblSideOff)/th}},
+		{{-dblSideW/2,  dblSideH/2 - dblSideOff/2, 0}, Color.White, {0.5*(sw - dblSideW)/tw, 0.5*(sh + dblSideH - dblSideOff)/th}},
+		{{ dblSideW/2,  dblSideH/2 + dblSideOff/2, 0}, Color.White, {0.5*(sw + dblSideW)/tw, 0.5*(sh + dblSideH + dblSideOff)/th}},
+	};
+
+theBoys[#theBoys+1] = Def.ActorMultiVertex {
+	Name = "DoublingAMV",
+	InitCommand=function(self)
+	end,
+	OnCommand=function(self)
+		for i = 1,4 do
+			Trace("## ["..i.."][1] = {"..dblRTLVerts[i][1][1]..", "..dblRTLVerts[i][1][2]..", "..dblRTLVerts[i][1][3].."}!");
+			Trace("## ["..i.."][2] = {"..dblRTLVerts[i][2][1]..", "..dblRTLVerts[i][2][2]..", "..dblRTLVerts[i][2][3]..", "..dblRTLVerts[i][2][4].."}!");
+			Trace("## ["..i.."][3] = {"..dblRTLVerts[i][3][1]..", "..dblRTLVerts[i][3][2].."}!");
+		end
+
+		self:visible(false)
+			:xy(sw/2, sh/2)
+			:z(1.8)
+			:SetVertices(dblRTLVerts)
+			:SetDrawState{Mode = "DrawMode_Quads", First = 1, Num = 4};
+	end,
+	DoublingMessageCommand=function(self, dir)
+		local verts = {};
+		if dir[1] == "RTL" then
+			verts = dblRTLVerts;
+		elseif dir[1] == "LTR" then
+			verts = dblLTRVerts;
+		end
+		-- Lead-in: 1 beat
+		local p = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+		self:visible(true)
+			:SetVertices(verts)
+			:diffusealpha(0.0)
+			:linear(1.0 / BPS)
+			:diffusealpha(1.0)
+			:queuecommand("Double");
+	end,
+	DoubleCommand=function(self)
+		self:linear(4.0 / BPS)
+			:addy(0)
+			:linear(1.0 / BPS)
+			:diffusealpha(0.0)
+			:queuecommand("DoublingOver");
+	end,
+	DoublingOverCommand=function(self)
+		self:visible(false);
+	end,
+}
+
+
+theBoys[#theBoys+1] = Def.ActorFrameTexture {
+	Name = "DoublingAFT",
+	InitCommand=function(self)
+		self:SetTextureName( self:GetName() )
+			:SetWidth( sw )
+			:SetHeight( sh )
+			:xy(0, 0)
+			:EnableAlphaBuffer( true )
+			:Create();			
+			
+		self:GetParent():GetChild("DoublingAMV"):SetTexture( self:GetTexture() );
+	end,
+	OnCommand=function(self)
+		for pn = 1,2 do
+			local p = SCREENMAN:GetTopScreen():GetChild('PlayerP' .. pn);
+			self:GetChild("ProxyP" .. pn)
+				:SetTarget(p)
+				:xy(BTIUtil_SideSign(pn) * 128 * dblMinify, 0);
+		end
+	end,
+	DoublingMessageCommand=function(self)
+		-- Lead-in: 1 beat
+		self:sleep(1.0 / BPS)
+			:queuecommand("Double");
+	end,
+	DoubleCommand = function(self)
+		for pn = 1,2 do
+			local p = SCREENMAN:GetTopScreen():GetChild('PlayerP' .. pn);
+			self:GetChild("ProxyP" .. pn)
+				:xy(BTIUtil_SideSign(pn) * 128 * dblMinify, 0)
+				:linear(4.0 / BPS)
+				:addy(dblShift);
+		end
+	end,
+	
+	Def.ActorProxy {Name = "ProxyP1"},
+	Def.ActorProxy {Name = "ProxyP2"},
+}
+
+local dblRcps = Def.ActorFrame {
+	Name = "DoublingReceptors",
+	InitCommand=function(self)
+	end,
+	OnCommand=function(self)
+		local p = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+		self:visible(false)
+			:xy(sw/2, p:GetY()-128)
+			:z(1.7);
+	end,
+	DoublingMessageCommand=function(self)
+		-- Lead-in: 1 beat
+		local p = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
+		self:y(p:GetY()-128)
+			:sleep(1.0 / BPS)
+			:queuecommand("Double");
+	end,
+	DoubleCommand = function(self)
+		self:visible(true)
+			:linear(4.0 / BPS)
+			:addy(dblShift)
+			:queuecommand("DoublingOver");
+	end,
+	DoublingOverCommand=function(self)
+		self:visible(false);
+	end,
+}
+
+rcpRotation = {90, 0, 180, -90, 90, 0, 180, -90};
+for rcpi = 1,8 do
+	dblRcps[#dblRcps+1] = NOTESKIN:LoadActorForNoteSkin("Down", "Receptor", "cyber") ..{
+		InitCommand=function(self)
+			self:xy((rcpi-4.5)*64*dblMinify, 0)
+				:zoom(dblMinify)
+				:rotationz(rcpRotation[rcpi]);
+		end,
+	}
+end
+
+theBoys[#theBoys+1] = dblRcps;
+
+--
+--		Doubles mode. You need both feet to play this game
+--
+-------------------------------------------------------------------------------
+
+
+
+-------------------------------------------------------------------------------
+--
 -- 		This is where the shit will be happening.
 --
 
 local messageList = {
 	{	4.0, "RecenterProxy"},
-	{   4.0, "BellDing"},
-	{   8.0, "CirclingAroundP1"},
-	{  16.0, "BellDing"},
-	{  24.0, "CirclingEndP1"},
-	{  32.0, "CirclingAroundP2"},
-	{  40.0, "BellDing"},
-	{  48.0, "CirclingEndP2"},
+	{   8.0, "BellDing"},
+	{  15.0, "Doubling", {"RTL"}},
+--	{  32.0, "CirclingAroundP2"},
+	{  24.0, "BellDing"},
+	{  31.0, "Doubling", {"LTR"}},
+--	{  48.0, "CirclingEndP2"},
 --	{   0.0, "BZBStart"},
 --	{  16.0, "BZBThrow"},
 --	{  24.0, "BZBThrow"},
@@ -1162,9 +1334,9 @@ local fifthProxyEffects = {
 --	{410.0, "rotationz",	360.0,	 5.0,	3, 'smooth'},
 
 
-	{ 12.0, "vibrate",	 5.0,	 1.0,	3, {1}},
-	{ 12.0, "stag", 	 1.0,	 3.0,	3, {2}},
-	{ 12.0, "stag", 	-1.0,	 3.0,	3, {3}},
+--	{ 12.0, "vibrate",	 5.0,	 1.0,	3, {1}},
+--	{ 12.0, "stag", 	 1.0,	 3.0,	3, {2}},
+--	{ 12.0, "stag", 	-1.0,	 3.0,	3, {3}},
 };
 local fifthEffectIndex = 0;
 
@@ -1203,7 +1375,11 @@ local fifthGfxHQ = Def.Quad {
 		while true do
 			if curmessage < #messageList then
 				if overtime >= messageList[curmessage+1][1] then			
-					MESSAGEMAN:Broadcast( messageList[curmessage+1][2] );
+					if messageList[curmessage+1][3] then
+						MESSAGEMAN:Broadcast( messageList[curmessage+1][2], messageList[curmessage+1][3] );
+					else
+						MESSAGEMAN:Broadcast( messageList[curmessage+1][2] );
+					end
 					
 					curmessage = curmessage + 1;
 				else
@@ -1305,7 +1481,9 @@ local modsTable = {
 	-- [4]: mod approach (in beats to complete)
 	-- [5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
 		
-		{   0.0,	"ScrollSpeed",	 cspd,    3.0,	3}, 
+		{   0.0,	"ScrollSpeed",		 dspd,    4.0,	3}, 
+		{   0.0,	"Mini",	  (1-dblMinify)*2,    4.0,	3}, 
+		{  20.0,	"Tiny",	  			 -1.0,    4.0,	3}, 
 		
 		
 	};
