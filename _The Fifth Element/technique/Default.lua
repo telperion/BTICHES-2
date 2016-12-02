@@ -10,6 +10,7 @@
 local sw = SCREEN_WIDTH;
 local sh = SCREEN_HEIGHT;
 local BPS = GAMESTATE:GetSongBPS();	
+local overtime = 0;
 local bpm = 140;
 local ofs = 0.000;	-- TODO
 local plr = {nil, nil};
@@ -74,7 +75,7 @@ local RoundBezier =
 --
 -- 		BUZZIBEE no jutsu
 --
-local totalAttempts = 12;
+local totalAttempts = 16;
 local takenAttempts = 0;
 local resultRowLength = 8;
 local lineWidth = 6;
@@ -158,11 +159,11 @@ for i = 1,2 do
 end
 
 local BZBRateMyProfessor = function(succ)
-		if totalAttempts - succ < 2 then do return 0 end		-- why are spritesheets of all things zero-indexed??
-	elseif totalAttempts - succ < 4 then do return 1 end
-	elseif totalAttempts - succ < 6 then do return 2 end
-	elseif totalAttempts - succ < 9 then do return 3 end
-	else 								 do return 4 end
+		if totalAttempts - succ < 3  then do return 0 end		-- why are spritesheets of all things zero-indexed??
+	elseif totalAttempts - succ < 5  then do return 1 end
+	elseif totalAttempts - succ < 8  then do return 2 end
+	elseif totalAttempts - succ < 11 then do return 3 end
+	else 								  do return 4 end
 	end
 end	
 
@@ -732,7 +733,7 @@ theBoys[#theBoys+1] = Def.Quad{
 	end,
 	BZBWaitForStepsCommand=function(self)
 		inSession = false;
-		self:sleep(8.0 / BPS)
+		self:sleep(4.0 / BPS)
 			:queuecommand("BZBReturnToGame");
 	end,
 	BZBReturnToGameCommand=function(self)
@@ -808,11 +809,6 @@ for pn = 1,2 do
 					local offset = (self:getaux()-1 + 1.5*(pn - 1));
 					self:decelerate((2 + offset) * (8/proxyCount) / BPS)
 						:addy(circlingAroundYExtent)
-						:wag()
-						:effectclock("beat")
-						:effectoffset(-offset)
-						:effectperiod(8)
-						:effectmagnitude(0, 0, circlingAroundWag)
 						:queuecommand("CircleUp");
 				end,
 				CircleUpCommand = function(self)
@@ -827,8 +823,7 @@ for pn = 1,2 do
 				end,
 				["CirclingEndP"..pn.."MessageCommand"] = function(self)
 					self:stoptweening()
-						:smooth(4.0/BPS)
-						:stopeffect()
+						:smooth(1.0/BPS)
 						:xy(remPlayerLoc[pn][1], remPlayerLoc[pn][2]);
 				end,
 			},
@@ -857,7 +852,7 @@ for pn = 1,2 do
 			end,
 			["CirclingEndP"..pn.."MessageCommand"] = function(self)
 				self:stoptweening()
-					:smooth(4.0/BPS)
+					:smooth(1.0/BPS)
 					:xy(0, 0);
 			end,
 			
@@ -1088,7 +1083,7 @@ theBoys[#theBoys+1] = Def.ActorFrameTexture{
 				},
 				OnCommand=function(self)
 					self:xy(sw * 1/6, 0.375*sh)
-						:zoom(0.8);
+						:zoom(0.5);
 				end,
 			},
 			Def.ActorFrame {
@@ -1105,7 +1100,7 @@ theBoys[#theBoys+1] = Def.ActorFrameTexture{
 				},
 				OnCommand=function(self)
 					self:xy(sw * 5/6, 0.375*sh)
-						:zoom(0.8);
+						:zoom(0.5);
 				end,
 			},
 			BellDingMessageCommand=function(self)
@@ -1113,9 +1108,9 @@ theBoys[#theBoys+1] = Def.ActorFrameTexture{
 				pops = GAMESTATE:GetPlayerState("PlayerNumber_P1"):GetPlayerOptions("ModsLevel_Song");
 				local myMini = pops:Mini();
 				local mySSpd = pops:ScrollSpeed();
-				self:y(sh/2-160*(1-myMini/2)*mySSpd)
+				self:y(sh/2-100*(1-myMini/2)*mySSpd)
 					:linear(6.0 / BPS)
-					:y(sh/2+160*(1-myMini/2)*mySSpd)
+					:y(sh/2+100*(1-myMini/2)*mySSpd)
 					:queuecommand("Reset");
 			end,
 			ResetCommand = function(self)
@@ -1313,11 +1308,141 @@ theBoys[#theBoys+1] = dblRcps;
 
 -------------------------------------------------------------------------------
 --
+-- 		Opening/Closing stuff
+--
+
+theBoys[#theBoys+1] = Def.Quad {
+	Name = "InOutCtrl",
+	InitCommand = function(self)
+		self:SetHeight(6)
+			:SetWidth(6)
+			:xy(-sw,-sh)
+			:visible(false);
+	end,
+	OnCommand = function(self)
+		self:aux(0.5);
+	end,
+	OpenUpMessageCommand = function(self)
+		self:linear(64.0 / BPS):aux(1);
+	end,
+	CloseOutMessageCommand = function(self)
+		self:linear(64.0 / BPS):aux(0);
+	end,
+};
+
+local rcpIntroOutro = Def.ActorFrame {
+	Name = "IntroOutro",
+	InitCommand = function(self)
+		self:xy(sw/2, sh/2);
+	end,
+	PulseRCPMessageCommand = function(self, swaths)
+		local strength = self:GetParent():GetChild("InOutCtrl"):getaux();
+		for _,si in pairs(swaths) do
+			self:GetChild("Swath"..si)
+				:visible(true)
+				:diffusealpha(strength)
+				:decelerate(4.0/BPS)
+				:diffusealpha(0.0);
+		end
+	end,
+	HideRCPMessageCommand = function(self, swaths)
+		for _,si in pairs(swaths) do
+			self:GetChild("Swath"..si)
+				:stoptweening()
+				:decelerate(4.0/BPS)
+				:diffusealpha(0.0)
+				:queuecommand("HideMyself");
+		end
+	end,
+};
+
+local nSwaths = 9;
+for si = 1,9 do
+	local rcpSwath = Def.ActorFrame {
+		Name = "SwathItems"..si,
+		InitCommand = function(self)
+			self:xy(0, 0);
+		end,
+		OnCommand = function(self)
+			self:aux(-1)
+				:queuecommand("Rotater");
+		end,
+		RotaterCommand = function(self)
+			self:aux( self:getaux() * -1 );
+			self:smooth((4.0 + math.random() * 4.0) / BPS)
+				:rotationz(180 * math.random() * self:getaux())
+				:queuecommand("Rotater");
+		end,
+	}
+	
+	local nObj = 3 + si;
+	for ri = 1,nObj do
+		rcpSwath[#rcpSwath + 1] = NOTESKIN:LoadActorForNoteSkin("Down", "Tap Mine", "cyber")..{
+			InitCommand = function(self)
+				local theta = math.pi * (2 * ri / nObj + 7 * si);
+				local reta = (si-0.5) * 0.5 * sw/nSwaths;
+				self:xy( math.cos(theta) * reta, math.sin(theta) * reta )
+					:zoom(1 - 0.3 * si/nSwaths);
+			end,
+		}
+	end
+	
+	rcpIntroOutro[#rcpIntroOutro+1] = Def.ActorFrame 
+	{
+		Name = "Swath"..si,
+		InitCommand = function(self)
+			self:visible(false);
+		end,
+		HideMyselfCommand = function(self)
+			self:visible(false);
+		end,
+		rcpSwath,
+	};
+end
+
+theBoys[#theBoys + 1] = rcpIntroOutro;
+
+--
+--		Opening/Closing stuff
+--
+-------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------
+--
 -- 		This is where the shit will be happening.
 --
 
 local messageList = {
 	{	4.0, "RecenterProxy"},
+	
+	{  8.00, "PulseRCP", {1,4,7}},
+	{  8.75, "PulseRCP", {2,5,8}},
+	{  9.50, "PulseRCP", {3,6,9}},
+	{ 16.00, "PulseRCP", {1,4,7}},
+	{ 16.75, "PulseRCP", {2,5,8}},
+	{ 17.50, "PulseRCP", {3,6,9}},	
+	{ 24.00, "PulseRCP", {1,4,7}},
+	{ 24.75, "PulseRCP", {2,5,8}},
+	{ 25.50, "PulseRCP", {3,6,9}},
+	{ 32.00, "PulseRCP", {1,4,7}},
+	{ 32.75, "PulseRCP", {2,5,8}},
+	{ 33.50, "PulseRCP", {3,6,9}},
+	
+	{ 40.00, "PulseRCP", {1,4,9}},
+	{ 40.75, "PulseRCP", {2,5,8}},
+	{ 41.50, "PulseRCP", {3,6,7}},
+	{ 48.00, "PulseRCP", {1,2,6}},
+	{ 48.75, "PulseRCP", {3,4,7}},
+	{ 49.50, "PulseRCP", {5,8,9}},
+	{ 56.00, "PulseRCP", {1,2,4}},
+	{ 56.75, "PulseRCP", {3,5,7}},
+	{ 57.50, "PulseRCP", {6,8,9}},
+	{ 64.00, "PulseRCP", {1,2,3}},
+	{ 64.75, "PulseRCP", {4,5,6}},
+	{ 65.50, "PulseRCP", {7,8,9}},	
+	
+	{ 66.00, "HideRCP",  {1,2,3,4,5,6,7,8,9}},
 	
 	{  76.0, "BellDing"},
 	{  92.0, "BellDing"},
@@ -1326,18 +1451,17 @@ local messageList = {
 	
 	{ 164.0, "CirclingAroundP1"},
 	{ 180.0, "CirclingAroundP2"},
-	{ 180.0, "CirclingEndP1"},
-	{ 192.0, "CirclingEndP2"},
+	{ 183.0, "CirclingEndP1"},
+	{ 195.0, "CirclingEndP2"},
+	{ 195.0, "Doubling", {"LTR"}},
 	{ 196.0, "CirclingAroundP1"},
 	{ 196.0, "CirclingAroundP2"},
-	{ 212.0, "CirclingEndP1"},
-	{ 212.0, "CirclingEndP2"},
+	{ 215.0, "CirclingEndP1"},
+	{ 215.0, "CirclingEndP2"},
 	
 	{ 240.0, "BellDing"},
 	{ 256.0, "BellDing"},
 
-
-	{ 195.0, "Doubling", {"LTR"}},
 	
 	{ 296.0, "BZBStart"},
 	{ 308.0, "BZBThrow"},
@@ -1348,15 +1472,15 @@ local messageList = {
 	{ 348.0, "BZBThrow"},
 	{ 356.0, "BZBThrow"},
 	{ 364.0, "BZBThrow"},
+	{ 371.0, "BZBInGameSteps"},
 	{ 372.0, "BZBThrow"},
-	{ 372.0, "BZBInGameSteps"},
 	{ 380.0, "BZBThrow"},
 	{ 388.0, "BZBThrow"},
 	{ 391.0, "BZBVibrate"},
 	{ 392.0, "BZBVibrateStop"},
 	{ 396.0, "BZBThrow"},
+	{ 403.0, "BZBInGameSteps"},
 	{ 404.0, "BZBThrow"},
-	{ 404.0, "BZBInGameSteps"},
 	{ 412.0, "BZBThrow"},
 	{ 415.0, "BZBVibrate"},
 	{ 416.0, "BZBVibrateStop"},
@@ -1380,6 +1504,46 @@ local messageList = {
 	{ 604.0, "BellDing"},
 	{ 620.0, "BellDing"},
 	
+	
+	{634.00, "PulseRCP", {4}},
+	{636.00, "PulseRCP", {9}},
+	{638.00, "PulseRCP", {3}},
+	{640.00, "PulseRCP", {8}},
+	{642.00, "PulseRCP", {2}},
+	{644.00, "PulseRCP", {7}},	
+	{646.00, "PulseRCP", {1}},
+	
+	{650.00, "PulseRCP", {4}},
+	{652.00, "PulseRCP", {1}},
+	{653.00, "PulseRCP", {3}},
+	{654.00, "PulseRCP", {9}},
+	{654.75, "PulseRCP", {8}},
+	{655.50, "PulseRCP", {7}},	
+	{656.00, "PulseRCP", {6}},	
+	{658.00, "PulseRCP", {2}},	
+	{660.00, "PulseRCP", {5}},	
+	{662.00, "PulseRCP", {8}},
+	
+	{666.00, "PulseRCP", {4}},
+	{668.00, "PulseRCP", {9}},
+	{670.00, "PulseRCP", {3}},
+	{672.00, "PulseRCP", {8}},
+	{674.00, "PulseRCP", {2}},
+	{676.00, "PulseRCP", {7}},	
+	{678.00, "PulseRCP", {1}},
+	
+	{682.00, "PulseRCP", {4}},
+	{684.00, "PulseRCP", {1}},
+	{685.00, "PulseRCP", {3}},
+	{686.00, "PulseRCP", {9}},
+	{686.75, "PulseRCP", {8}},
+	{687.50, "PulseRCP", {7}},	
+	{688.00, "PulseRCP", {6}},	
+	{690.00, "PulseRCP", {2}},	
+	{692.00, "PulseRCP", {5}},	
+	{694.00, "PulseRCP", {8}},
+	
+	{696.00, "HideRCP",  {1,2,3,4,5,6,7,8,9}},
 };
 
 local fifthProxyEffects = {
@@ -1417,7 +1581,7 @@ local fifthGfxHQ = Def.Quad {
 	end,
 	UpdateCommand = function(self)
 		-- Most things are determined by beat, believe it or not.		
-		local overtime = GAMESTATE:GetSongBeat();
+		overtime = GAMESTATE:GetSongBeat();
 		
 		-- TODO: this assumes the effect applies over a constant BPM section!!
 		BPS = GAMESTATE:GetSongBPS();	
@@ -1538,7 +1702,7 @@ local fifthGfxHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
-table.insert(theBoys, fifthGfxHQ);
+--table.insert(theBoys, fifthGfxHQ);
 
 
 -------------------------------------------------------------------------------
@@ -1554,6 +1718,9 @@ local modsTable = {
 	-- [5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
 		
 		{   0.0,	"ScrollSpeed",		 cspd,    4.0,	3}, 
+		{   0.0,	"Dark",				  1.0,    1.0,	3}, 
+		
+		
 --		{   0.0,	"ScrollSpeed",		 dspd,    4.0,	3}, 
 --		{   0.0,	"Mini",	  (1-dblMinify)*2,    4.0,	3}, 
 --		{  20.0,	"Tiny",	  			 -1.0,    4.0,	3}, 
