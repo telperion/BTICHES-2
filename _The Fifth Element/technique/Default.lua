@@ -698,6 +698,35 @@ table.insert(theBoys, BZBFrame);
 -------------------------------------------------------------------------------
 
 
+theBoys[#theBoys+1] = Def.Quad{
+	InitCommand=function(self)
+		self:Center()
+			:SetWidth(sw)
+			:SetHeight(sh)
+			:diffuse(0.0, 0.0, 0.0, 0.0);
+	end,
+	OnCommand=function(self)
+		self:z(0.8)
+			:diffusealpha(0.0);
+	end,
+	BZBInGameStepsMessageCommand=function(self)
+		inSession = false;
+		self:diffusealpha(0.0)
+			:decelerate(1.0 / BPS)
+			:diffusealpha(0.5)
+			:queuecommand("BZBWaitForSteps");
+	end,
+	BZBWaitForStepsCommand=function(self)
+		inSession = false;
+		self:sleep(8.0 / BPS)
+			:queuecommand("BZBReturnToGame");
+	end,
+	BZBReturnToGameCommand=function(self)
+		inSession = true;
+		self:decelerate(1.0 / BPS)
+			:diffusealpha(0.0);
+	end,
+};
 
 
 
@@ -709,110 +738,125 @@ table.insert(theBoys, BZBFrame);
 --
 --		idk, let's make three. to have
 --
-local circleAroundXExtent = sw/4;
-local circleAroundYExtent = sh/12;
+local proxyCount = 3;
+local circlingAroundXExtent = sw/4;
+local circlingAroundYExtent = sh/12;
+local circlingAroundWag		= 15;
 
-local remP1Location = {nil, nil};
+local remPlayerLoc = {
+	{nil, nil},
+	{nil, nil}
+};
 
-for i = 1,3 do
-	theBoys[#theBoys + 1] = Def.ActorFrame {	
-		Name = "ProxyP1Outer_"..i,
-		Def.ActorFrame {	
-			Name = "ProxyP1Inner_"..i,
-			Def.ActorProxy {					
-				Name = "ProxyP1",
-				BeginCommand=function(self)
-					local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
-					if McCoy then self:SetTarget(McCoy); else self:hibernate(1573); end
+for pn = 1,2 do
+	for i = 1,proxyCount do
+		theBoys[#theBoys + 1] = Def.ActorFrame {	
+			Name = "ProxyP"..pn.."Outer_"..i,
+			Def.ActorFrame {	
+				Name = "ProxyP"..pn.."Inner_"..i,
+				Def.ActorProxy {					
+					Name = "ProxyP"..pn,
+					InitCommand = function(self)
+						self:aux( tonumber(string.match(self:GetName(), "[0-9]")) );
+					end,
+					BeginCommand=function(self)
+						local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP'..self:getaux());
+						if McCoy then self:SetTarget(McCoy); else self:hibernate(1573); end
+					end,
+					OnCommand=function(self)
+						local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP'..self:getaux());
+						if McCoy then 
+							remPlayerLoc[pn][1] = McCoy:GetX();
+							remPlayerLoc[pn][2] = McCoy:GetY();
+							self:xy(-McCoy:GetX(), -McCoy:GetY()); 
+							self:GetParent():xy(McCoy:GetX(), McCoy:GetY()); 
+						end
+					end,
+					RecenterProxyMessageCommand=function(self)					
+						local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP'..self:getaux());
+						if McCoy then 
+							remPlayerLoc[pn][1] = McCoy:GetX();
+							remPlayerLoc[pn][2] = McCoy:GetY();
+							self:xy(-McCoy:GetX(), -McCoy:GetY()); 
+							self:GetParent():xy(McCoy:GetX(), McCoy:GetY()); 
+						end
+					end
+				},
+				InitCommand = function(self)
+					self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) );
 				end,
-				OnCommand=function(self)
-					local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
-					if McCoy then self:xy(-McCoy:GetX(), -McCoy:GetY()); end
-				end
+				OnCommand = function(self)
+					self:xy(remPlayerLoc[pn][1], remPlayerLoc[pn][2]);
+				end,
+				
+				
+				["CirclingAroundP"..pn.."MessageCommand"] = function(self)
+					local offset = (self:getaux()-1 + 1.5*(pn - 1));
+					self:decelerate((2 + offset) * (8/proxyCount) / BPS)
+						:addy(circlingAroundYExtent)
+						:wag()
+						:effectclock("beat")
+						:effectoffset(-offset)
+						:effectperiod(8)
+						:effectmagnitude(0, 0, circlingAroundWag)
+						:queuecommand("CircleUp");
+				end,
+				CircleUpCommand = function(self)
+					self:smooth(4.0/BPS)
+						:addy(-2 * circlingAroundYExtent)
+						:queuecommand("CircleDown");
+				end,
+				CircleDownCommand = function(self)
+					self:smooth(4.0/BPS)
+						:addy(2 * circlingAroundYExtent)
+						:queuecommand("CircleUp");
+				end,
+				["CirclingEndP"..pn.."MessageCommand"] = function(self)
+					self:stoptweening()
+						:smooth(1.0/BPS)
+						:stopeffect()
+						:xy(remPlayerLoc[pn][1], remPlayerLoc[pn][2]);
+				end,
 			},
 			InitCommand = function(self)
 				self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) );
 			end,
 			OnCommand = function(self)
-				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
-				remP1Location[1] = McCoy:GetX();
-				remP1Location[2] = McCoy:GetY();
-				if McCoy then self:xy(remP1Location[1], remP1Location[2]); end
+				self:xy(0, 0)
+					:z(1);
 			end,
-			
-			
-			CircleAroundMessageCommand = function(self)
-				self:decelerate((2 + (self:getaux()-1) * (8/3)) / BPS)
-					:addy(circleAroundYExtent)
-					:queuecommand("CircleUp");
+			["CirclingAroundP"..pn.."MessageCommand"] = function(self)
+				local offset = (self:getaux()-1 + 1.5*(pn - 1));
+				self:decelerate(offset * (8/proxyCount) / BPS)
+					:addx(circlingAroundXExtent)
+					:queuecommand("CircleLeft");
 			end,
-			CircleUpCommand = function(self)
-				self:smooth(4.0/BPS)
-					:addy(-2 * circleAroundYExtent)
-					:queuecommand("CircleDown");
+			CircleLeftCommand = function(self)
+				self:smooth(4.0/BPS, RoundBezier)
+					:addx(-2 * circlingAroundXExtent)
+					:queuecommand("CircleRight");
 			end,
-			CircleDownCommand = function(self)
-				self:smooth(4.0/BPS)
-					:addy(2 * circleAroundYExtent)
-					:queuecommand("CircleUp");
+			CircleRightCommand = function(self)
+				self:smooth(4.0/BPS, RoundBezier)
+					:addx(2 * circlingAroundXExtent)
+					:queuecommand("CircleLeft");
 			end,
-			CircleEndMessageCommand = function(self)
+			["CirclingEndP"..pn.."MessageCommand"] = function(self)
 				self:stoptweening()
 					:smooth(1.0/BPS)
-					:xy(remP1Location[1], remP1Location[2]);
+					:xy(0, 0);
 			end,
-		},
-		InitCommand = function(self)
-			self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) );
-		end,
-		OnCommand = function(self)
-			self:xy(0, 0);
-		end,
-		CircleAroundMessageCommand = function(self)
-			self:decelerate((self:getaux()-1) * (8/3) / BPS)
-				:addx(circleAroundXExtent)
-				:queuecommand("CircleLeft");
-		end,
-		CircleLeftCommand = function(self)
-			self:smooth(4.0/BPS, RoundBezier)
-				:addx(-2 * circleAroundXExtent)
-				:queuecommand("CircleRight");
-		end,
-		CircleRightCommand = function(self)
-			self:smooth(4.0/BPS, RoundBezier)
-				:addx(2 * circleAroundXExtent)
-				:queuecommand("CircleLeft");
-		end,
-		CircleEndMessageCommand = function(self)
-			self:stoptweening()
-				:smooth(1.0/BPS)
-				:xy(0, 0);
-		end,
-	}
-
-	theBoys[#theBoys + 1] = Def.ActorFrame {
-		Name = "ProxyP2_"..i,
-		Def.ActorProxy {					
-			Name = "Proxy",
-			BeginCommand=function(self)
-				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
-				if McCoy then self:SetTarget(McCoy); else self:hibernate(1573); end
-			end,
-			OnCommand=function(self)
-				local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
-				if McCoy then self:xy(-McCoy:GetX(), -McCoy:GetY()); end
-				self:visible(false);
-			end
-		},
-		InitCommand = function(self)
-			self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) )
-				:visible(false);
-		end,
-		OnCommand = function(self)
-			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
-			if McCoy then self:xy(McCoy:GetX(), McCoy:GetY()); end
-		end,
-	}
+			
+			
+--			["CirclingAroundP"..(3-pn).."MessageCommand"] = function(self)
+--				self:visible(false);
+--			end,
+--			["CirclingEndP"..(3-pn).."MessageCommand"] = function(self)
+--				self:sleep(1.0/BPS)
+--					:visible(true);
+--			end,
+		}
+	end
 end
 
 
@@ -947,6 +991,25 @@ end
 --
 -- Special bell ghost (player 2)
 --
+theBoys[#theBoys+1] = Def.Quad{
+		InitCommand=function(self)
+			self:Center()
+				:SetWidth(sw)
+				:SetHeight(sh)
+				:diffuse(0.0, 0.0, 0.0, 0.0);
+		end,
+		OnCommand=function(self)
+			self:z(1.5)
+				:diffusealpha(0.0);
+		end,
+		BellDingMessageCommand=function(self)
+			self:diffusealpha(1.0)
+				:accelerate(4.0 / BPS)
+				:diffusealpha(0.0)
+		end,
+	};
+	
+	
 theBoys[#theBoys+1] = Def.ActorFrameTexture{
 		Name = "BellGhostMemory",
 		InitCommand=function(self)
@@ -991,13 +1054,13 @@ theBoys[#theBoys+1] = Def.ActorFrameTexture{
 		Def.ActorFrame {
 			Def.ActorFrame {
 				Def.ActorProxy {					
-					Name = "ProxyP2A",
+					Name = "ProxyP1",
 					BeginCommand=function(self)
-						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
 						self:SetTarget(p);
 					end,
 					BellDingMessageCommand=function(self)
-						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
+						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
 						self:xy(-p:GetX(), -p:GetY());
 					end,
 				},
@@ -1008,7 +1071,7 @@ theBoys[#theBoys+1] = Def.ActorFrameTexture{
 			},
 			Def.ActorFrame {
 				Def.ActorProxy {					
-					Name = "ProxyP2B",
+					Name = "ProxyP2",
 					BeginCommand=function(self)
 						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP2');
 						self:SetTarget(p);
@@ -1023,13 +1086,14 @@ theBoys[#theBoys+1] = Def.ActorFrameTexture{
 						:zoom(0.8);
 				end,
 			},
-			OnCommand=function(self)
-				self:diffusealpha(0.0);
-			end,
 			BellDingMessageCommand=function(self)
-				self:diffusealpha(1.0)
-					:linear(8.0 / BPS)
-					:diffusealpha(0.0);
+				self:y(sh/2-320)
+					:linear(6.0 / BPS)
+					:y(sh/2+320)
+					:queuecommand("Reset");
+			end,
+			ResetCommand = function(self)
+				self:y(0);
 			end,
 		},
 	};
@@ -1039,8 +1103,15 @@ theBoys[#theBoys+1] = Def.Sprite{
 		Texture = "BellGhostOutput",
 		InitCommand=cmd(Center),
 		OnCommand=function(self)
-			self:blend("BlendMode_Add")
-		end
+			self:z(2)
+				:blend("BlendMode_Add")
+				:diffusealpha(0.0);
+		end,
+		BellDingMessageCommand=function(self)
+			self:diffusealpha(1.0)
+				:accelerate(4.0 / BPS)
+				:diffusealpha(0.0)
+		end,
 	};
 	
 table.insert(theBoys, aftMemory);
@@ -1059,15 +1130,44 @@ table.insert(theBoys, ghostBoy);
 --
 
 local messageList = {
+	{	4.0, "RecenterProxy"},
 	{   4.0, "BellDing"},
-	{   8.0, "CircleAround"},
+	{   8.0, "CirclingAroundP1"},
 	{  16.0, "BellDing"},
-	{  24.0, "CircleEnd"},
---	{   8.0, "BZBStart"},
+	{  24.0, "CirclingEndP1"},
+	{  32.0, "CirclingAroundP2"},
+	{  40.0, "BellDing"},
+	{  48.0, "CirclingEndP2"},
+--	{   0.0, "BZBStart"},
 --	{  16.0, "BZBThrow"},
---	{  24.0, "BZBEnd"},
+--	{  24.0, "BZBThrow"},
+--	{  24.0, "BZBInGameSteps"},
+--	{  48.0, "BZBEnd"},
 	{ 104.0, "BZBRateMyProfessor"},
 };
+
+local fifthProxyEffects = {
+	-- proxyEffect[1]: beat number
+	-- proxyEffect[2]: mod name (applied as element function of Actor, with a couple exceptions)
+	-- proxyEffect[3]: mod strength
+	-- proxyEffect[4]: mod length (in beats)
+	-- proxyEffect[5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
+	--
+	-- stag = column-based "skewing", where +1.0 staggers the columns by one arrow height, left highest
+	--
+--	{ 97.0, "addx",		 sw/12,	 6.0,	1},
+--	{ 97.0, "addx",		-sw/12,	 6.0,	2},
+--	{ 97.0, "vibrate",	 5.0,	 6.0,	3},
+--	
+--	{410.0, "rotationz",	360.0,	 5.0,	3, 'smooth'},
+
+
+	{ 12.0, "vibrate",	 5.0,	 1.0,	3, {1}},
+	{ 12.0, "stag", 	 1.0,	 3.0,	3, {2}},
+	{ 12.0, "stag", 	-1.0,	 3.0,	3, {3}},
+};
+local fifthEffectIndex = 0;
+
 
 local fifthGfxHQ = Def.Quad {
 	InitCommand = function(self)
@@ -1113,6 +1213,66 @@ local fifthGfxHQ = Def.Quad {
 				break;
 			end
 		end
+		
+		
+		
+		-- Apply skews and staggers.
+		while true do
+			if fifthEffectIndex < #fifthProxyEffects then
+				local proxyEffect = fifthProxyEffects[fifthEffectIndex+1];				
+				if overtime >= proxyEffect[1] then			
+					local effFunc 		= proxyEffect[2];
+					local effArg  		= proxyEffect[3];
+					local effBeats		= proxyEffect[4];
+					local effPlayers	= proxyEffect[5];
+					local effProxies	= proxyEffect[6];
+					local effTweenHint	= proxyEffect[7];
+					
+					if not effProxies then effProxies = {}; end
+										
+					for pn = 1,2 do
+						if effPlayers == 3 or effPlayers == pn then
+							pv = SCREENMAN:GetTopScreen():GetChild("PlayerP"..pn);
+							if pv then							
+								if effFunc == "stag" then
+									pca = pv:GetChild("NoteField"):GetColumnActors();
+									for colIndex = 1,4 do
+										pca[colIndex]:decelerate(effBeats / BPS)
+													 :y(64 * effArg * (colIndex - 2.5));
+									end
+								else
+									for proxyIndex in ivalues(effProxies) do
+										pp = self:GetParent():GetChild("ProxyP"..pn.."Outer_"..proxyIndex);
+										if effFunc == "vibrate" then
+											if effArg <= 0.01 then
+												pp:stopeffect();
+											else
+												pp[effFunc](pp);
+												pp:effectmagnitude(effArg, effArg, 0);
+											end
+										else
+											if effTweenHint then
+												pp[effTweenHint](pp, effBeats / BPS);
+											else
+												pp:decelerate(effBeats / BPS);
+											end
+											pp[effFunc](pp, effArg);
+										end
+									end
+								end
+							end
+						end
+					end		
+														
+					fifthEffectIndex = fifthEffectIndex + 1;
+				else
+					break;
+				end
+			else
+				break;
+			end
+		end
+		
 					
 					
 		-- BUZZIBEE no jutsu: update
