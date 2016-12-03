@@ -756,7 +756,6 @@ theBoys[#theBoys+1] = Def.Quad{
 local proxyCount = 3;
 local circlingAroundXExtent = sw/4;
 local circlingAroundYExtent = sh/12;
-local circlingAroundWag		= 15;
 
 local remPlayerLoc = {
 	{nil, nil},
@@ -839,14 +838,16 @@ for pn = 1,2 do
 					local strength = (1 - (BZBData[pn].totalSucc / totalAttempts));
 					Trace("pn = "..pn);
 					self:smooth(1.0 / BPS)
-						:rotationz(-30 * strength*strength)
+						:rotationz(-45 * strength*strength)
+						:rotationy(-60 * strength*strength)
 						:queuecommand("WagRight");
 				end,
 				WagRightCommand = function(self)
 					local pn = tonumber(string.match(self:GetName(), "ProxyP([0-9])"));
 					local strength = (1 - (BZBData[pn].totalSucc / totalAttempts));
 					self:smooth(1.0 / BPS)
-						:rotationz( 30 * strength*strength)
+						:rotationz( 45 * strength*strength)
+						:rotationy( 60 * strength*strength)
 						:queuecommand("WagLeft");
 				end,
 				
@@ -856,7 +857,8 @@ for pn = 1,2 do
 						:stoptweening()
 						:decelerate(4.0/BPS)
 						:addx(sw * -0.25 * BTIUtil_SideSign(pn))
-						:rotationz(0);
+						:rotationz(0)
+						:rotationy(0);
 				end,
 			},
 			InitCommand = function(self)
@@ -1062,7 +1064,7 @@ theBoys[#theBoys+1] = Def.Quad{
 				:diffuse(0.0, 0.0, 0.0, 0.0);
 		end,
 		OnCommand=function(self)
-			self:z(1.5)
+			self:z(3.5)
 				:diffusealpha(0.0);
 		end,
 		BellDingMessageCommand=function(self)
@@ -1178,7 +1180,7 @@ theBoys[#theBoys+1] = Def.Sprite{
 		Texture = "BellGhostOutput",
 		InitCommand=cmd(Center),
 		OnCommand=function(self)
-			self:z(2)
+			self:z(4)
 				:blend("BlendMode_Add")
 				:diffusealpha(0.0);
 		end,
@@ -1240,7 +1242,7 @@ theBoys[#theBoys+1] = Def.ActorMultiVertex {
 
 		self:visible(false)
 			:xy(sw/2, sh/2)
-			:z(1.8)
+			:z(5)
 			:SetVertices(dblRTLVerts)
 			:SetDrawState{Mode = "DrawMode_Quads", First = 1, Num = 4};
 	end,
@@ -1320,7 +1322,7 @@ local dblRcps = Def.ActorFrame {
 		local p = SCREENMAN:GetTopScreen():GetChild('PlayerP1');
 		self:visible(false)
 			:xy(sw/2, p:GetY()-128)
-			:z(1.7);
+			:z(3.8);
 	end,
 	DoublingMessageCommand=function(self)
 		-- Lead-in: 1 beat
@@ -1507,13 +1509,9 @@ local messageList = {
 	{ 124.0, "BellDing"},
 	
 	{ 164.0, "CirclingAroundP1"},
-	{ 164.0, "CirclingAroundP2"},
 	{ 195.0, "CirclingEndP1"},
-	{ 195.0, "CirclingEndP2"},
 	{ 195.0, "Doubling", {"LTR"}},
-	{ 196.0, "CirclingAroundP1"},
 	{ 196.0, "CirclingAroundP2"},
-	{ 215.0, "CirclingEndP1"},
 	{ 215.0, "CirclingEndP2"},
 	
 	{ 239.5, "BellDing"},
@@ -1630,25 +1628,25 @@ local fifthProxyEffects = {
 	{160.0, "vibrate",	20.0,	 1.0,	3, {1,2,3}},
 	{164.0, "vibrate",	 0.0,	 1.0,	3, {1,2,3}},
 	
-	{232.00,"skewx",	 1.0,	 1.0,	3},
-	{233.00,"skewx",	-1.0,	 1.0,	3},
-	{234.00,"skewx",	 0.7,	 1.0,	3},
-	{235.00,"skewx",	 0.0,	 0.5,	3},
-	{235.50,"skewy",	 1.0,	 1.0,	3},
-	{236.50,"skewy",	-1.0,	 1.0,	3},
-	{237.50,"skewy",	 1.0,	 1.0,	3},
-	{238.50,"skewy",	-1.0,	 1.0,	3},
-	{239.50,"skewy",	 0.0,	 0.5,	3},
+	{232.00,"skewx",	 1.0,	 1.0,	3, {1,2,3}},
+	{233.00,"skewx",	-1.0,	 1.0,	3, {1,2,3}},
+	{234.00,"skewx",	 0.7,	 1.0,	3, {1,2,3}},
+	{235.00,"skewx",	 0.0,	 0.5,	3, {1,2,3}},
+	{235.50,"rotationz",	 15.0,	 1.0,	3, {1,2,3}},
+	{236.50,"rotationz",	-15.0,	 1.0,	3, {1,2,3}},
+	{237.50,"rotationz",	 15.0,	 1.0,	3, {1,2,3}},
+	{238.50,"rotationz",	-15.0,	 1.0,	3, {1,2,3}},
+	{239.50,"rotationz",	  0.0,	 0.5,	3, {1,2,3}},
 	
 	{248.00,"skewx",	-1.0,	 1.0,	3},
 	{249.00,"skewx",	 1.0,	 1.0,	3},
 	{250.00,"skewx",	-0.7,	 1.0,	3},
 	{251.00,"skewx",	 0.0,	 0.5,	3},
-	{251.50,"skewy",	-1.0,	 1.0,	3},
-	{252.50,"skewy",	 1.0,	 1.0,	3},
-	{253.50,"skewy",	-1.0,	 1.0,	3},
-	{254.50,"skewy",	 1.0,	 1.0,	3},
-	{255.50,"skewy",	 0.0,	 0.5,	3},
+	{251.50,"rotationz",	-15.0,	 1.0,	3, {1,2,3}},
+	{252.50,"rotationz",	 15.0,	 1.0,	3, {1,2,3}},
+	{253.50,"rotationz",	-15.0,	 1.0,	3, {1,2,3}},
+	{254.50,"rotationz",	 15.0,	 1.0,	3, {1,2,3}},
+	{255.50,"rotationz",	  0.0,	 0.5,	3, {1,2,3}},
 	
 	
 	{280.00,"stag",		 0.17,	 0.01,	3},
@@ -1776,10 +1774,154 @@ local fifthProxyEffects = {
 	{291.33,"addy",		-26.6,	 0.01,	3},
 	{291.67,"stag",		-0.00,	 0.01,	3},
 	{291.67,"addy",		-26.7,	 0.01,	3},
-
---	{ 12.0, "vibrate",	 5.0,	 1.0,	3, {1}},
---	{ 12.0, "stag", 	 1.0,	 3.0,	3, {2}},
---	{ 12.0, "stag", 	-1.0,	 3.0,	3, {3}},
+	
+	
+	{504.00,"skewx",	 1.0,	 1.0,	3},
+	{505.00,"skewx",	-1.0,	 1.0,	3},
+	{506.00,"skewx",	 0.7,	 1.0,	3},
+	{507.00,"skewx",	 0.0,	 0.5,	3},
+	{507.50,"rotationz",	 15.0,	 1.0,	3},
+	{508.50,"rotationz",	-15.0,	 1.0,	3},
+	{509.50,"rotationz",	 15.0,	 1.0,	3},
+	{510.50,"rotationz",	-15.0,	 1.0,	3},
+	{511.50,"rotationz",	  0.0,	 0.5,	3},
+	
+	{520.00,"skewx",	-1.0,	 1.0,	3},
+	{521.00,"skewx",	 1.0,	 1.0,	3},
+	{522.00,"skewx",	-0.7,	 1.0,	3},
+	{523.00,"skewx",	 0.0,	 0.5,	3},
+	{523.50,"rotationz",	-15.0,	 1.0,	3},
+	{524.50,"rotationz",	 15.0,	 1.0,	3},
+	{525.50,"rotationz",	-15.0,	 1.0,	3},
+	{526.50,"rotationz",	 15.0,	 1.0,	3},
+	{527.50,"rotationz",	  0.0,	 0.5,	3},
+	
+	
+	{552.00,"stag",		 0.17,	 0.01,	3},
+	{552.00,"addrotationz",    1,	 0.01,	1},
+	{552.00,"addrotationz",    2,	 0.01,	2},
+	{552.00,"addy",		 13.3,	 0.01,	3},
+	{552.33,"stag",		 0.33,	 0.01,	3},
+	{552.33,"addrotationz",    1,	 0.01,	1},
+	{552.33,"addrotationz",    2,	 0.01,	2},
+	{552.33,"addy",		 13.4,	 0.01,	3},
+	{552.67,"stag",		 0.50,	 0.01,	3},
+	{552.67,"addrotationz",    1,	 0.01,	1},
+	{552.67,"addrotationz",    2,	 0.01,	2},
+	{552.67,"addy",		 13.3,	 0.01,	3},
+	{553.00,"stag",		 0.67,	 0.01,	3},
+	{553.00,"addrotationz",    1,	 0.01,	1},
+	{553.00,"addrotationz",    2,	 0.01,	2},
+	{553.00,"addy",		 13.3,	 0.01,	3},
+	{553.33,"stag",		 0.83,	 0.01,	3},
+	{553.33,"addrotationz",    1,	 0.01,	1},
+	{553.33,"addrotationz",    2,	 0.01,	2},
+	{553.33,"addy",		 13.4,	 0.01,	3},
+	{553.67,"stag",		 1.00,	 0.01,	3},
+	{553.67,"addrotationz",    1,	 0.01,	1},
+	{553.67,"addrotationz",    2,	 0.01,	2},
+	{553.67,"addy",		 13.3,	 0.01,	3},
+	
+	{554.00,"stag",		 0.83,	 0.01,	3},
+	{554.00,"addrotationz",   -1,	 0.01,	1},
+	{554.00,"addrotationz",   -2,	 0.01,	2},
+	{554.00,"addy",		-13.3,	 0.01,	3},
+	{554.33,"stag",		 0.67,	 0.01,	3},
+	{554.33,"addrotationz",   -1,	 0.01,	1},
+	{554.33,"addrotationz",   -2,	 0.01,	2},
+	{554.33,"addy",		-13.3,	 0.01,	3},
+	{554.67,"stag",		 0.50,	 0.01,	3},
+	{554.67,"addrotationz",   -1,	 0.01,	1},
+	{554.67,"addrotationz",   -2,	 0.01,	2},
+	{554.67,"addy",		-13.3,	 0.01,	3},
+	{555.00,"stag",		 0.33,	 0.01,	3},
+	{555.00,"addrotationz",   -1,	 0.01,	1},
+	{555.00,"addrotationz",   -2,	 0.01,	2},
+	{555.00,"addy",		-13.3,	 0.01,	3},
+	{555.33,"stag",		 0.17,	 0.01,	3},
+	{555.33,"addrotationz",   -1,	 0.01,	1},
+	{555.33,"addrotationz",   -2,	 0.01,	2},
+	{555.33,"addy",		-13.3,	 0.01,	3},
+	{555.67,"stag",		 0.00,	 0.01,	3},
+	{555.67,"addrotationz",   -1,	 0.01,	1},
+	{555.67,"addrotationz",   -2,	 0.01,	2},
+	{555.67,"addy",		-13.3,	 0.01,	3},
+	
+	{556.00,"stag",		-0.17,	 0.01,	3},
+	{556.00,"addrotationz",    2,	 0.01,	1},
+	{556.00,"addrotationz",    1,	 0.01,	2},
+	{556.00,"addy",		 13.3,	 0.01,	3},
+	{556.33,"stag",		-0.33,	 0.01,	3},
+	{556.33,"addrotationz",    2,	 0.01,	1},
+	{556.33,"addrotationz",    1,	 0.01,	2},
+	{556.33,"addy",		 13.4,	 0.01,	3},
+	{556.67,"stag",		-0.50,	 0.01,	3},
+	{556.67,"addrotationz",    2,	 0.01,	1},
+	{556.67,"addrotationz",    1,	 0.01,	2},
+	{556.67,"addy",		 13.3,	 0.01,	3},
+	{557.00,"stag",		-0.67,	 0.01,	3},
+	{557.00,"addrotationz",    2,	 0.01,	1},
+	{557.00,"addrotationz",    1,	 0.01,	2},
+	{557.00,"addy",		 13.3,	 0.01,	3},
+	{557.33,"stag",		-0.83,	 0.01,	3},
+	{557.33,"addrotationz",    2,	 0.01,	1},
+	{557.33,"addrotationz",    1,	 0.01,	2},
+	{557.33,"addy",		 13.4,	 0.01,	3},
+	{557.67,"stag",		-1.00,	 0.01,	3},
+	{557.67,"addrotationz",    2,	 0.01,	1},
+	{557.67,"addrotationz",    1,	 0.01,	2},
+	{557.67,"addy",		 13.3,	 0.01,	3},
+	
+	{558.00,"stag",		-0.83,	 0.01,	3},
+	{558.00,"addrotationz",   -2,	 0.01,	1},
+	{558.00,"addrotationz",   -1,	 0.01,	2},
+	{558.00,"addy",		-13.3,	 0.01,	3},
+	{558.33,"stag",		-0.67,	 0.01,	3},
+	{558.33,"addrotationz",   -2,	 0.01,	1},
+	{558.33,"addrotationz",   -1,	 0.01,	2},
+	{558.33,"addy",		-13.3,	 0.01,	3},
+	{558.67,"stag",		-0.50,	 0.01,	3},
+	{558.67,"addrotationz",   -2,	 0.01,	1},
+	{558.67,"addrotationz",   -1,	 0.01,	2},
+	{558.67,"addy",		-13.3,	 0.01,	3},
+	{559.00,"stag",		-0.33,	 0.01,	3},
+	{559.00,"addrotationz",   -2,	 0.01,	1},
+	{559.00,"addrotationz",   -1,	 0.01,	2},
+	{559.00,"addy",		-13.3,	 0.01,	3},
+	{559.33,"stag",		-0.17,	 0.01,	3},
+	{559.33,"addrotationz",   -2,	 0.01,	1},
+	{559.33,"addrotationz",   -1,	 0.01,	2},
+	{559.33,"addy",		-13.3,	 0.01,	3},
+	{559.67,"stag",		 0.00,	 0.01,	3},
+	{559.67,"addrotationz",   -2,	 0.01,	1},
+	{559.67,"addrotationz",   -1,	 0.01,	2},
+	{559.67,"addy",		-13.3,	 0.01,	3},
+	
+	{560.00,"stag",		 0.33,	 0.01,	3},
+	{560.00,"addy",		 26.7,	 0.01,	3},
+	{560.33,"stag",		 0.67,	 0.01,	3},
+	{560.33,"addy",		 26.6,	 0.01,	3},
+	{560.67,"stag",		 1.00,	 0.01,	3},
+	{560.67,"addy",		 26.7,	 0.01,	3},
+	{561.00,"stag",		 0.67,	 0.01,	3},
+	{561.00,"addy",		-26.7,	 0.01,	3},
+	{561.33,"stag",		 0.33,	 0.01,	3},
+	{561.33,"addy",		-26.6,	 0.01,	3},
+	{561.67,"stag",		 0.00,	 0.01,	3},
+	{561.67,"addy",		-26.7,	 0.01,	3},
+	
+	{562.00,"stag",		-0.33,	 0.01,	3},
+	{562.00,"addy",		 26.7,	 0.01,	3},
+	{562.33,"stag",		-0.67,	 0.01,	3},
+	{562.33,"addy",		 26.6,	 0.01,	3},
+	{562.67,"stag",		-1.00,	 0.01,	3},
+	{562.67,"addy",		 26.7,	 0.01,	3},
+	{563.00,"stag",		-0.67,	 0.01,	3},
+	{563.00,"addy",		-26.7,	 0.01,	3},
+	{563.33,"stag",		-0.33,	 0.01,	3},
+	{563.33,"addy",		-26.6,	 0.01,	3},
+	{563.67,"stag",		-0.00,	 0.01,	3},
+	{563.67,"addy",		-26.7,	 0.01,	3},
 };
 local fifthEffectIndex = 0;
 
@@ -1860,8 +2002,9 @@ local fifthGfxHQ = Def.Quad {
 													 :y(64 * effArg * (colIndex - 2.5));
 									end
 								else
+									if #proxyEffect < 6 then effProxies = {1, 2, 3}; end
 									for proxyIndex in ivalues(effProxies) do
-										pp = self:GetParent():GetChild("ProxyP"..pn.."Outer_"..proxyIndex);
+										pp = self:GetParent():GetChild("ProxyP"..pn.."Outer_"..proxyIndex):GetChild("ProxyP"..pn.."Inner_"..proxyIndex);
 										if effFunc == "vibrate" then
 											if effArg <= 0.01 then
 												pp:stopeffect();
@@ -1917,7 +2060,7 @@ local fifthGfxHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
---table.insert(theBoys, fifthGfxHQ);
+table.insert(theBoys, fifthGfxHQ);
 
 
 -------------------------------------------------------------------------------
@@ -1925,6 +2068,7 @@ local fifthGfxHQ = Def.Quad {
 --		Manage arrow mods for the whole song here.
 --
 local cspd = 3.0;
+local bspd = 4.0;
 local modsTable = {
 	-- [1]: beat start
 	-- [2]: mod type
@@ -1981,7 +2125,7 @@ local modsTable = {
 		{ 100.0,	"Roll",				  0.8,    1.0,	3}, 
 		{ 101.0,	"Roll",				 -0.8,    1.0,	3}, 
 		{ 102.0,	"Roll",				  0.8,    1.0,	3}, 
-		{ 102.0,	"Roll",				  0.0,    1.0,	3}, 
+		{ 103.0,	"Roll",				  0.0,    1.0,	3}, 
 		{ 103.0,	"Twirl",			 -0.8,    1.0,	3}, 
 		{ 104.0,	"Twirl",			  0.8,    1.0,	3}, 
 		{ 105.0,	"Twirl",			 -0.8,    1.0,	3}, 
@@ -1998,7 +2142,7 @@ local modsTable = {
 		{ 116.0,	"Twirl",			  0.8,    1.0,	3}, 
 		{ 117.0,	"Twirl",			 -0.8,    1.0,	3}, 
 		{ 118.0,	"Twirl",			  0.8,    1.0,	3}, 
-		{ 118.0,	"Twirl",			  0.0,    1.0,	3}, 
+		{ 119.0,	"Twirl",			  0.0,    1.0,	3}, 
 		{ 119.0,	"Roll",				 -0.8,    1.0,	3}, 
 		{ 120.0,	"Roll",				  0.8,    1.0,	3}, 
 		{ 121.0,	"Roll",				 -0.8,    1.0,	3}, 
@@ -2029,9 +2173,8 @@ local modsTable = {
 		{ 158.0,	"Alternate",		  0.0,    2.0,	3}, 
 		{ 158.0,	"Split",			  0.0,    2.0,	3}, 
 		{ 160.0,	"Centered",			  0.0,    4.0,	3}, 
-		{ 164.0,	"ScrollSpeed",		 dspd,    4.0,	3}, 	
-		{ 164.0,	"Boost",			  1.5,    4.0,	3},	
-		{ 164.0,	"Mini",	  (1-dblMinify)*2,    4.0,	3}, 
+		{ 160.0,	"ScrollSpeed",		 bspd,    4.0,	3}, 	
+		{ 160.0,	"Mini",	  (1-dblMinify)*2,    4.0,	3}, 
 		{ 166.0,	"Reverse",			  0.0,    2.0,	3}, 
 			
 --		{ 168.0,	"Tiny",				  0.2,    1.0,	1},	
@@ -2061,11 +2204,11 @@ local modsTable = {
 --		{ 191.05,	"Tiny",				  0.2,    1.95,	1},	
 --		{ 193.0,	"Tiny",				 -0.3,    0.0,	1},	
 --		{ 193.05,	"Tiny",				  0.2,    1.95,	1},	
-		{ 194.0,	"Boost",			  0.0,    2.0,	3},	
+--		{ 194.0,	"Boost",			  0.0,    2.0,	3},	
 --		{ 195.0,	"Tiny",				 -0.3,    0.0,	1},	
 --		{ 195.05,	"Tiny",				  0.0,    0.95,	1},	
 			
-		{ 200.0,	"Boost",			  1.5,    1.0,	3},	
+--		{ 200.0,	"Boost",			  1.5,    1.0,	3},	
 --		{ 200.0,	"Tiny",				  0.2,    1.0,	1},	
 --		{ 201.0,	"Tiny",				 -0.3,    0.0,	1},	
 --		{ 201.05,	"Tiny",				  0.2,    1.95,	1},	
@@ -2075,6 +2218,9 @@ local modsTable = {
 --		{ 205.05,	"Tiny",				  0.2,    1.95,	1},	
 --		{ 207.0,	"Tiny",				 -0.3,    0.0,	1},	
 --		{ 207.05,	"Tiny",				  0.2,    1.95,	1},	
+		
+				
+		{ 194.0,	"ScrollSpeed",		 dspd,    2.0,	3},	
 		
 		{ 208.0,	"ScrollSpeed",		 cspd,    8.0,	3},	
 		{ 208.0,	"Boost",			 -2.5,   16.0,	3},	
@@ -2238,10 +2384,14 @@ local modsTable = {
 		
 		{ 408.0,	"Dark",				  1.0,    1.0,	3}, 
 		{ 408.0,	"Stealth",	  		  1.0,    4.0,	3},
+		{ 408.0,	"ScrollSpeed",		 bspd,   16.0,	3}, 
+		{ 408.0,	"Mini",	  (1-dblMinify)*2,   16.0,	3}, 
 		
 		{ 436.0,	"Stealth",			  0.0,    4.0,	3}, 
 		{ 436.0,	"Dark",				  0.0,    1.0,	3}, 
-		{ 436.0,	"ScrollSpeed",		 dspd,   16.0,	3}, 
+				
+		{ 467.0,	"ScrollSpeed",		 dspd,    1.0,	3},			
+		{ 474.0,	"ScrollSpeed",		 bspd,    1.0,	3},	
 		
 		{ 488.0,	"Centered",			  1.0,    8.0,	3}, 
 		{ 488.0,	"Invert",		  	  1.0,    2.0,	3},	
@@ -2255,7 +2405,9 @@ local modsTable = {
 		
 		
 		
-		{ 502.0,	"Reverse",			  0.0,    2.0,	3}, 	
+		{ 502.0,	"Reverse",			  0.0,    2.0,	3},
+		{ 502.0,	"ScrollSpeed",		 cspd,    2.0,	3},  	
+		{ 502.0,	"Mini",	  			  0.0,    2.0,	3}, 
 		
 		{ 511.6,	"Tiny",	  			 -1.5,    0.0,	3},
 		{ 511.6,	"Flip",	  			  0.5,    0.0,	3},
@@ -2383,7 +2535,83 @@ local modsTable = {
 		{567.00,	"Tiny",		  		  0.0,    0.5,	3},
 		{567.00,	"Flip",		  		  0.0,    0.5,	3},
 		
+		{ 567.0,	"Drunk",			  0.3,    1.0,	3}, 
+		{ 567.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 567.5,	"Beat",				  1.0,    0.5,	3}, 
+		{ 568.0,	"Drunk",			  1.0,   64.0,	3}, 
+		{ 568.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 569.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 570.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 571.0,	"Twirl",			 -0.8,    1.0,	3}, 		
+		{ 571.5,	"Beat",				  0.0,    0.5,	3}, 
 		
+		{ 575.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 575.5,	"Beat",				  1.0,    0.5,	3}, 
+		{ 576.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 577.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 578.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 579.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 580.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 581.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 582.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 583.0,	"Twirl",			  0.0,    1.0,	3}, 
+		{ 583.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 584.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 585.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 586.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 587.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 587.5,	"Beat",				  0.0,    0.5,	3}, 
+		
+		{ 591.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 591.5,	"Beat",				  1.0,    0.5,	3}, 
+		{ 592.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 593.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 594.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 595.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 596.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 597.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 598.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 599.0,	"Roll",				  0.0,    1.0,	3}, 
+		{ 599.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 600.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 601.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 602.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 603.0,	"Twirl",			 -0.8,    1.0,	3},
+		{ 603.5,	"Beat",				  0.0,    0.5,	3}, 
+		
+		{ 607.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 607.5,	"Beat",				  1.0,    0.5,	3}, 
+		{ 608.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 609.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 610.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 611.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 612.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 613.0,	"Twirl",			 -0.8,    1.0,	3}, 
+		{ 614.0,	"Twirl",			  0.8,    1.0,	3}, 
+		{ 615.0,	"Twirl",			  0.0,    1.0,	3}, 
+		{ 615.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 616.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 617.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 618.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 619.0,	"Roll",				 -0.8,    1.0,	3},
+		{ 619.5,	"Beat",				  0.0,    0.5,	3}, 
+		
+		{ 623.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 623.5,	"Beat",				  1.0,    0.5,	3}, 
+		{ 624.0,	"Tornado",			  1.0,    8.0,	3},
+		{ 624.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 625.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 626.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 627.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 628.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 629.0,	"Roll",				 -0.8,    1.0,	3}, 
+		{ 630.0,	"Roll",				  0.8,    1.0,	3}, 
+		{ 631.0,	"Roll",				  0.0,    1.0,	3}, 
+		{ 631.5,	"Beat",				  0.0,    0.5,	3}, 
+		{ 632.0,	"Drunk",			  0.0,   64.0,	3}, 
+		{ 632.0,	"Tornado",			  0.0,    8.0,	3},
+		{ 632.0,	"Dark",				  1.0,    8.0,	3}, 
+		{ 632.0,	"Stealth",	  		  1.0,   32.0,	3},
 		
 	};
 local modsLaunched = 0;
