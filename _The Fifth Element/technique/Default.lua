@@ -150,7 +150,7 @@ for i = 1,2 do
 		elasticity = 0.9,				-- Ball bounce elasticity
 		acceleration = 50,				-- Ball acceleration due to gravity (in pixels per beat squared!)
 
-		totalSucc = 0					-- Successes
+		totalSucc = 0,					-- Successes
 	};
 	BZBInput[i] = {
 		{false, false, false, false},	-- State of input
@@ -826,6 +826,38 @@ for pn = 1,2 do
 						:smooth(1.0/BPS)
 						:xy(remPlayerLoc[pn][1], remPlayerLoc[pn][2]);
 				end,
+			
+			
+				PunishDrunksMessageCommand = function(self)
+					local pn = tonumber(string.match(self:GetName(), "ProxyP([0-9])"));
+					self:decelerate(4.0/BPS)
+						:addx(sw * 0.25 * BTIUtil_SideSign(pn))
+						:queuecommand("WagLeft");
+				end,
+				WagLeftCommand = function(self)
+					local pn = tonumber(string.match(self:GetName(), "ProxyP([0-9])"));
+					local strength = (1 - (BZBData[pn].totalSucc / totalAttempts));
+					Trace("pn = "..pn);
+					self:smooth(1.0 / BPS)
+						:rotationz(-30 * strength*strength)
+						:queuecommand("WagRight");
+				end,
+				WagRightCommand = function(self)
+					local pn = tonumber(string.match(self:GetName(), "ProxyP([0-9])"));
+					local strength = (1 - (BZBData[pn].totalSucc / totalAttempts));
+					self:smooth(1.0 / BPS)
+						:rotationz( 30 * strength*strength)
+						:queuecommand("WagLeft");
+				end,
+				
+				PunishmentCompleteMessageCommand = function(self)
+					local pn = tonumber(string.match(self:GetName(), "ProxyP([0-9])"));
+					self:stopeffect()
+						:stoptweening()
+						:decelerate(4.0/BPS)
+						:addx(sw * -0.25 * BTIUtil_SideSign(pn))
+						:rotationz(0);
+				end,
 			},
 			InitCommand = function(self)
 				self:aux( tonumber(string.match(self:GetName(), "_([0-9]+)")) );
@@ -841,12 +873,12 @@ for pn = 1,2 do
 					:queuecommand("CircleLeft");
 			end,
 			CircleLeftCommand = function(self)
-				self:smooth(4.0/BPS, RoundBezier)
+				self:smooth(4.0/BPS)
 					:addx(-2 * circlingAroundXExtent)
 					:queuecommand("CircleRight");
 			end,
 			CircleRightCommand = function(self)
-				self:smooth(4.0/BPS, RoundBezier)
+				self:smooth(4.0/BPS)
 					:addx(2 * circlingAroundXExtent)
 					:queuecommand("CircleLeft");
 			end,
@@ -954,22 +986,26 @@ for pn = 1,2 do
 					BeginCommand=function(self)
 						local myColorIndex = tonumber(string.match(self:GetName(), "SpriteP[12]_([0-9]+)"));
 						self:Center()
-							:rotationz(myColorIndex * 1 - 2)
-							:zoom(1.005)
-							:diffuse({1,1,1,0.0})
+							:rotationz(myColorIndex * 4 - 6)
+							:zoom(1.003)
+							:diffuse({1,1,1,0.99})
 							:visible(true);
 					end,
 					["StopTrailP"..pn.."MessageCommand"]=function(self)
 						self:diffuse({1,1,1,0.0});
 					end,
 					["StartTrailP"..pn.."MessageCommand"]=function(self)
-						self:diffuse({1,1,1,0.98});
+						self:diffuse({1,1,1,0.99});
 					end
 				},
 				Def.ActorProxy {					
 					Name = "ProxyP"..pn,
 					BeginCommand=function(self)
-						local p = SCREENMAN:GetTopScreen():GetChild('PlayerP'..string.match(self:GetName(), "ProxyP([12])"));
+						local pn = string.match(self:GetName(), "ProxyP([12])");
+						local p = self:GetParent()
+									  :GetParent()
+									  :GetChild('ProxyP'..pn.."Outer_1")
+									  :GetChild('ProxyP'..pn.."Inner_1");
 						self:SetTarget(p);
 					end,
 					OnCommand=function(self)
@@ -986,9 +1022,27 @@ for pn = 1,2 do
 				OnCommand=function(self)
 					local myColorIndex = tonumber(string.match(self:GetName(), "GhostP[12]_([0-9]+)"));
 					Trace("myColorIndex: "..myColorIndex);
-					self:blend("BlendMode_Add")
-						:diffuse(ghostColors[myColorIndex]);
-				end
+					self:z(3)
+						:blend("BlendMode_Add")
+						:diffuse(ghostColors[myColorIndex])
+						:visible(false);
+				end,
+				PunishDrunksMessageCommand=function(self)
+					local pn = tonumber(string.match(self:GetName(), "GhostP([12])"));
+					self:visible(true)
+						:diffusealpha(0.0)
+						:decelerate(4.0 / BPS)
+						:diffusealpha( 1 - (BZBData[pn].totalSucc / totalAttempts) );					
+				end,
+				PunishmentCompleteMessageCommand=function(self)
+					self:decelerate(8.0/BPS)
+						:diffusealpha(0.0)
+						:queuecommand("DisappearMe");
+				end,
+				DisappearMeCommand=function(self)
+					self:visible(false);
+				end,
+				
 			};
 			
 		table.insert(theBoys, aftMemory);
@@ -1415,6 +1469,7 @@ theBoys[#theBoys + 1] = rcpIntroOutro;
 
 local messageList = {
 	{	4.0, "RecenterProxy"},
+--	{   8.0, "PunishDrunks"},
 	
 	{  8.00, "PulseRCP", {1,4,7}},
 	{  8.75, "PulseRCP", {2,5,8}},
@@ -1428,6 +1483,8 @@ local messageList = {
 	{ 32.00, "PulseRCP", {1,4,7}},
 	{ 32.75, "PulseRCP", {2,5,8}},
 	{ 33.50, "PulseRCP", {3,6,9}},
+	
+--	{ 36.0, "PunishmentComplete"},
 	
 	{ 40.00, "PulseRCP", {1,4,9}},
 	{ 40.75, "PulseRCP", {2,5,8}},
@@ -1450,8 +1507,8 @@ local messageList = {
 	{ 124.0, "BellDing"},
 	
 	{ 164.0, "CirclingAroundP1"},
-	{ 180.0, "CirclingAroundP2"},
-	{ 183.0, "CirclingEndP1"},
+	{ 164.0, "CirclingAroundP2"},
+	{ 195.0, "CirclingEndP1"},
 	{ 195.0, "CirclingEndP2"},
 	{ 195.0, "Doubling", {"LTR"}},
 	{ 196.0, "CirclingAroundP1"},
@@ -1492,9 +1549,11 @@ local messageList = {
 	{ 436.0, "BZBAllVibrateStop"},
 	{ 436.0, "BZBRateMyProfessor"},
 	{ 436.0, "BZBEnd"},
-	
-	
+	{ 436.0, "PunishDrunks"},
+		
 	{ 467.0, "Doubling", {"RTL"}},
+	
+	{ 488.0, "PunishmentComplete"},
 	
 	{ 512.0, "BellDing"},
 	{ 528.0, "BellDing"},
@@ -1562,61 +1621,134 @@ local fifthProxyEffects = {
 --	{410.0, "rotationz",	360.0,	 5.0,	3, 'smooth'},
 
 	{136.0, "vibrate",	 5.0,	 1.0,	3, {1,2,3}},
+	{136.00,"addx",		 16,	15.0,	3, {1}},
+	{136.00,"addx",		-16,	15.0,	3, {3}},
+	{151.00,"addx",		-16,	 8.0,	3, {1}},
+	{151.00,"addx",		 16,	 8.0,	3, {3}},
 	{151.0, "vibrate",	 0.0,	 1.0,	3, {1,2,3}},
 	{152.0, "vibrate",	10.0,	 1.0,	3, {1,2,3}},
 	{160.0, "vibrate",	20.0,	 1.0,	3, {1,2,3}},
 	{164.0, "vibrate",	 0.0,	 1.0,	3, {1,2,3}},
 	
+	{232.00,"skewx",	 1.0,	 1.0,	3},
+	{233.00,"skewx",	-1.0,	 1.0,	3},
+	{234.00,"skewx",	 0.7,	 1.0,	3},
+	{235.00,"skewx",	 0.0,	 0.5,	3},
+	{235.50,"skewy",	 1.0,	 1.0,	3},
+	{236.50,"skewy",	-1.0,	 1.0,	3},
+	{237.50,"skewy",	 1.0,	 1.0,	3},
+	{238.50,"skewy",	-1.0,	 1.0,	3},
+	{239.50,"skewy",	 0.0,	 0.5,	3},
+	
+	{248.00,"skewx",	-1.0,	 1.0,	3},
+	{249.00,"skewx",	 1.0,	 1.0,	3},
+	{250.00,"skewx",	-0.7,	 1.0,	3},
+	{251.00,"skewx",	 0.0,	 0.5,	3},
+	{251.50,"skewy",	-1.0,	 1.0,	3},
+	{252.50,"skewy",	 1.0,	 1.0,	3},
+	{253.50,"skewy",	-1.0,	 1.0,	3},
+	{254.50,"skewy",	 1.0,	 1.0,	3},
+	{255.50,"skewy",	 0.0,	 0.5,	3},
+	
+	
 	{280.00,"stag",		 0.17,	 0.01,	3},
+	{280.00,"addrotationz",    1,	 0.01,	1},
+	{280.00,"addrotationz",    2,	 0.01,	2},
 	{280.00,"addy",		 13.3,	 0.01,	3},
 	{280.33,"stag",		 0.33,	 0.01,	3},
+	{280.33,"addrotationz",    1,	 0.01,	1},
+	{280.33,"addrotationz",    2,	 0.01,	2},
 	{280.33,"addy",		 13.4,	 0.01,	3},
 	{280.67,"stag",		 0.50,	 0.01,	3},
+	{280.67,"addrotationz",    1,	 0.01,	1},
+	{280.67,"addrotationz",    2,	 0.01,	2},
 	{280.67,"addy",		 13.3,	 0.01,	3},
 	{281.00,"stag",		 0.67,	 0.01,	3},
+	{281.00,"addrotationz",    1,	 0.01,	1},
+	{281.00,"addrotationz",    2,	 0.01,	2},
 	{281.00,"addy",		 13.3,	 0.01,	3},
 	{281.33,"stag",		 0.83,	 0.01,	3},
+	{281.33,"addrotationz",    1,	 0.01,	1},
+	{281.33,"addrotationz",    2,	 0.01,	2},
 	{281.33,"addy",		 13.4,	 0.01,	3},
 	{281.67,"stag",		 1.00,	 0.01,	3},
+	{281.67,"addrotationz",    1,	 0.01,	1},
+	{281.67,"addrotationz",    2,	 0.01,	2},
 	{281.67,"addy",		 13.3,	 0.01,	3},
 	
 	{282.00,"stag",		 0.83,	 0.01,	3},
+	{282.00,"addrotationz",   -1,	 0.01,	1},
+	{282.00,"addrotationz",   -2,	 0.01,	2},
 	{282.00,"addy",		-13.3,	 0.01,	3},
 	{282.33,"stag",		 0.67,	 0.01,	3},
+	{282.33,"addrotationz",   -1,	 0.01,	1},
+	{282.33,"addrotationz",   -2,	 0.01,	2},
 	{282.33,"addy",		-13.3,	 0.01,	3},
 	{282.67,"stag",		 0.50,	 0.01,	3},
+	{282.67,"addrotationz",   -1,	 0.01,	1},
+	{282.67,"addrotationz",   -2,	 0.01,	2},
 	{282.67,"addy",		-13.3,	 0.01,	3},
 	{283.00,"stag",		 0.33,	 0.01,	3},
+	{283.00,"addrotationz",   -1,	 0.01,	1},
+	{283.00,"addrotationz",   -2,	 0.01,	2},
 	{283.00,"addy",		-13.3,	 0.01,	3},
 	{283.33,"stag",		 0.17,	 0.01,	3},
+	{283.33,"addrotationz",   -1,	 0.01,	1},
+	{283.33,"addrotationz",   -2,	 0.01,	2},
 	{283.33,"addy",		-13.3,	 0.01,	3},
 	{283.67,"stag",		 0.00,	 0.01,	3},
+	{283.67,"addrotationz",   -1,	 0.01,	1},
+	{283.67,"addrotationz",   -2,	 0.01,	2},
 	{283.67,"addy",		-13.3,	 0.01,	3},
 	
-	{284.00,"stag",		 0.17,	 0.01,	3},
+	{284.00,"stag",		-0.17,	 0.01,	3},
+	{284.00,"addrotationz",    2,	 0.01,	1},
+	{284.00,"addrotationz",    1,	 0.01,	2},
 	{284.00,"addy",		 13.3,	 0.01,	3},
-	{284.33,"stag",		 0.33,	 0.01,	3},
+	{284.33,"stag",		-0.33,	 0.01,	3},
+	{284.33,"addrotationz",    2,	 0.01,	1},
+	{284.33,"addrotationz",    1,	 0.01,	2},
 	{284.33,"addy",		 13.4,	 0.01,	3},
-	{284.67,"stag",		 0.50,	 0.01,	3},
+	{284.67,"stag",		-0.50,	 0.01,	3},
+	{284.67,"addrotationz",    2,	 0.01,	1},
+	{284.67,"addrotationz",    1,	 0.01,	2},
 	{284.67,"addy",		 13.3,	 0.01,	3},
-	{285.00,"stag",		 0.67,	 0.01,	3},
+	{285.00,"stag",		-0.67,	 0.01,	3},
+	{285.00,"addrotationz",    2,	 0.01,	1},
+	{285.00,"addrotationz",    1,	 0.01,	2},
 	{285.00,"addy",		 13.3,	 0.01,	3},
-	{285.33,"stag",		 0.83,	 0.01,	3},
+	{285.33,"stag",		-0.83,	 0.01,	3},
+	{285.33,"addrotationz",    2,	 0.01,	1},
+	{285.33,"addrotationz",    1,	 0.01,	2},
 	{285.33,"addy",		 13.4,	 0.01,	3},
-	{285.67,"stag",		 1.00,	 0.01,	3},
+	{285.67,"stag",		-1.00,	 0.01,	3},
+	{285.67,"addrotationz",    2,	 0.01,	1},
+	{285.67,"addrotationz",    1,	 0.01,	2},
 	{285.67,"addy",		 13.3,	 0.01,	3},
 	
-	{286.00,"stag",		 0.83,	 0.01,	3},
+	{286.00,"stag",		-0.83,	 0.01,	3},
+	{286.00,"addrotationz",   -2,	 0.01,	1},
+	{286.00,"addrotationz",   -1,	 0.01,	2},
 	{286.00,"addy",		-13.3,	 0.01,	3},
-	{286.33,"stag",		 0.67,	 0.01,	3},
+	{286.33,"stag",		-0.67,	 0.01,	3},
+	{286.33,"addrotationz",   -2,	 0.01,	1},
+	{286.33,"addrotationz",   -1,	 0.01,	2},
 	{286.33,"addy",		-13.3,	 0.01,	3},
-	{286.67,"stag",		 0.50,	 0.01,	3},
+	{286.67,"stag",		-0.50,	 0.01,	3},
+	{286.67,"addrotationz",   -2,	 0.01,	1},
+	{286.67,"addrotationz",   -1,	 0.01,	2},
 	{286.67,"addy",		-13.3,	 0.01,	3},
-	{287.00,"stag",		 0.33,	 0.01,	3},
+	{287.00,"stag",		-0.33,	 0.01,	3},
+	{287.00,"addrotationz",   -2,	 0.01,	1},
+	{287.00,"addrotationz",   -1,	 0.01,	2},
 	{287.00,"addy",		-13.3,	 0.01,	3},
-	{287.33,"stag",		 0.17,	 0.01,	3},
+	{287.33,"stag",		-0.17,	 0.01,	3},
+	{287.33,"addrotationz",   -2,	 0.01,	1},
+	{287.33,"addrotationz",   -1,	 0.01,	2},
 	{287.33,"addy",		-13.3,	 0.01,	3},
 	{287.67,"stag",		 0.00,	 0.01,	3},
+	{287.67,"addrotationz",   -2,	 0.01,	1},
+	{287.67,"addrotationz",   -1,	 0.01,	2},
 	{287.67,"addy",		-13.3,	 0.01,	3},
 	
 	{288.00,"stag",		 0.33,	 0.01,	3},
@@ -1785,7 +1917,7 @@ local fifthGfxHQ = Def.Quad {
 		self:queuecommand("Update");
 	end
 }
---table.insert(theBoys, fifthGfxHQ);
+table.insert(theBoys, fifthGfxHQ);
 
 
 -------------------------------------------------------------------------------
@@ -1974,6 +2106,8 @@ local modsTable = {
 		{ 259.5,	"Flip",	  			  0.0,    1.0,	3},
 		
 		
+		{ 263.5,	"Beat",	  			  0.2,    0.5,	3},
+		
 		{264.00,	"Flip",	  			  0.08,    0.0,	3},
 		{264.00,	"Invert",	  		 -0.25,    0.0,	3},
 		{264.33,	"Flip",	  			  0.17,    0.0,	3},
@@ -2080,6 +2214,8 @@ local modsTable = {
 		{278.67,	"Flip",	  			  0.00,    0.0,	3},
 		{278.67,	"Invert",	  		  0.00,    0.0,	3},
 		
+		{291.50,	"Beat",	  			  0.0,    0.5,	3},
+		
 		{292.00,	"Tiny",		  		 -2.0,    8.0,	3},
 		{292.00,	"Flip",		  		  0.5,    4.0,	3},
 		{296.00,	"Dark",		  		  1.0,    4.0,	3},
@@ -2094,6 +2230,17 @@ local modsTable = {
 		{ 371.0,	"Dark",				  0.0,    1.0,	3}, 
 		
 		
+		{ 376.0,	"Dark",				  1.0,    1.0,	3}, 
+		{ 376.0,	"Stealth",	  		  1.0,    4.0,	3},
+		
+		{ 400.0,	"Stealth",			  0.0,    4.0,	3}, 
+		{ 403.0,	"Dark",				  0.0,    1.0,	3}, 
+		
+		{ 408.0,	"Dark",				  1.0,    1.0,	3}, 
+		{ 408.0,	"Stealth",	  		  1.0,    4.0,	3},
+		
+		{ 436.0,	"Stealth",			  0.0,    4.0,	3}, 
+		{ 436.0,	"Dark",				  0.0,    1.0,	3}, 
 		
 		
 --		{   0.0,	"ScrollSpeed",		 dspd,    4.0,	3}, 
@@ -2296,7 +2443,7 @@ local fifthModsHQ = Def.Quad {
 		self:queuecommand('Update');
 	end
 }
-table.insert(theBoys, fifthModsHQ);
+--table.insert(theBoys, fifthModsHQ);
 
 -------------------------------------------------------------------------------
 --
