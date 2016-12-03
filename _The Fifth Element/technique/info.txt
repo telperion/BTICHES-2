@@ -42,6 +42,11 @@ Cups
 	actual lip height: 212
 	sides @ ± 81° angle
 	cup base, player side edge: 320 ± 117 (or 120 for approx purposes I guess)
+	
+	75% scale (96 x 126)
+	cx: 320 ± 64
+	cy: 313
+	actual lip height: 252
 
 Table
 	table2-cy144
