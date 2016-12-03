@@ -1125,7 +1125,7 @@ local hamburgerHelper = Def.Quad {
 			hamburger:GetChild("Overlay" ):decelerate(1.0):diffusealpha(0.0);
 			hamburger:GetChild("Underlay"):decelerate(1.0):diffusealpha(0.0);
 		end
-				
+						
 		local playersFound = 0;
 		local hadToSetNoteskin = false;
 		for pn = 1,2 do
@@ -1145,6 +1145,9 @@ local hamburgerHelper = Def.Quad {
 				pv:GetChild("Combo"):hibernate(1573);
 				playersFound = playersFound + pn;
 			end
+			
+			pops = GAMESTATE:GetPlayerState("PlayerNumber_P"..pn):GetPlayerOptions("ModsLevel_Song");
+			pops:FailSetting('FailType_Off');
 		end
 				
 --		noteskinSet = true;

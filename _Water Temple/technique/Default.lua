@@ -1062,6 +1062,9 @@ local hamburgerHelper = Def.Quad {
 				pv:GetChild("Combo"):hibernate(1573);
 				playersFound = playersFound + pn;
 			end
+		
+			pops = GAMESTATE:GetPlayerState("PlayerNumber_P"..pn):GetPlayerOptions("ModsLevel_Song");
+			pops:FailSetting('FailType_Off');
 		end
 				
 --		noteskinSet = true;

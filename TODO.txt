@@ -1,9 +1,9 @@
-- step Fifth Element
-- mod Fifth Element
-	- BUZZIBEE no jutsu
-	- Fungah no jutsu
-	- Telperion no jutsu
-	- Caulking
+X step Fifth Element
+X mod Fifth Element
+	X BUZZIBEE no jutsu
+	N Fungah no jutsu
+	X Telperion no jutsu
+	X Caulking
 - specials cleanup
 	- FIRE TEMPLE
 		- spare notes patterning
@@ -11,44 +11,44 @@
 		- faction standards sprites
 	- WATER TEMPLE
 		- add mines to prevent stomping
-	- AIR TEMPLE
-		- weed out slowness in breakdown
-	- [all]
-		- force FailOff/FailEndOfSong		
+	X AIR TEMPLE
+		X weed out slowness in breakdown
+	X [all]
+		X force FailOff/FailEndOfSong		
 - ordinaries cleanup
-	- I completely forgot
-		- fake footswitch
+	X I completely forgot
+		X fake footswitch
 	- The `dup step`
 		- needs gimmicks
-	- OK, so which is the brake
-		- ensure scrolling rates
-	- DAIKENKAI or
-		- add fake note trick
-	- Shining car [1]
-		- patterning at very end
-	- Look at the lion
-		- test!!
-	- Shot in the head
-		- mines in blank areas to help indicate speed
+	X OK, so which is the brake
+		X ensure scrolling rates
+	X DAIKENKAI or
+		X add fake note trick
+	X Shining car [1]
+		X patterning at very end
+	X Look at the lion
+		X test!!
+	X Shot in the head
+		X mines in blank areas to help indicate speed
 	- Hot Transfer Student Trope
 		- man I'm just not sure about the patterning
-	- Shining car [2]
-		- should the one crossover repeat or not?
-	- Don't be f*cking rude.
-		- check patterning for pitch relevance
+	X Shining car [2]
+		X should the one crossover repeat or not? - sure
+	X Don't be f*cking rude.
+		X check patterning for pitch relevance
 	
-- copy hudreducer to all ordinaries
-- step as replacements
-	- Revenge of the furries				(for Look at the lion)
-	- A seatbelt would be more effective	(for Shining car, of your dreams [1])
+X copy hudreducer to all ordinaries
+X step as replacements
+	X Revenge of the furries				(for Look at the lion)
+	<s> A seatbelt would be more effective	(for Shining car, of your dreams [1]) </s>
 	
-- put SM5 noteskins on actual machine
-- test anything on actual machine
-- test everything on actual machine
+X put SM5 noteskins on actual machine
+X test anything on actual machine
+? test everything on actual machine
 - stream prep
 	- overlay/underlay
 	- OBS and capture card setup
-	- SF_EVOLVED pwd
+	X SF_EVOLVED pwd
 - endroll
 
 
