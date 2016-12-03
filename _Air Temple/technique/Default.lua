@@ -862,8 +862,8 @@ local cyberModsTable = {
 		{402.0,	"HiddenOffset",	 0.8,	60.0,	3}, 
 		{402.0,	"SuddenOffset",	 1.0,	60.0,	3}, 
 				
-		{402.0,	"ScrollSpeed",	 cspd * 0.6,	4.0,	3}, 
-		{402.0,	"Boost",		 1.2,	4.0,	3}, 
+--		{402.0,	"ScrollSpeed",	 cspd * 0.6,	4.0,	3}, 
+--		{402.0,	"Boost",		 1.2,	4.0,	3}, 
 		
 		{460.0,	"Hidden",		 0.0,	 2.0,	3}, 
 		{460.0,	"Sudden",		 0.0,	 2.0,	3}, 
@@ -889,8 +889,8 @@ local cyberModsTable = {
 		{528.25,"Centered",		 0.7,	 0.01,	3}, 
 		{529.0,	"Reverse",		 0.0,	 0.01,	3}, 
 		{529.0,	"Centered",		 0.3,	 0.01,	3}, 
-		{529.0,	"ScrollSpeed",	 cspd,	 1.0,	3}, 
-		{529.0,	"Boost",		 0.0,	 1.0,	3}, 
+--		{529.0,	"ScrollSpeed",	 cspd,	 1.0,	3}, 
+--		{529.0,	"Boost",		 0.0,	 1.0,	3}, 
 		{529.05,"Centered",		 0.0,	 5.0,	3}, 
 		
 		

@@ -326,6 +326,28 @@ end
 
 
 
+--
+-- Judgment proxies
+--
+for pn = 1,2 do
+	theBoys[#theBoys + 1] = Def.ActorProxy {
+		Name = "JudgeP"..pn.."Proxy",
+		BeginCommand = function(self)
+			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP'..pn):GetChild('Judgment');
+			if McCoy then 
+				self:SetTarget(McCoy); 
+				McCoy:visible(false);
+			else 
+				self:hibernate(1573);
+			end
+		end,
+		OnCommand = function(self)
+			local pn = string.match(self:GetName(), "[0-9]");
+			self:xy( sw * (4*pn - 3)/6, sh/2)
+				:zoom(0.8);
+		end,
+	}
+end
 
 -------------------------------------------------------------------------------
 

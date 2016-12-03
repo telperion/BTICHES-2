@@ -485,6 +485,30 @@ for i = 1,#felysNotes do
 end
 
 
+
+--
+-- Judgment proxies
+--
+for pn = 1,2 do
+	theBoys[#theBoys + 1] = Def.ActorProxy {
+		Name = "JudgeP"..pn.."Proxy",
+		BeginCommand = function(self)
+			local McCoy = SCREENMAN:GetTopScreen():GetChild('PlayerP'..pn):GetChild('Judgment');
+			if McCoy then 
+				self:SetTarget(McCoy); 
+				McCoy:visible(false);
+			else 
+				self:hibernate(1573);
+			end
+		end,
+		OnCommand = function(self)
+			local pn = string.match(self:GetName(), "[0-9]");
+			self:xy( sw * (4*pn - 3)/6, sh/2)
+				:zoom(0.8);
+		end,
+	}
+end
+
 -------------------------------------------------------------------------------
 --
 --		Some ghosting!
@@ -917,14 +941,14 @@ local modsTable = {
 		{ 220.0,	"Centered",		  1.0,    3.0,	3}, 
 		
 		{ 256.0,	"Tiny",			  0.5,    2.0,	3},
-		{ 258.0,	"Boost",		  0.5,    0.5,	3},
+--		{ 258.0,	"Boost",		  0.5,    0.5,	3},
 		{ 258.5,	"Tiny",			  0.0,    1.0,	3},
-		{ 259.0,	"Boost",		  0.0,    0.5,	3},
+--		{ 259.0,	"Boost",		  0.0,    0.5,	3},
 		
 		{ 272.0,	"Tiny",			  0.5,    2.0,	3},
-		{ 274.0,	"Boost",		  0.5,    0.5,	3},
+--		{ 274.0,	"Boost",		  0.5,    0.5,	3},
 		{ 274.5,	"Tiny",			  0.0,    1.0,	3},
-		{ 275.0,	"Boost",		  0.0,    0.5,	3},
+--		{ 275.0,	"Boost",		  0.0,    0.5,	3},
 		
 		{ 284.0,	"ScrollSpeed",	 cspd,    4.0,	3}, 
 		{ 284.0,	"Centered",		  0.0,    4.0,	3}, 

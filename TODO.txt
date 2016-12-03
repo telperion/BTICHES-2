@@ -18,8 +18,8 @@ X mod Fifth Element
 - ordinaries cleanup
 	X I completely forgot
 		X fake footswitch
-	- The `dup step`
-		- needs gimmicks
+	X The `dup step`
+		X needs gimmicks
 	X OK, so which is the brake
 		X ensure scrolling rates
 	X DAIKENKAI or
