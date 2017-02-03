@@ -60,6 +60,11 @@ local cyberSkin = Def.ActorFrame {
 			:xy(sw/4, sh/2);
 	end
 };
+
+-- Assign each "pixel" of the cyberskin its own color.
+-- The available spectrum ranges from {0.0, 0.5, 0.0} to {0.0, 1.0, 0.0} to {0.0, 1.0, 0.5}.
+-- To mix things up a little, the Nth pixel gets the (12^N mod 257)th color in the spectrum.
+-- (If you like it, then you should have put a ring on it.)
 local cyberModulator = 257;
 local cyberGenerator = 12;
 local cyberColorator = 1;
@@ -104,7 +109,7 @@ table.insert(theBoys, cyberSkinP1);
 table.insert(theBoys, cyberSkinP2);
 
 
-
+-- Two copies of a half-screen texture, to save on rendering requirements.
 local cyberSkinTexName = "cyberSkinTex";
 local cyberTexSet = {false, false};
 local cyberSkinTex = Def.ActorFrameTexture {
@@ -225,6 +230,8 @@ local cyberFlight = Def.ActorFrame {
 };
 
 for i = cyberFlightStrips,1,-1 do
+	-- I could have skewed a plain quad with vertex coloring for this,
+	-- but why do that when I've already got AMVs on call
 	local cyberSkyAMV = Def.ActorMultiVertex {
 		Name = "skyAMV" .. i,
 		InitCommand = function(self)
@@ -290,6 +297,11 @@ local CalcCyberEase = function(t)
 	return t;
 end
 
+-- Turn on pixels in the cyberskin to create various time-shifting patterns.
+-- CalcCyberWave: imagine the ripple front from a drop of water in a still pond
+-- CalcCyberLine: pulse the pixels that overlap a single line at a given angle and offset.
+-- CalcCyberStripe: pulse the pixels that overlap a grating of lines at a given angle.
+
 local CalcCyberWave = function(r, t)
 	local waveSpread	= 4.0;		-- Spreading rate in units/beat
 	local waveWidth		= 1.5;		-- Width of wave in units
@@ -334,6 +346,9 @@ local CalcCyberRadialPos = function(x, y)
 	return math.sqrt(xi*xi + yi*yi);
 end
 
+-- this is a monolith, but it was also the first of the BTI2 specials I wrote
+-- if you're looking for SM5 Lua coding examples please do not follow this file lmao
+-- I rolled a proper framework for almost everything after, with Special 5 probably being the cleanest
 local fgcDidMyJob = false;
 local cyberGfxHQ = Def.Quad {
 	InitCommand = function(self)
@@ -928,7 +943,7 @@ local mods = {
 	["Boomerang"] =		"FLOAT", 
 	["Drunk"] =			"FLOAT", 
 	["Dizzy"] =			"FLOAT", 
-	["Confusion"] =		"FLOAT", 	-- yuck
+	["Confusion"] =		"FLOAT",
 	["Mini"] =			"FLOAT", 
 	["Tiny"] =			"FLOAT", 
 	["Flip"] =			"FLOAT", 
@@ -1037,7 +1052,7 @@ local clearAllMods = function(playerNum, justTrace)
 	end
 end
 
-local cyberModsHQ = Def.Quad {
+local modsHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
 			:SetWidth(6)
@@ -1054,19 +1069,19 @@ local cyberModsHQ = Def.Quad {
 		local overtime = GAMESTATE:GetSongBeat();
 		
 		if cyberModsLaunched >= #cyberModsTable then
-			Trace('>>> cyberModsHQ: Hibernated!!');
+			Trace('>>> modsHQ: Hibernated!!');
 			self:hibernate(600);
 			do return end
 		else
 			while cyberModsLaunched < #cyberModsTable do
-				-- Trace('>>> cyberModsHQ: ' .. cyberModsLaunched);
+				-- Trace('>>> modsHQ: ' .. cyberModsLaunched);
 				-- Check the next line of the mods table.
 				cyberNextMod = cyberModsTable[cyberModsLaunched + 1];
 				
 				if overtime + cyberModsLeadBy >= cyberNextMod[1] then
 					-- TODO: this assumes the effect applies over a constant BPM section!!
 					local cyberBPS = GAMESTATE:GetSongBPS();
-					Trace('>>> cyberModsHQ: ' .. cyberModsLaunched .. ' @ time = ' .. overtime);
+					Trace('>>> modsHQ: ' .. cyberModsLaunched .. ' @ time = ' .. overtime);
 					
 					for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
 						pn = tonumber(string.match(pe, "[0-9]+"));
@@ -1082,15 +1097,15 @@ local cyberModsHQ = Def.Quad {
 							else
 								newApproach = math.abs(cyberNextMod[3] - opVal) * cyberBPS / (cyberNextMod[4] + 0.001);
 							end
-												pops[ cyberNextMod[2] ]( pops, cyberNextMod[3], newApproach );
-							Trace('>>> cyberModsHQ: ' .. opVal .. ' @ rate = ' .. opApproach .. ' for ' .. pe);
-							Trace('>>> cyberModsHQ: ' .. cyberNextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
+							pops[ cyberNextMod[2] ]( pops, cyberNextMod[3], newApproach );
+							Trace('>>> modsHQ: ' .. opVal .. ' @ rate = ' .. opApproach .. ' for ' .. pe);
+							Trace('>>> modsHQ: ' .. cyberNextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
 						end
 					end
 					
 					cyberModsLaunched = cyberModsLaunched + 1;
 				else
-					-- Trace('>>> cyberModsHQ: ' .. overtime .. ' < ' .. cyberNextMod[1]);
+					-- Trace('>>> modsHQ: ' .. overtime .. ' < ' .. cyberNextMod[1]);
 					break;
 				end
 			end
@@ -1104,7 +1119,7 @@ local cyberModsHQ = Def.Quad {
 		self:queuecommand('Update');
 	end
 }
-table.insert(theBoys, cyberModsHQ);
+table.insert(theBoys, modsHQ);
 
 -------------------------------------------------------------------------------
 --

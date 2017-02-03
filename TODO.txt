@@ -82,18 +82,19 @@ Wawa
 	10 Hot Transfer Student Trope
 
 	 9 Stop! Don't touch me there
-	 9 The `dup step`
-	11 DAIKENKAI or
-	 
-	10 Baby, I'm not tough enough
--->	10 Shining car, of your dreams [1]
-	11 A bigger, blacker box
-
 	11 Don't be f*cking rude.
--->	12 Look at the lion
-	12 I completely forgot (ry
+	11 A bigger, blacker box
+	 
+	 9 The `dup step`
+	10 Baby, I'm not tough enough
+	12 Look at the lion
+
+	10 Shining car, of your dreams [1]
+	11 DAIKENKAI or
+	13 Revenge of the furries
 
 	12 Shining car, of your dreams [2]
+	12 I completely forgot (ry
 	13 OK, so which is the brake
 	14 Shot in the head, and you're to blame
  

@@ -1,7 +1,7 @@
 #VERSION:0.83;
-#TITLE:I completely forgot which song this was;
-#SUBTITLE:like, I just can't remember at all;
-#ARTIST:There's a term for this, I know there is;
+#TITLE:Amnesia;
+#SUBTITLE:;
+#ARTIST:JAKAZiD;
 #TITLETRANSLIT:;
 #SUBTITLETRANSLIT:;
 #ARTISTTRANSLIT:;
@@ -34,22 +34,20 @@
 #FAKES:;
 #LABELS:0.000=Song Start;
 #BGCHANGES:;
-#FGCHANGES:0.000=hudreducer=1.000=0=0=1=====,
-;
 #KEYSOUNDS:;
 #ATTACKS:
 ;
 
-//---------------dance-single - ----------------
+//---------------dance-single - Telperion----------------
 #NOTEDATA:;
-#CHARTNAME:;
+#CHARTNAME:Telperion;
 #STEPSTYPE:dance-single;
-#DESCRIPTION:;
+#DESCRIPTION:Telperion;
 #CHARTSTYLE:;
 #DIFFICULTY:Challenge;
 #METER:12;
 #RADARVALUES:0.946108,1.164362,0.262576,0.379277,1.323822,908.000000,872.000000,36.000000,52.000000,26.000000,0.000000,1.000000,0.000000,0.000000,0.946108,1.164362,0.262576,0.379277,1.323822,908.000000,872.000000,36.000000,52.000000,26.000000,0.000000,1.000000,0.000000,0.000000;
-#CREDIT:;
+#CREDIT:Telperion;
 #DISPLAYBPM:170.000000;
 #NOTES:
 // measure 0

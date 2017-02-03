@@ -51,30 +51,43 @@ local enjoyBGFieldHeight 	= math.ceil(0.5 * sh / enjoyTriangleAscent);	-- The BG
 local enjoyBGFieldTexScale	= enjoyBGFieldSpan / (1 + enjoyBGFieldSpan);	-- The BG field texture coordinates are scaled by this much from center.
 
 -- Literally take a dump in a dump TRUCK.
-local tw = math.exp(math.ceil(math.log(sw)/LOG2) * LOG2);
-local th = math.exp(math.ceil(math.log(sh)/LOG2) * LOG2);
+local tw = math.exp(math.ceil(math.log(sw)/LOG2) * LOG2);					-- Texture true width
+local th = math.exp(math.ceil(math.log(sh)/LOG2) * LOG2);					-- Texture true height
 Trace("### Are you shitting in my asshole with this textures " ..
 	  "constrained to powers of 2 bullshit!! tw = "..tw..", th = "..th..".");
-local cx = sw/2;
-local cy = sh/2;
-local BTIUtil_ScaleTexX = function(x)
+local cx = sw/2;															-- Screen center X, short name
+local cy = sh/2;															-- Screen center Y, short name
+local BTIUtil_ScaleTexX = function(x)										-- Locate expected U coordinate for texture.
 	return (x - cx)/sw * enjoyBGFieldTexScale + 0.5;
 end
-local BTIUtil_ScaleTexY = function(y)
+local BTIUtil_ScaleTexY = function(y)										-- Locate expected V coordinate for texture.
 	return (y - cy)/sh * enjoyBGFieldTexScale + 0.5;
 end
-local BTIUtil_ScaleTex = function(x, y)
+local BTIUtil_ScaleTex = function(x, y)										-- Calculate base (u, v) for a given (x, y).
 	return {BTIUtil_ScaleTexX(x) * sw/tw, BTIUtil_ScaleTexY(y) * sh/th};
 end
 
+-- Each AMV is comprised of a single row of triangles.
+--      |
+--      |
+--   1-----3-----5-----7---
+--    \   / \   / \   / \
+--     \ /   \ /   \ /   \ /
+--      2-----4-----6-----8--
+--      |
+--      |
+-- Alternating rows are upside down.
 local oneStripVertices = {
 		{{-0.5 * enjoyTriangleSize,	0.0, 0}, {1,1,1,0.9}, {0, 0}}
 	};
 for i = 0,enjoyBGFieldWidth-1 do
+	-- Calculate the vertex coordinates for the row.
+	-- Leave the texture coordinates blank for now - they will be immediately replaced.
 	oneStripVertices[#oneStripVertices + 1] = {{ i      * enjoyTriangleSize,	1.0 * enjoyTriangleAscent, 	0}, {1,1,1,0.9}, {0, 0}};
 	oneStripVertices[#oneStripVertices + 1] = {{(i+0.5) * enjoyTriangleSize,	0.0, 						0}, {1,1,1,0.9}, {0, 0}};
 end
 for i = 1,#oneStripVertices do
+	-- Calculate base texture coordinates for each vertex.
 	oneStripVertices[i][3] = BTIUtil_ScaleTex(oneStripVertices[i][1][1], oneStripVertices[i][1][2]);
 end
 
@@ -417,18 +430,6 @@ local enjoyGfxHQ = Def.Quad {
 			
 			fgcurcommand = fgcurcommand + 1;
 		end
---		if overtime >=  48.0 and fgcurcommand ==  3 then
---			-- boy i die!! shit boy...
---			local enjoyTheta = overtime * math.pi / 2.0;
---			
---			for i,v in ipairs(plr) do
---				if v then					
---					for j,w in ipairs(v:GetChild("NoteField"):GetColumnActors()) do
---						w:diffusealpha(0.5 + 0.5 * math.sin(enjoyTheta + math.pi / 2.0 * j));
---					end
---				end
---			end
---		end
 		if overtime >= 126.75 and fgcurcommand ==  2 then
 			-- oh shit!!			
 			for i,v in ipairs(plr) do
@@ -867,7 +868,7 @@ local mods = {
 	["Boomerang"] =		"FLOAT", 
 	["Drunk"] =			"FLOAT", 
 	["Dizzy"] =			"FLOAT", 
-	["Confusion"] =		"FLOAT", 	-- yuck
+	["Confusion"] =		"FLOAT",
 	["Mini"] =			"FLOAT", 
 	["Tiny"] =			"FLOAT", 
 	["Flip"] =			"FLOAT", 
@@ -976,7 +977,7 @@ local clearAllMods = function(playerNum, justTrace)
 	end
 end
 
-local enjoyModsHQ = Def.Quad {
+local modsHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
 			:SetWidth(6)
@@ -993,19 +994,19 @@ local enjoyModsHQ = Def.Quad {
 		local overtime = GAMESTATE:GetSongBeat();
 		
 		if modsLaunched >= #modsTable then
-			Trace('>>> enjoyModsHQ: Hibernated!!');
+			Trace('>>> modsHQ: Hibernated!!');
 			self:hibernate(600);
 			do return end
 		else
 			while modsLaunched < #modsTable do
-				-- Trace('>>> enjoyModsHQ: ' .. modsLaunched);
+				-- Trace('>>> modsHQ: ' .. modsLaunched);
 				-- Check the next line of the mods table.
 				nextMod = modsTable[modsLaunched + 1];
 				
 				if overtime + modsLeadBy >= nextMod[1] then
 					-- TODO: this assumes the effect applies over a constant BPM section!!
 					local BPS = GAMESTATE:GetSongBPS();
-					Trace('>>> enjoyModsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
+					Trace('>>> modsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
 					
 					for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
 						pn = tonumber(string.match(pe, "[0-9]+"));
@@ -1021,15 +1022,15 @@ local enjoyModsHQ = Def.Quad {
 							else
 								newApproach = math.abs(nextMod[3] - opVal) * BPS / (nextMod[4] + 0.001);
 							end
-												pops[ nextMod[2] ]( pops, nextMod[3], newApproach );
-							Trace('>>> enjoyModsHQ: ' .. opVal      .. ' @ rate = ' .. opApproach  .. ' for ' .. pe);
-							Trace('>>> enjoyModsHQ: ' .. nextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
+							pops[ nextMod[2] ]( pops, nextMod[3], newApproach );
+							Trace('>>> modsHQ: ' .. opVal      .. ' @ rate = ' .. opApproach  .. ' for ' .. pe);
+							Trace('>>> modsHQ: ' .. nextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
 						end
 					end
 					
 					modsLaunched = modsLaunched + 1;
 				else
-					-- Trace('>>> enjoyModsHQ: ' .. overtime .. ' < ' .. nextMod[1]);
+					-- Trace('>>> modsHQ: ' .. overtime .. ' < ' .. nextMod[1]);
 					break;
 				end
 			end
@@ -1043,7 +1044,7 @@ local enjoyModsHQ = Def.Quad {
 		self:queuecommand('Update');
 	end
 }
-table.insert(theBoys, enjoyModsHQ);
+table.insert(theBoys, modsHQ);
 
 -------------------------------------------------------------------------------
 --

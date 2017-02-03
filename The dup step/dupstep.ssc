@@ -1,7 +1,7 @@
 #VERSION:0.83;
-#TITLE:The `dup step`;
-#SUBTITLE:;
-#ARTIST:Call of Duty meets A Heptagram of Large Cats;
+#TITLE:On My Way To Heaven;
+#SUBTITLE:(Seven Lions Remix);
+#ARTIST:Above & Beyond feat. Richard Bedford;
 #TITLETRANSLIT:;
 #SUBTITLETRANSLIT:;
 #ARTISTTRANSLIT:;
@@ -433,22 +433,20 @@
 #FAKES:;
 #LABELS:0.000=Song Start;
 #BGCHANGES:;
-#FGCHANGES:0.000=hudreducer=1.000=0=0=1=====,
-;
 #KEYSOUNDS:;
 #ATTACKS:
 ;
 
-//---------------dance-single - ----------------
+//---------------dance-single - Telperion----------------
 #NOTEDATA:;
-#CHARTNAME:;
+#CHARTNAME:Telperion;
 #STEPSTYPE:dance-single;
-#DESCRIPTION:;
+#DESCRIPTION:Telperion;
 #CHARTSTYLE:;
 #DIFFICULTY:Challenge;
-#METER:9;
+#METER:10;
 #RADARVALUES:0.522167,0.721031,0.327328,0.230342,0.421284,603.000000,549.000000,54.000000,38.000000,12.000000,0.000000,1.000000,0.000000,0.000000,0.522167,0.721031,0.327328,0.230342,0.421284,603.000000,549.000000,54.000000,38.000000,12.000000,0.000000,1.000000,0.000000,0.000000;
-#CREDIT:;
+#CREDIT:Telperion;
 #DISPLAYBPM:138.000000;
 #NOTES:
 // measure 0

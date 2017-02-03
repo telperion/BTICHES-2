@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------
 --
---		Quintessence
+--		The Avatar State
 --		
 --		Author: 	Telperion
 --		Date: 		2016-11-25
@@ -48,7 +48,7 @@ local BTIUtil_Scale = function(t, inLower, inUpper, outLower, outUpper)
 	return outLower + ti * (outUpper - outLower);
 end
 
--- I grabbed this out of ScreenTestInput underlay
+-- I grabbed this out of ScreenTestInput underlay #codereuseboys
 local function input(event)
 	if not event.PlayerNumber or not event.button then
 		return false
@@ -63,33 +63,27 @@ local function input(event)
 	return false
 end
 
-local RoundBezier =
-{
-	0	,	0,
-	0	,	1,
-	1	,	1,
-	1	,	0,
-}
 
 -------------------------------------------------------------------------------
 --
 -- 		BUZZIBEE no jutsu
 --
-local totalAttempts = 16;
-local takenAttempts = 0;
-local resultRowLength = 8;
-local lineWidth = 6;
-local inputPersistenceFactor = 0.8;
-local inputPerturbanceFactor = 0;
+local totalAttempts = 16;				-- Length of game, in shots
+local takenAttempts = 0;				-- Shots taken (ping pong balls, I mean)
+local resultRowLength = 8;				-- Break up the Xs and Os for cleaner viewing
+local lineWidth = 6;					-- Trajectory AMV line width
+local inputPersistenceFactor = 0.8;		-- Dampening factor for arrow inputs (the closer to 1.0, the slower the game responds to user directions)
+local inputPerturbanceFactor = 0;		-- Initial velocity perturbance factor (you can't just let the player sit still!!)
 local inputStrengthX = 50;				-- Units per beat
 local inputStrengthY = 200;				-- Units per beat
-local inSession = false;
-local DEBUG_firstVerts = true;
+local inSession = false;				-- Game active?
+local DEBUG_firstVerts = true;			-- List out the initial trajectory in Trace statements
 
 local BZBFrame = Def.ActorFrame {
 	Name = "bzbFrame",
 	OnCommand = function(self)
 		self:diffusealpha(0.0)
+			:x(SCREEN_CENTER_X)
 			:visible(false);
 	end,
 	BZBStartMessageCommand = function(self)
@@ -130,12 +124,12 @@ for i = 1,2 do
 		vx = -33*s,						-- **	**	Initial horizontal velocity
 		vy =   0,						-- 		**	Initial vertical velocity
 		
-		x_throw 	= 320 + 288*s,		-- (const)	Horizontal position from which ball is thrown
+		x_throw 	= 288*s,			-- (const)	Horizontal position from which ball is thrown
 		x_bounce 	= nil,				-- (calc)	Horizontal position at which ball bounces first time
 		x_rebounce 	= nil,				-- (calc)	Horizontal position at which ball bounces second time
 		x_end	 	= nil,				-- (calc)	Horizontal position at which ball would peak on the /third/ bounce
-		x_near 		= 320 + 104*s,		-- (const)	Horizontal position of left side of cup
-		x_far	 	= 320 +  24*s,		-- (const)	Horizontal position of right side of cup
+		x_near 		= 104*s,			-- (const)	Horizontal position of left side of cup
+		x_far	 	=  24*s,			-- (const)	Horizontal position of right side of cup
 		x_edge 		= nil,				-- (calc)	Horizontal position of ball meeting edge
 		
 		y_throw 	=  84,				-- **		Vertical position from which ball is thrown
@@ -169,7 +163,11 @@ end
 
 local BZBAllowMove = function(pn)
 	-- Constrain the range of player throws by making sure the ball bounces only once.
-	-- Zero times, or twice, is not allowed.	
+	-- Zero times, or twice, is not allowed. This is MLG beer pong rules yo
+	-- (Well, that was the original intent of this function, but allowing the player to
+	-- fix their aim after reaching the zero/twice limits wasn't trivial enough to
+	-- get rolling in time for the tourney. The game certainly requires /some/ sort of
+	-- bounding though, to prevent unrecoverable aiming mistakes! So that's here now.)
 	
 	local allowMove = {true, true, true, true};
 	local bd = BZBData[pn];
@@ -204,6 +202,7 @@ local BZBAllowMove = function(pn)
 end
 
 local BZBPush = function(pn, throwing, overtime, timestep)
+	-- just rough 'em up a bit. so they don't get too complacent.
 	if not inSession then do return end end
 	
 	inputStates = BZBInput[pn][1];
@@ -217,11 +216,13 @@ local BZBPush = function(pn, throwing, overtime, timestep)
 	local ay = (inputPersist[3] - inputPersist[2]);
 	local allowMove = BZBAllowMove(pn);
 	
+	-- Push the player's aim around in a circle.
 	local axPerturb = inputPerturbanceFactor * math.cos(overtime * math.pi / 13.0) * (pn == 2 and 1 or -1);
 	local ayPerturb = inputPerturbanceFactor * math.sin(overtime * math.pi / 13.0);	
 	ax = ax + axPerturb;
 	ay = ay + ayPerturb;	
 	
+	-- Perturbance shouldn't take effect if the player's aim is about to be out of range.
 	if throwing == 0 then
 		if (ax < 0 and allowMove[1]) or (ax > 0 and allowMove[4]) then
 			BZBData[pn].vx = BZBData[pn].vx + ax * inputStrengthX * timestep;
@@ -233,8 +234,8 @@ local BZBPush = function(pn, throwing, overtime, timestep)
 end
 
 local BZBUpdateDataModel = function(pn, timestep)
-	
 	-- Generate linestrip vertices from player data index pn with the given timestep (time is in beats).
+	-- Those good ol' kinematic equations. Hello high-school physics. OK, maybe college physics.
 	
 	local bd = BZBData[pn];
 	local xn = bd.x_throw;
@@ -285,8 +286,8 @@ local BZBUpdateDataModel = function(pn, timestep)
 	
 	for t = 0,t_total,timestep do
 		-- Don't draw into the other player's field.
-		if (pn == 1 and (xn > SCREEN_CENTER_X or xn > bd.x_end)) or
-		   (pn == 2 and (xn < SCREEN_CENTER_X or xn < bd.x_end)) then
+		if (pn == 1 and (xn > 0 or xn > bd.x_end)) or
+		   (pn == 2 and (xn < 0 or xn < bd.x_end)) then
 			break
 		end
 		-- Don't overdraw if we already made it.
@@ -355,7 +356,7 @@ BZBFrame[#BZBFrame + 1] = Def.Sprite {
 	Texture = "table2-cy144.png",
 	InitCommand = function(self)
 		self:aux(0)				-- are we throwing right now or not?
-			:xy(320, 591)
+			:xy(0, 591)
 			:z(0.0);
 	end,
 	BZBThrowMessageCommand = function(self)
@@ -408,7 +409,7 @@ for i = 1,2 do
 		Texture = "rsc.png",
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
-				:xy(320 + BTIUtil_SideSign(i) * 64, 313)
+				:xy(BTIUtil_SideSign(i) * 64, 313)
 				:zoom(0.75)
 				:z(0.2);
 		end,
@@ -418,7 +419,7 @@ for i = 1,2 do
 		Texture = "hand.png",
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
-				:xy(320 + BTIUtil_SideSign(i) * 308,  84)
+				:xy(BTIUtil_SideSign(i) * 308,  84)
 				:z(0.1)
 				:zoomx(BTIUtil_SideSign(i));
 		end,
@@ -434,6 +435,9 @@ for i = 1,2 do
 		end,
 	}
 	BZBFrame[#BZBFrame + 1] = Def.ActorFrame {
+		-- You can think of the ball as moving in a horizontal [Actor]Frame of reference
+		-- while bouncing straight up and down.
+		-- Nesting the sprite inside an ActorFrame allows us to tween both directions natively.
 		Name = "bzbBall"..i,
 		Def.Sprite {
 			Name = "bzbBallInner"..i,
@@ -441,7 +445,7 @@ for i = 1,2 do
 			InitCommand = function(self)
 				--TODO: follow splines
 				self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
-					:xy(320 + BTIUtil_SideSign(i) * 288, 0)
+					:xy(BTIUtil_SideSign(i) * 288, 0)
 					:z(0);
 			end,
 			BZBThrowMessageCommand = function(self)
@@ -543,6 +547,7 @@ for i = 1,2 do
 		end,
 	}
 	BZBFrame[#BZBFrame + 1] = Def.ActorMultiVertex {
+		-- Draw the trajectory hit for each player.
 		Name = "bzbTrail"..i,
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
@@ -564,7 +569,7 @@ for i = 1,2 do
 		Texture = "rsc-hi.png",
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
-				:xy(320 + BTIUtil_SideSign(i) * 64, 313)
+				:xy(BTIUtil_SideSign(i) * 64, 313)
 				:zoom(0.75)
 				:z(0.35);
 		end,
@@ -576,7 +581,7 @@ for i = 1,2 do
 			InitCommand = function(self)
 				local xi = 			  (sfi-1) % resultRowLength;
 				local yi = math.floor((sfi-1) / resultRowLength);
-				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * xi / resultRowLength), 420 + 32 * yi)
+				self:xy(BTIUtil_SideSign(i) * (32 + 256 * xi / resultRowLength), 420 + 32 * yi)
 					:z(0.4)
 					:diffusealpha(0.0);
 			end,
@@ -594,7 +599,7 @@ for i = 1,2 do
 			InitCommand = function(self)
 				local xi = 			  (sfi-1) % resultRowLength;
 				local yi = math.floor((sfi-1) / resultRowLength);
-				self:xy(320 + BTIUtil_SideSign(i) * (32 + 256 * xi / resultRowLength), 420 + 32 * yi)
+				self:xy(BTIUtil_SideSign(i) * (32 + 256 * xi / resultRowLength), 420 + 32 * yi)
 					:z(0.4)
 					:diffusealpha(0.0);
 			end,
@@ -622,11 +627,12 @@ for i = 1,2 do
 	};
 	local bzbReceptorsThisSide = Def.ActorFrame {
 		InitCommand = function(self)
-			self:xy(320 + BTIUtil_SideSign(i) * 112, 80);
+			self:xy(BTIUtil_SideSign(i) * 112, 80);
 		end,
 	}
 	for rcpi = 1,4 do
 		bzbReceptorsThisSide[#bzbReceptorsThisSide + 1] = NOTESKIN:LoadActorForNoteSkin("Down", "Receptor", "cyber") ..{
+			-- Realistic as possible!
 			Name = "bzbReceptor"..i.."_"..rcpi,
 			InitCommand = function(self)
 				self:x(bzbReceptorPlacement[rcpi][1] * 33)
@@ -636,7 +642,6 @@ for i = 1,2 do
 					:z(0.5)
 					:diffusealpha(0.3);
 			end,
-			-- TODO: add listeners for the player stepping on the pads!!
 			["P"..i..bzbReceptorNames[rcpi].."OnMessageCommand"] = function(self)
 				self:diffusealpha(1.0);
 				
@@ -684,7 +689,7 @@ for i = 1,2 do
 		Texture = "ratings 1x5.png",
 		InitCommand = function(self)
 			self:aux( tonumber(string.match(self:GetName(), "([0-9]+)")) )
-				:xy(320 + BTIUtil_SideSign(i) * 160, 160)
+				:xy(BTIUtil_SideSign(i) * 160, 160)
 				:z(1.0)
 				:animate(0)
 				:diffusealpha(0.0)
@@ -903,12 +908,6 @@ for pn = 1,2 do
 end
 
 
---
--- Bell proxies & AFT
---
-
-
-
 
 --
 -- Judgment proxies
@@ -1054,7 +1053,7 @@ for pn = 1,2 do
 end
 
 --
--- Special bell ghost (player 2)
+-- Special bell ghost
 --
 theBoys[#theBoys+1] = Def.Quad{
 		InitCommand=function(self)
@@ -1209,12 +1208,12 @@ local LOG2  = math.log(2.0);
 local tw = math.exp(math.ceil(math.log(sw)/LOG2) * LOG2);
 local th = math.exp(math.ceil(math.log(sh)/LOG2) * LOG2);
 
-local dspd			= 2.0;
+local dspd			= 2.0;				-- special scroll speed for this section (to accommodate driven drop)
 local dblMinify		= 0.8;				-- using mini mod. unity is fullsize
 local dblSideW		= 576*dblMinify;	-- slightly larger
 local dblSideH		= 256*dblMinify;	-- slightly larger
-local dblSideOff	= 576*dblMinify;
-local dblShift		= 512*dblMinify;
+local dblSideOff	= 576*dblMinify;	-- bring the AMV up to meet the arrows
+local dblShift		= 512*dblMinify;	-- driven drop distance
 
 local dblRTLVerts = {
 		{{-dblSideW/2, -dblSideH/2 + dblSideOff/2, 0}, Color.White, {0.5*(sw - dblSideW)/tw, 0.5*(sh - dblSideH + dblSideOff)/th}},
@@ -1436,7 +1435,7 @@ for si = 1,9 do
 		rcpSwath[#rcpSwath + 1] = NOTESKIN:LoadActorForNoteSkin("Down", "Tap Mine", "cyber")..{
 			InitCommand = function(self)
 				local theta = math.pi * (2 * ri / nObj + 7 * si);
-				local reta = (si-0.5) * 0.5 * sw/nSwaths;
+				local reta = (si-0.5) * 0.5 * sw/nSwaths;					-- yes, I know the corresponding Greek letter is "rho". but I wrhote this, not you
 				self:xy( math.cos(theta) * reta, math.sin(theta) * reta )
 					:zoom(1 - 0.3 * si/nSwaths);
 			end,
@@ -1471,7 +1470,6 @@ theBoys[#theBoys + 1] = rcpIntroOutro;
 
 local messageList = {
 	{	4.0, "RecenterProxy"},
---	{   8.0, "PunishDrunks"},
 	
 	{  8.00, "PulseRCP", {1,4,7}},
 	{  8.75, "PulseRCP", {2,5,8}},
@@ -1485,9 +1483,7 @@ local messageList = {
 	{ 32.00, "PulseRCP", {1,4,7}},
 	{ 32.75, "PulseRCP", {2,5,8}},
 	{ 33.50, "PulseRCP", {3,6,9}},
-	
---	{ 36.0, "PunishmentComplete"},
-	
+		
 	{ 40.00, "PulseRCP", {1,4,9}},
 	{ 40.75, "PulseRCP", {2,5,8}},
 	{ 41.50, "PulseRCP", {3,6,7}},
@@ -2176,64 +2172,14 @@ local modsTable = {
 		{ 160.0,	"ScrollSpeed",		 bspd,    4.0,	3}, 	
 		{ 160.0,	"Mini",	  (1-dblMinify)*2,    4.0,	3}, 
 		{ 166.0,	"Reverse",			  0.0,    2.0,	3}, 
-			
---		{ 168.0,	"Tiny",				  0.2,    1.0,	1},	
---		{ 169.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 169.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 171.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 171.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 173.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 173.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 175.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 175.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 177.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 177.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 179.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 179.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 181.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 181.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 183.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 183.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 185.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 185.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 187.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 187.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 189.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 189.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 191.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 191.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 193.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 193.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 194.0,	"Boost",			  0.0,    2.0,	3},	
---		{ 195.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 195.05,	"Tiny",				  0.0,    0.95,	1},	
-			
---		{ 200.0,	"Boost",			  1.5,    1.0,	3},	
---		{ 200.0,	"Tiny",				  0.2,    1.0,	1},	
---		{ 201.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 201.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 203.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 203.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 205.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 205.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 207.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 207.05,	"Tiny",				  0.2,    1.95,	1},	
 		
 				
 		{ 194.0,	"ScrollSpeed",		 dspd,    2.0,	3},	
 		
-		{ 208.0,	"ScrollSpeed",		 cspd,    8.0,	3},	
+		{ 200.0,	"ScrollSpeed",		 cspd,    8.0,	3},	
 		{ 208.0,	"Boost",			 -2.5,   16.0,	3},	
 		{ 208.0,	"Mini",	  			  0.0,    8.0,	3}, 
---		{ 209.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 209.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 211.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 211.05,	"Tiny",				  0.2,    1.95,	1},	
---		{ 213.0,	"Tiny",				 -0.3,    0.0,	1},	
---		{ 213.05,	"Tiny",				  0.0,    0.95,	1},	
---		{ 214.0,	"Boost",			  0.0,    2.0,	3},	
 		
---		{ 214.0,	"Boost",			 -2.5,   10.0,	3}, 
 		{ 214.0,	"Centered",			  2.0,   10.0,	3}, 
 		{ 224.0,	"Boost",			  0.0,    2.0,	3}, 
 		{ 224.0,	"Reverse",			  1.0,    4.0,	3}, 
@@ -2391,7 +2337,7 @@ local modsTable = {
 		{ 436.0,	"Dark",				  0.0,    1.0,	3}, 
 				
 		{ 467.0,	"ScrollSpeed",		 dspd,    1.0,	3},			
-		{ 474.0,	"ScrollSpeed",		 bspd,    1.0,	3},	
+		{ 472.0,	"ScrollSpeed",		 bspd,    1.0,	3},	
 		
 		{ 488.0,	"Centered",			  1.0,    8.0,	3}, 
 		{ 488.0,	"Invert",		  	  1.0,    2.0,	3},	
@@ -2633,7 +2579,7 @@ local mods = {
 	["Boomerang"] =		"FLOAT", 
 	["Drunk"] =			"FLOAT", 
 	["Dizzy"] =			"FLOAT", 
-	["Confusion"] =		"FLOAT", 	-- yuck
+	["Confusion"] =		"FLOAT",
 	["Mini"] =			"FLOAT", 
 	["Tiny"] =			"FLOAT", 
 	["Flip"] =			"FLOAT", 
@@ -2742,7 +2688,7 @@ local clearAllMods = function(playerNum, justTrace)
 	end
 end
 
-local fifthModsHQ = Def.Quad {
+local modsHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
 			:SetWidth(6)
@@ -2759,18 +2705,18 @@ local fifthModsHQ = Def.Quad {
 		local overtime = GAMESTATE:GetSongBeat();
 		
 		if modsLaunched >= #modsTable then
-			Trace('>>> fifthModsHQ: Hibernated!!');
+			Trace('>>> modsHQ: Hibernated!!');
 			self:hibernate(600);
 			do return end
 		else
 			while modsLaunched < #modsTable do
-				-- Trace('>>> enjoyModsHQ: ' .. modsLaunched);
+				-- Trace('>>> modsHQ: ' .. modsLaunched);
 				-- Check the next line of the mods table.
 				nextMod = modsTable[modsLaunched + 1];
 				
 				if overtime + modsLeadBy >= nextMod[1] then
 					-- TODO: this assumes the effect applies over a constant BPM section!!
-					Trace('>>> fifthModsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
+					Trace('>>> modsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
 					
 					for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
 						pn = tonumber(string.match(pe, "[0-9]+"));
@@ -2786,15 +2732,15 @@ local fifthModsHQ = Def.Quad {
 							else
 								newApproach = math.abs(nextMod[3] - opVal) * BPS / (nextMod[4] + 0.001);
 							end
-												pops[ nextMod[2] ]( pops, nextMod[3], newApproach );
-							Trace('>>> enjoyModsHQ: ' .. opVal      .. ' @ rate = ' .. opApproach  .. ' for ' .. pe);
-							Trace('>>> enjoyModsHQ: ' .. nextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
+							pops[ nextMod[2] ]( pops, nextMod[3], newApproach );
+							Trace('>>> modsHQ: ' .. opVal      .. ' @ rate = ' .. opApproach  .. ' for ' .. pe);
+							Trace('>>> modsHQ: ' .. nextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
 						end
 					end
 					
 					modsLaunched = modsLaunched + 1;
 				else
-					-- Trace('>>> enjoyModsHQ: ' .. overtime .. ' < ' .. nextMod[1]);
+					-- Trace('>>> modsHQ: ' .. overtime .. ' < ' .. nextMod[1]);
 					break;
 				end
 			end
@@ -2808,7 +2754,7 @@ local fifthModsHQ = Def.Quad {
 		self:queuecommand('Update');
 	end
 }
-table.insert(theBoys, fifthModsHQ);
+table.insert(theBoys, modsHQ);
 
 -------------------------------------------------------------------------------
 --

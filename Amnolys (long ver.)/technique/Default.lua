@@ -19,8 +19,8 @@ local screen;
 local nextbeat = 0;
 local DEG_TO_RAD = math.pi / 180.0;
 
-local cspd = 3.0;
-local cspdA = 1.8;
+local cspd = 3.0;						-- Preferred scroll speed for most of the chart.
+local cspdA = 1.8;						-- Scroll speed for the column staggering section.
 
 local theBoys = Def.ActorFrame {
 	InitCommand = function(self)
@@ -452,42 +452,7 @@ table.insert(theBoys, DefaultProxyP2);
 
 -------------------------------------------------------------------------------
 --
--- 		Some graphical doods 'n' dads 'n' doodads.
---
--------------------------------------------------------------------------------
-local numArrows = {["4th"] = 45,  ["32nd"] = 30,    ["48th"] = 15};		-- Number of arrows to instantiate
-local texArrows = {["4th"] = 0.0, ["32nd"] = 0.625, ["48th"] = 0.75};	-- Texture coordinate shifts
-
-local felysNotes = {};
-local stronk = 64;
-for quantColor,quantCount in pairs(numArrows) do
-	Trace("> making scary "..quantColor.." notes");
-	for i = 1,quantCount do
-		local pos = {math.cos(i/quantCount * 2 * math.pi) * stronk, math.sin(i/quantCount * 2 * math.pi) * stronk};
-		
---		Trace("> making scary "..quantColor.." note #"..i);
-		felysNotes[#felysNotes + 1] = NOTESKIN:LoadActorForNoteSkin("Down", "Tap Note", "cyber") .. {
-			Name = "ScaryNote"..quantColor.."_"..i,
-			InitCommand = function(self)
-				self:visible(true)
-					:xy(sw/2 + pos[1], sh/2 + pos[2])
-					:texturetranslate(texArrows[quantColor], 0);
-			end,
-		};
---		Trace(">>> made scary "..quantColor.." note #"..i);
-	end
-	Trace(">>> made "..quantCount.." scary "..quantColor.." notes");
-	stronk = stronk + 64;
-end
-
-for i = 1,#felysNotes do
---	table.insert(theBoys, felysNotes[i]);
-end
-
-
-
---
--- Judgment proxies
+-- 		Judgment proxies
 --
 for pn = 1,2 do
 	theBoys[#theBoys + 1] = Def.ActorProxy {
@@ -720,10 +685,7 @@ local felysGfxHQ = Def.Quad {
 					self:GetParent():GetChild("GhostP"..i.."_"..ghostIndex):diffusealpha(0);
 				end
 			end
-			
---			self:GetParent():GetChild("felysOL"):sleep(4.0/BPS)
---												:queuecommand("Bass");
-				
+							
 			fgcurcommand = fgcurcommand + 1;
 		end
 		if overtime >= 32.0 and fgcurcommand ==  1 then
@@ -1169,7 +1131,7 @@ local mods = {
 	["Boomerang"] =		"FLOAT", 
 	["Drunk"] =			"FLOAT", 
 	["Dizzy"] =			"FLOAT", 
-	["Confusion"] =		"FLOAT", 	-- yuck
+	["Confusion"] =		"FLOAT",
 	["Mini"] =			"FLOAT", 
 	["Tiny"] =			"FLOAT", 
 	["Flip"] =			"FLOAT", 
@@ -1278,7 +1240,7 @@ local clearAllMods = function(playerNum, justTrace)
 	end
 end
 
-local enjoyModsHQ = Def.Quad {
+local modsHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
 			:SetWidth(6)
@@ -1295,19 +1257,19 @@ local enjoyModsHQ = Def.Quad {
 		local overtime = GAMESTATE:GetSongBeat();
 		
 		if modsLaunched >= #modsTable then
-			Trace('>>> enjoyModsHQ: Hibernated!!');
+			Trace('>>> modsHQ: Hibernated!!');
 			self:hibernate(600);
 			do return end
 		else
 			while modsLaunched < #modsTable do
-				-- Trace('>>> enjoyModsHQ: ' .. modsLaunched);
+				-- Trace('>>> modsHQ: ' .. modsLaunched);
 				-- Check the next line of the mods table.
 				nextMod = modsTable[modsLaunched + 1];
 				
 				if overtime + modsLeadBy >= nextMod[1] then
 					-- TODO: this assumes the effect applies over a constant BPM section!!
 					local BPS = GAMESTATE:GetSongBPS();
-					Trace('>>> enjoyModsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
+					Trace('>>> modsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
 					
 					for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
 						pn = tonumber(string.match(pe, "[0-9]+"));
@@ -1323,15 +1285,15 @@ local enjoyModsHQ = Def.Quad {
 							else
 								newApproach = math.abs(nextMod[3] - opVal) * BPS / (nextMod[4] + 0.001);
 							end
-												pops[ nextMod[2] ]( pops, nextMod[3], newApproach );
-							Trace('>>> enjoyModsHQ: ' .. opVal      .. ' @ rate = ' .. opApproach  .. ' for ' .. pe);
-							Trace('>>> enjoyModsHQ: ' .. nextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
+							pops[ nextMod[2] ]( pops, nextMod[3], newApproach );
+							Trace('>>> modsHQ: ' .. opVal      .. ' @ rate = ' .. opApproach  .. ' for ' .. pe);
+							Trace('>>> modsHQ: ' .. nextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
 						end
 					end
 					
 					modsLaunched = modsLaunched + 1;
 				else
-					-- Trace('>>> enjoyModsHQ: ' .. overtime .. ' < ' .. nextMod[1]);
+					-- Trace('>>> modsHQ: ' .. overtime .. ' < ' .. nextMod[1]);
 					break;
 				end
 			end
@@ -1345,7 +1307,7 @@ local enjoyModsHQ = Def.Quad {
 		self:queuecommand('Update');
 	end
 }
-table.insert(theBoys, enjoyModsHQ);
+table.insert(theBoys, modsHQ);
 
 -------------------------------------------------------------------------------
 --

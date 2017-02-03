@@ -291,7 +291,7 @@ end
 table.insert(theBoys, nattoBG);
 
 
-
+-------------------------------------------------------------------------------
 --
 --		Proxy up the players.
 --
@@ -514,21 +514,7 @@ local nattoProxyEffects = {
 	-- proxyEffect[5]: player application (1 = P1, 2 = P2, 3 = both, 0 = neither)
 	--
 	-- stag = column-based "skewing", where +1.0 staggers the columns by one arrow height, left highest
-	--
---	{ 32.0, "skewx",	 1.0,	 4.0,	3},
---	{ 39.0, "skewx",	 0.0,	 1.0,	3},
---	{ 40.0, "skewx",	-1.0,	 4.0,	3},
---	{ 47.0, "skewx",	 0.0,	 1.0,	3},
---	{ 48.0, "skewy",	 1.0,	 4.0,	3},
---	{ 48.0, "stag",		-1.0,	 4.0,	3},
---	{ 55.0, "skewy",	 0.0,	 1.0,	3},
---	{ 55.0, "stag",		 0.0,	 1.0,	3},
---	{ 56.0, "skewy",	-1.0,	 4.0,	3},
---	{ 56.0, "stag",		 1.0,	 4.0,	3},
---	{ 63.0, "skewy",	 0.0,	 1.0,	3},
---	{ 63.0, "stag",		 0.0,	 1.0,	3},
-	
-	
+	--	
 	{ 97.0, "addx",		 sw/12,	 6.0,	1},
 	{ 97.0, "addx",		-sw/12,	 6.0,	2},
 	{ 97.0, "vibrate",	 5.0,	 6.0,	3},
@@ -646,24 +632,6 @@ local nattoProxyEffects = {
 	{303.0, "addx",		-sw/24,	 0.5,	1},
 	{303.0, "addx",		 sw/24,	 0.5,	2},
 	{303.5, "addy",		-sh/24,	 0.5,	3},
-	
-	
---	{319.95,"zoomx",	 0.0,	 0.05,	1},
---	{320.0, "zoomx",	 0.0,	 2.0,	2, 'accelerate'},
---	{320.0, "zoomx",	 1.0,	 2.0,	1, 'decelerate'},
---	{322.0, "zoomx",	 1.0,	 2.0,	2, 'accelerate'},
---	{322.0, "zoomx",	 0.0,	 2.0,	1, 'decelerate'},
---	{324.0, "zoomx",	 0.0,	 2.0,	2, 'accelerate'},
---	{324.0, "zoomx",	 1.0,	 2.0,	1, 'decelerate'},
---	{326.0, "zoomx",	 1.0,	 2.0,	2, 'accelerate'},
---	{326.0, "zoomx",	 0.0,	 2.0,	1, 'decelerate'},
---	{328.0, "zoomx",	 0.0,	 2.0,	2, 'accelerate'},
---	{328.0, "zoomx",	 1.0,	 2.0,	1, 'decelerate'},
---	{330.0, "zoomx",	 1.0,	 2.0,	2, 'accelerate'},
---	{330.0, "zoomx",	 0.0,	 2.0,	1, 'decelerate'},
---	{332.0, "zoomx",	 0.0,	 2.0,	2, 'accelerate'},
---	{332.0, "zoomx",	 1.0,	 2.0,	1, 'decelerate'},
---	{334.0, "zoomx",	 1.0,	 2.0,	2, 'accelerate'},
 	
 	
 	{337.0, "vibrate",	 5.0,	 6.0,	3},
@@ -1112,15 +1080,6 @@ local modsTable = {
 		{ 399.0,	"Tipsy",		  0.8,	  0.01,	3},
 		{ 399.05,	"Tipsy",		  0.0,	  0.9,	3},
 		
-				
---		{ 410.0,	"Tilt",			 -1.8,	  5.0,	1},
---		{ 410.0,	"Tilt",			 -1.5,	  5.0,	2},
---		{ 410.0,	"Boost",		  1.5,	  5.0,	3},
---		{ 415.0,	"Boost",		  1.0,	  1.0,	3},
---		{ 415.0,	"Tilt",			  0.5,	  0.5,	1},
---		{ 415.0,	"Tilt",			  0.4,	  0.5,	2},
---		{ 415.5,	"Tilt",			  0.0,	  0.5,	3},
-		
 		{ 424.0,	"Tipsy",		  0.8,	  0.01,	3},
 		{ 424.05,	"Tipsy",		  0.0,	  0.9,	3},
 		{ 426.0,	"Tipsy",		 -0.8,	  0.01,	3},
@@ -1216,7 +1175,7 @@ local mods = {
 	["Boomerang"] =		"FLOAT", 
 	["Drunk"] =			"FLOAT", 
 	["Dizzy"] =			"FLOAT", 
-	["Confusion"] =		"FLOAT", 	-- yuck
+	["Confusion"] =		"FLOAT",
 	["Mini"] =			"FLOAT", 
 	["Tiny"] =			"FLOAT", 
 	["Flip"] =			"FLOAT", 
@@ -1325,7 +1284,7 @@ local clearAllMods = function(playerNum, justTrace)
 	end
 end
 
-local enjoyModsHQ = Def.Quad {
+local modsHQ = Def.Quad {
 	InitCommand = function(self)
 		self:SetHeight(6)
 			:SetWidth(6)
@@ -1342,19 +1301,19 @@ local enjoyModsHQ = Def.Quad {
 		local overtime = GAMESTATE:GetSongBeat();
 		
 		if modsLaunched >= #modsTable then
-			Trace('>>> enjoyModsHQ: Hibernated!!');
+			Trace('>>> modsHQ: Hibernated!!');
 			self:hibernate(600);
 			do return end
 		else
 			while modsLaunched < #modsTable do
-				-- Trace('>>> enjoyModsHQ: ' .. modsLaunched);
+				-- Trace('>>> modsHQ: ' .. modsLaunched);
 				-- Check the next line of the mods table.
 				nextMod = modsTable[modsLaunched + 1];
 				
 				if overtime + modsLeadBy >= nextMod[1] then
 					-- TODO: this assumes the effect applies over a constant BPM section!!
 					local BPS = GAMESTATE:GetSongBPS();
-					Trace('>>> enjoyModsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
+					Trace('>>> modsHQ: ' .. modsLaunched .. ' @ time = ' .. overtime);
 					
 					for _,pe in pairs(GAMESTATE:GetEnabledPlayers()) do
 						pn = tonumber(string.match(pe, "[0-9]+"));
@@ -1370,15 +1329,15 @@ local enjoyModsHQ = Def.Quad {
 							else
 								newApproach = math.abs(nextMod[3] - opVal) * BPS / (nextMod[4] + 0.001);
 							end
-												pops[ nextMod[2] ]( pops, nextMod[3], newApproach );
-							Trace('>>> enjoyModsHQ: ' .. opVal      .. ' @ rate = ' .. opApproach  .. ' for ' .. pe);
-							Trace('>>> enjoyModsHQ: ' .. nextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
+							pops[ nextMod[2] ]( pops, nextMod[3], newApproach );
+							Trace('>>> modsHQ: ' .. opVal      .. ' @ rate = ' .. opApproach  .. ' for ' .. pe);
+							Trace('>>> modsHQ: ' .. nextMod[3] .. ' @ rate = ' .. newApproach .. ' for ' .. pe .. ' [New!]');
 						end
 					end
 					
 					modsLaunched = modsLaunched + 1;
 				else
-					-- Trace('>>> enjoyModsHQ: ' .. overtime .. ' < ' .. nextMod[1]);
+					-- Trace('>>> modsHQ: ' .. overtime .. ' < ' .. nextMod[1]);
 					break;
 				end
 			end
@@ -1392,7 +1351,7 @@ local enjoyModsHQ = Def.Quad {
 		self:queuecommand('Update');
 	end
 }
-table.insert(theBoys, enjoyModsHQ);
+table.insert(theBoys, modsHQ);
 
 -------------------------------------------------------------------------------
 --

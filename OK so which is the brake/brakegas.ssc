@@ -1,7 +1,7 @@
 #VERSION:0.83;
-#TITLE:OK, so which is the brake;
-#SUBTITLE:and which is the gas;
-#ARTIST:Stop trying to make "clutch" happen;
+#TITLE:accelerate;
+#SUBTITLE:;
+#ARTIST:ccgc;
 #TITLETRANSLIT:;
 #SUBTITLETRANSLIT:;
 #ARTISTTRANSLIT:;
@@ -73,22 +73,20 @@
 #FAKES:;
 #LABELS:0.000=Song Start;
 #BGCHANGES:;
-#FGCHANGES:0.000=hudreducer=1.000=0=0=1=====,
-;
 #KEYSOUNDS:;
 #ATTACKS:
 ;
 
-//---------------dance-single - ----------------
+//---------------dance-single - Telperion----------------
 #NOTEDATA:;
-#CHARTNAME:;
+#CHARTNAME:Telperion;
 #STEPSTYPE:dance-single;
-#DESCRIPTION:;
+#DESCRIPTION:Telperion;
 #CHARTSTYLE:;
 #DIFFICULTY:Challenge;
 #METER:13;
 #RADARVALUES:0.905196,1.005182,0.052121,0.148916,1.254616,851.000000,844.000000,7.000000,20.000000,13.000000,0.000000,0.000000,0.000000,0.000000,0.905196,1.005182,0.052121,0.148916,1.254616,851.000000,844.000000,7.000000,20.000000,13.000000,0.000000,0.000000,0.000000,0.000000;
-#CREDIT:;
+#CREDIT:Telperion;
 #NOTES:
 // measure 0
 0000

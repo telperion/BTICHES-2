@@ -1,7 +1,7 @@
 #VERSION:0.83;
-#TITLE:Stop! Don't touch me there;
-#SUBTITLE:This is my private square;
-#ARTIST:not the m'lady brigade;
+#TITLE:Mean What I Mean;
+#SUBTITLE:(feat. Leikeli47, Dreezy);
+#ARTIST:AlunaGeorge;
 #TITLETRANSLIT:;
 #SUBTITLETRANSLIT:;
 #ARTISTTRANSLIT:;
@@ -33,22 +33,20 @@
 #FAKES:;
 #LABELS:0.000=Song Start;
 #BGCHANGES:;
-#FGCHANGES:0.000=hudreducer=1.000=0=0=1=====,
-;
 #KEYSOUNDS:;
 #ATTACKS:
 ;
 
-//---------------dance-single - ----------------
+//---------------dance-single - Telperion----------------
 #NOTEDATA:;
-#CHARTNAME:;
+#CHARTNAME:Telperion;
 #STEPSTYPE:dance-single;
-#DESCRIPTION:;
+#DESCRIPTION:Telperion;
 #CHARTSTYLE:;
 #DIFFICULTY:Challenge;
 #METER:9;
 #RADARVALUES:0.536173,0.586089,0.126041,0.175057,0.658213,536.000000,518.000000,18.000000,25.000000,12.000000,0.000000,2.000000,0.000000,0.000000,0.536173,0.586089,0.126041,0.175057,0.658213,536.000000,518.000000,18.000000,25.000000,12.000000,0.000000,2.000000,0.000000,0.000000;
-#CREDIT:;
+#CREDIT:Telperion;
 #NOTES:
 // measure 0
 0000
