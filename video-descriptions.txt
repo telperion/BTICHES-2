@@ -1,0 +1,88 @@
+Bubble Tea Invitational, Avatar: The Last Arrowbender, <song name>, <song artist>, StepMania, In The Groove, ITG, DanceDanceRevolution, DDR, Lua, bullshit, hack, mods
+
+
+===============================================================================
+Bubble Tea Invitational, Avatar: The Last Arrowbender, Cyberbrain, Qrabit, StepMania, In The Groove, ITG, DanceDanceRevolution, DDR, Lua, bullshit, hack, mods
+
+[SM5] BTI2 Special 1: Qrabit - "Cyberbrain"
+
+
+
+StepMania 5.0.12
+Bubble Tea Invitational Co-Host's Exciting Sightreadables II: Avatar: The Last Arrowbender
+Round 1, Special Stage
+Qrabit - "Cyberbrain"
+MBC Scale: 1
+
+The Avatar started out as an airbender and presumably was pretty comfortable with the technique, so AIR TEMPLE comes first, and is super easy - well, by WHY/UKSRT standards, anyway. Since NorCal doesn't have a whole lot of experience in the mod scene, I wanted the first mod stage in the tournament to ease people into reading with distractions and distortions. Also I needed it to be ＣＹＢＥＲ (song selection relevant) 
+
+The background in the beginning and end is a half-screen-size 20x30 grid of "pixel" quads embedded in an ActorFrameTexture, then mirrored to the other player's side. To make pixel patterns, StepMania runs three or four bespoke algebraic compounds, and I'm sorry you had to read that phrase, but they control the intensity of pixels by location.
+
+
+
+BTI2 Special Stage videos are going up! One per day this week, hopefully. Starting off with AIR TEMPLE!
+
+===============================================================================
+Bubble Tea Invitational, Avatar: The Last Arrowbender, Wait 4 Enjoy (siromaru Sunrise Remix), VALLEYSTONE, siromaru, StepMania, In The Groove, ITG, DanceDanceRevolution, DDR, Lua, bullshit, hack, mods
+
+[SM5] BTI2 Special 2: VALLEYSTONE - "Wait 4 Enjoy (siromaru Sunrise Remix)"
+
+
+
+StepMania 5.0.12
+Bubble Tea Invitational Co-Host's Exciting Sightreadables II: Avatar: The Last Arrowbender
+Round 2, Special Stage
+VALLEYSTONE - "Wait 4 Enjoy (siromaru Sunrise Remix)"
+MBC Scale: 3
+
+The next elemental technique on the list is waterbending, and, oh boy. I definitely thought this was a lot easier than it turned out to be. The fact that MBC's Warriors Aboot was firmly Level 3 on the MBC scale should have tipped me off. On top of that, the boomerang section after the first set of arrow interleaving becomes ridiculously hard to read when either player starts to miss notes. Also, nobody had a good strategy to approach the "drop drop drop drop" waterwheel (I'd recommend reading only one side and allowing your brain to persist chart chunks). This is arguably the hardest of the five specials to sightread
+
+I'm kinda proud of the water background concept; it's a pile of ActorMultiVertex triangle strips, with texture coordinates mapped on. Every few beats, the texture coordinates are moved slightly, causing the background to warp and undulate. The texture comes from an AFT containing the background sprite and two playfield proxies, so the arrows and receptors get warped too!
+I think fuck.exe could probably do a better job of simulating water like this - I'm sorely in need of a blurring shader. Also, the Lua processor seizes really briefly (but visibly) when recalculating vertices...gotta optimize... I probably could have gotten away with quads instead of triangles but it is REALLY easy to see orthogonal lines on an effect like this and I wanted to obscure how regular the pinching points were.
+
+
+
+The second BTI2 Special Stage video is up! The frustratingly tricky WATER TEMPLE - as expected of a level named "WATER TEMPLE"...
+
+===============================================================================
+Bubble Tea Invitational, Avatar: The Last Arrowbender, Berserk, Nhato, StepMania, In The Groove, ITG, DanceDanceRevolution, DDR, Lua, bullshit, hack, mods
+
+[SM5] BTI2 Special 3: Nhato - "Berserk"
+
+
+
+StepMania 5.0.12
+Bubble Tea Invitational Co-Host's Exciting Sightreadables II: Avatar: The Last Arrowbender
+Round 3, Special Stage
+Nhato - "Berserk"
+MBC Scale: 2–
+
+Next up is the earth kingdom! I took the scenic route with this one, at the expense of forcing it to be harder than the water temple. Earthquakes are happening?? This is the true `dup step`.
+I think the worst complaint I received on this one was that the background is too bright and the 8ths and 16ths blend in - completely true, and I probably could have gotten away with 80% brightness on the BG layers.
+
+Nothing too technical in the Lua this time, so let's talk about the background! I sketched out some hills and mountains using FireAlpaca (a free, simple drawing program à la SAI), exported them as individual layers, and passed them through GIMP's Dithering operation to get the old-timey video game look. Quick and dirty does the job! It's not truly pixel art, so I'd hesitate to use the term.
+
+
+A fresh breath of...dirt? The third BTI2 Special Stage video - a day in the earth kingdom - is up! 
+
+===============================================================================
+Bubble Tea Invitational, Avatar: The Last Arrowbender, Amnolys, onoken, StepMania, In The Groove, ITG, DanceDanceRevolution, DDR, Lua, bullshit, hack, mods
+
+[SM5] BTI2 Special 4: onoken - "Amnolys (long ver.)"
+
+
+
+StepMania 5.0.12
+Bubble Tea Invitational Co-Host's Exciting Sightreadables II: Avatar: The Last Arrowbender
+Round 4, Special Stage
+onoken - "Amnolys (long ver.)"
+MBC Scale: 2+
+
+Three kingdoms down and one to go: this must be fire, then. I think Round 4 finally rolled around around 10pm, and everybody was starting to just lose steam. Well, that's no problem; I've got the bedtime story right here. Amnolys is a great storytelling song, and I made an effort to draw sharp contrast between the dark and light parts of the tune.
+
+This stage was a great excuse to throw ghosting AFTs in everywhere. There are three per player, one each in red, orange, and magenta. The column staggering in the first hard bit is done using the absurdly convenient get_column_actors() on the players' NoteField children. Aaaaaand the backdrop is a throwback to Round 2 - I set up an ActorMultiVertex to draw quads with various shading, and tweened the corners around a bit for ~dramatic effect~. If you've seen my Let Me Drive file...well, I'm not a very original person.
+
+I do regret not spicing up the daytime sections. They're quite empty. The second section in particular spends most of its time just sitting there! If I had the time, I'd fire up some foreground distractions, get some Jonathan's Dream action up in there.
+
+
+We've finally made it to Fire Temple, and wow, they seem angry! Here comes the fourth BTI2 Special Stage video!

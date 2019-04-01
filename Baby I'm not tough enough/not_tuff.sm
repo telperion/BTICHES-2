@@ -6,8 +6,8 @@
 #ARTISTTRANSLIT:;
 #GENRE:;
 #CREDIT:Telperion;
-#BANNER:;
-#BACKGROUND:;
+#BANNER:not_tuff-bn.png;
+#BACKGROUND:not_tuff-bq-fs.png;
 #LYRICSPATH:;
 #CDTITLE:;
 #MUSIC:not_tuff.ogg;
