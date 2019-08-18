@@ -91,7 +91,7 @@ local tehe_update_function = function()
 
 			local scroll_speed = calc_xmod(pops, BPS)
 			local tehe_distance = tehe_distance_px / (scroll_speed * mrate * 64 * scl_m)
-			Trace("$$$ P"..idx.."'s scroll_speed = "..scroll_speed)
+			--Trace("$$$ P"..idx.."'s scroll_speed = "..scroll_speed)
 
 			if (beat >= tehe_beat_start and beat < tehe_beat_cross) then
 				-- Parabolic approach phase:
