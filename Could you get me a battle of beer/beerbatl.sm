@@ -5,7 +5,7 @@
 #SUBTITLETRANSLIT:;
 #ARTISTTRANSLIT:;
 #GENRE:;
-#CREDIT:Telperion (β);
+#CREDIT:Telperion;
 #BANNER:beerbatl-bn.png;
 #BACKGROUND:beerbatl-bg-fs.png;
 #LYRICSPATH:;
@@ -24,10 +24,10 @@
 #KEYSOUNDS:;
 #ATTACKS:;
 
-//---------------dance-single - Telperion (β)----------------
+//---------------dance-single - Telperion----------------
 #NOTES:
      dance-single:
-     :
+     Telperion:
      Challenge:
      11:
      0.624716,0.708707,0.126081,0.311884,1.718681,659.000000,640.000000,19.000000,47.000000,6.000000,0.000000,0.624716,0.708707,0.126081,0.311884,1.718681,659.000000,640.000000,19.000000,47.000000,6.000000,0.000000:

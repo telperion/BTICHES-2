@@ -7,13 +7,13 @@
 #ARTISTTRANSLIT:;
 #GENRE:;
 #ORIGIN:;
-#CREDIT:Telperion (β);
+#CREDIT:Telperion;
 #BANNER:beerbatl-bn.png;
 #BACKGROUND:beerbatl-bg-ws.png;
 #PREVIEWVID:;
 #JACKET:beerbatl-jk.png;
-#CDIMAGE:;
-#DISCIMAGE:beerbatl-bg-ws.png;
+#CDIMAGE:../telperion-SM5.png;
+#DISCIMAGE:;
 #LYRICSPATH:;
 #CDTITLE:;
 #MUSIC:beerbatl.ogg;
@@ -38,16 +38,16 @@
 #ATTACKS:
 ;
 
-//---------------dance-single - Telperion (β)----------------
+//---------------dance-single - Telperion----------------
 #NOTEDATA:;
 #CHARTNAME:;
 #STEPSTYPE:dance-single;
-#DESCRIPTION:Telperion (β);
+#DESCRIPTION:Telperion;
 #CHARTSTYLE:;
 #DIFFICULTY:Challenge;
 #METER:11;
 #RADARVALUES:0.624716,0.708707,0.126081,0.311884,1.718681,659.000000,640.000000,19.000000,47.000000,6.000000,0.000000,1.000000,0.000000,0.000000,0.624716,0.708707,0.126081,0.311884,1.718681,659.000000,640.000000,19.000000,47.000000,6.000000,0.000000,1.000000,0.000000,0.000000;
-#CREDIT:Telperion (β);
+#CREDIT:Telperion;
 #DISPLAYBPM:42.500000;
 #NOTES:
 // measure 0
