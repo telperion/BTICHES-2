@@ -14,10 +14,10 @@ Seriously, I'm so sorry about the wait lol. BTI 2 was held in December 2016 and 
 | w | Afro Universe | t+pazolite | 1 | 4 | 7 | 11 | 12 | FS XO BR |
 | w | Amnesia | JAKAZiD | 2 | 4 | 9 | 11 | 12 | XO JA STR:2-2-2-2 |
 | w | At The Break Of Dawn (feat. Elize Ryd) | ARION | 2 | 4 | 7 | 8 | 10 | BPM |
-| w | Dog 3 | [Alexandros] | 2 | 6 | 9 | 11 | 13 | STR:12\* XO BPM
+| w | Dog 3 | \[Alexandros\] | 2 | 6 | 9 | 11 | 13 | STR:12\* XO BPM
 | w | ELEVEN | HITCH HIKER | 1 | 4 | 5 | 7 | 10 | XO 24ths |
 | w | Ferrari | coyote kisses | 1 | 3 | 5 | 7 | 10 | FS TL STR:4 |
-| w | Headshot | Ujico* | 3 | 8 | 10 | 12 | 14 | STR:\*\*\*\* XO BR BPM |
+| w | Headshot | Ujico\* | 3 | 8 | 10 | 12 | 14 | STR:\*\*\*\* XO BR BPM |
 | w | Kiss my ass | USAO | 1 | 3 | 6 | 8 | 11 | FS DS 32nds | 
 | w | Kukkad | Vishal & Shekhar | 1 | 3 | 5 | 8 | 10 | XO BR |
 | w | LIMOUSINE | MANUEL | 2 | 4 | 7 | 10 | 12 | XO BR |
@@ -25,7 +25,7 @@ Seriously, I'm so sorry about the wait lol. BTI 2 was held in December 2016 and 
 | w | Mean What I Mean (feat. Leikeli47, Dreezy) | AlunaGeorge | 1 | 3 | 5 | 7 | 9 | XO DS JA |
 | w | On My Way To Heaven (Seven Lions Remix) | Above & Beyond | 1 | 2 | 5 | 7 | 10 | BPM 24ths |
 | w | Vantablack | siqlo | 1 | 4 | 8 | 9 | 11 | XO FS DS |
-| w | 斬刀鬼[Zantouki] | Des-ROW • 組[Des-ROW feat. TSUBOI for ALPHA] | 2 | 4 | 7 | 9 | 10 | XO BPM FL |
+| w | 斬刀鬼\[Zantouki\] | Des-ROW • 組\[Des-ROW feat. TSUBOI for ALPHA\] | 2 | 4 | 7 | 9 | 10 | XO BPM FL |
 
 And also one bonus file that was not used in the tournament. For hopefully obvious reasons.
 
