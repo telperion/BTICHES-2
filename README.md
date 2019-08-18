@@ -15,7 +15,7 @@ Seriously, I'm so sorry about the wait lol. BTI 2 was held in December 2016 and 
 | ![Amnesia](I%20completely%20forgot/amnesia-bn.png) | Amnesia | JAKAZiD | 2 | 4 | 9 | 11 | 12 | XO JA STR:2-2-2-2 |
 | ![At The Break Of Dawn](Baby%20I'm%20not%20tough%20enough/not_tuff-bn.png) | At The Break Of Dawn (feat. Elize Ryd) | ARION | 2 | 4 | 7 | 8 | 10 | BPM |
 | ![Dog 3](Furry%20revenge/furries3-bn.png) | Dog 3 | \[Alexandros\] | 2 | 6 | 9 | 11 | 13 | STR:12\* XO BPM
-| w | ELEVEN | HITCH HIKER | 1 | 4 | 5 | 7 | 10 | XO 24ths |
+| ![ELEVEN](Wawa/eleven-bn.png) | ELEVEN | HITCH HIKER | 1 | 4 | 5 | 7 | 10 | XO 24ths |
 | ![Ferrari](Shining%20car%20of%20your%20dreams/ferrari-bn.png) | Ferrari | coyote kisses | 1 | 3 | 5 | 7 | 10 | FS TL STR:4 |
 | ![Headshot](Shot%20in%20the%20head%20and%20you're%20to%20blame/shothead-bn.png) | Headshot | Ujico\* | 3 | 8 | 10 | 12 | 14 | STR:\*\*\*\* XO BR BPM |
 | ![Kiss my ass](Dont%20be%20fcking%20rude/kma-bn.png) | Kiss my ass | USAO | 1 | 3 | 6 | 8 | 11 | FS DS 32nds | 
