@@ -9,7 +9,7 @@
 #ORIGIN:;
 #CREDIT:Telperion (β);
 #BANNER:zantouki-bn.png;
-#BACKGROUND:zantouki-bg-fs.png;
+#BACKGROUND:zantouki-bg-ws.png;
 #PREVIEWVID:;
 #JACKET:zantouki-jk.png;
 #CDIMAGE:;
@@ -41,7 +41,7 @@
 #FAKES:;
 #LABELS:0.000=Song Start;
 #BGCHANGES:;
-#FGCHANGES:216.000=tehe=1.000=0=0=1=====,
+#FGCHANGES:4.000=tehe=1.000=0=0=1=====,
 ;
 #KEYSOUNDS:;
 #ATTACKS:
